@@ -15,6 +15,7 @@ model User {
   phoneNumber String   @unique
   password    String?  // nullable for Google auth users
   googleId    String?  @unique // for Google auth users
+  role        UserRole @default(USER)
   orders      Order[]  // relation to orders
   
   @@map("users")
@@ -64,4 +65,9 @@ enum OrderStatus {
 enum AvailabilityStatus {
   AVAILABLE
   UNAVAILABLE
+}
+
+enum UserRole {
+  USER
+  PARTNER
 }
