@@ -25,6 +25,7 @@ model Canteen {
   id        String     @id @default(cuid())
   name      String
   menuItems MenuItem[] // relation to menu items
+  orders    Order[]    // relation to orders
 
   @@map("canteens")
 }
@@ -47,6 +48,8 @@ model Order {
   id          String   @id @default(cuid())
   customer    User     @relation(fields: [userId], references: [id])
   userId      String
+  canteen     Canteen  @relation(fields: [canteenId], references: [id])
+  canteenId   String
   menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
   menuItemId  String
   quantity    Int      // ensure it doesn't exceed MenuItem.limitPerOrder
