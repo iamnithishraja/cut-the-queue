@@ -11,6 +11,7 @@ model User {
   id          String   @id @default(cuid())
   firstName   String
   lastName    String
+  userProfile String?
   email       String   @unique
   phoneNumber String   @unique
   password    String?  // nullable for Google auth users
@@ -37,6 +38,7 @@ model MenuItem {
   id            String   @id @default(cuid())
   name          String
   description   String?
+  itemImage     String?
   price         Float
   limitPerOrder Int
   status        AvailabilityStatus @default(AVAILABLE)
