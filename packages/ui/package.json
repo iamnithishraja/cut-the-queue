@@ -3,9 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./button": "./src/button.tsx",
-    "./card": "./src/card.tsx",
-    "./code": "./src/code.tsx"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
@@ -23,6 +21,6 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "react": "^18.2.0"
+    "react-native": "0.74.5"
   }
 }
