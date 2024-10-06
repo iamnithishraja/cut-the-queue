@@ -1,14 +1,67 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phoneNumber String   @unique
+  password    String?  // nullable for Google auth users
+  googleId    String?  @unique // for Google auth users
+  orders      Order[]  // relation to orders
+  
+  @@map("users")
+}
+
+model Canteen {
+  id        String     @id @default(cuid())
+  name      String
+  menuItems MenuItem[] // relation to menu items
+
+  @@map("canteens")
+}
+
+model MenuItem {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  price         Float
+  limitPerOrder Int
+  status        AvailabilityStatus @default(AVAILABLE)
+  canteen       Canteen  @relation(fields: [canteenId], references: [id])
+  canteenId     String
+  orders        Order[]  // the relation to orders does not require fields/references
+
+  @@map("menu_items")
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  customer    User     @relation(fields: [userId], references: [id])
+  userId      String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId  String
+  quantity    Int      // ensure it doesn't exceed MenuItem.limitPerOrder
+  status      OrderStatus @default(WAITING_FOR_PICKUP)
+  createdAt   DateTime @default(now())
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  COOKING
+  WAITING_FOR_PICKUP
+  SENT
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
 }
