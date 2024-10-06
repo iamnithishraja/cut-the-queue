@@ -17,16 +17,19 @@ model User {
   googleId    String?  @unique // for Google auth users
   role        UserRole @default(USER)
   orders      Order[]  // relation to orders
+
+  @@index([id])      
   
   @@map("users")
-}
+} 
 
 model Canteen {
   id        String     @id @default(cuid())
   name      String
   menuItems MenuItem[] // relation to menu items
   orders    Order[]    // relation to orders
-
+  
+  @@index([id])
   @@map("canteens")
 }
 
@@ -41,6 +44,9 @@ model MenuItem {
   canteenId     String
   orders        Order[]  // the relation to orders does not require fields/references
 
+  @@index([id])     
+  @@index([canteenId])     
+  
   @@map("menu_items")
 }
 
@@ -56,6 +62,11 @@ model Order {
   status      OrderStatus @default(WAITING_FOR_PICKUP)
   createdAt   DateTime @default(now())
 
+  @@index([id])
+  @@index([userId])     
+  @@index([menuItemId]) 
+  @@index([canteenId])  
+  
   @@map("orders")
 }
 
