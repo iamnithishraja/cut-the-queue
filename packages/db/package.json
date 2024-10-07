@@ -11,7 +11,7 @@
   },
   "exports": {
     "./client": "./src/index.ts",
-    "./objectClient":"./src/objectStore.ts"
+    "./objectClient": "./src/objectStore.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.15.1"

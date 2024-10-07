@@ -9,6 +9,18 @@
     "build": "npx tsc -b"
   },
   "devDependencies": {
+    "@repo/db": "*",
+    "@repo/utils": "*",
     "@repo/typescript-config": "*"
+  },
+  "dependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/dotenv": "^6.1.1",
+    "@types/jsonwebtoken": "^9.0.7",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "google-auth-library": "^9.14.1",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.23.8"
   }
 }

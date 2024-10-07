@@ -8,71 +8,84 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  firstName   String
-  lastName    String
-  userProfile String?
-  email       String   @unique
-  phoneNumber String   @unique
-  password    String?  // nullable for Google auth users
-  googleId    String?  @unique // for Google auth users
-  role        UserRole @default(USER)
-  orders      Order[]  // relation to orders
+  id                 String    @id @default(cuid())
+  firstName          String
+  lastName           String
+  userProfile        String?
+  email              String    @unique
+  phoneNumber        String    @unique
+  isVerified         Boolean   @default(false)
+  resetPasswordToken String?
+  expire             DateTime?
+  otp                Int?
+  password           String? // nullable for Google auth users
+  googleId           String?   @unique // for Google auth users
+  role               UserRole  @default(USER)
+  orders             Order[] // relation to orders
 
-  @@index([id])      
-  
+  @@index([id])
   @@map("users")
-} 
+}
 
 model Canteen {
   id        String     @id @default(cuid())
   name      String
   menuItems MenuItem[] // relation to menu items
-  orders    Order[]    // relation to orders
-  
+  orders    Order[] // relation to orders
+
   @@index([id])
   @@map("canteens")
 }
 
 model MenuItem {
-  id            String   @id @default(cuid())
+  id            String             @id @default(cuid())
   name          String
   description   String?
   itemImage     String?
   price         Float
   limitPerOrder Int
   status        AvailabilityStatus @default(AVAILABLE)
-  canteen       Canteen  @relation(fields: [canteenId], references: [id])
+  canteen       Canteen            @relation(fields: [canteenId], references: [id])
   canteenId     String
-  orders        Order[]  // the relation to orders does not require fields/references
+  orders        Order[] // the relation to orders does not require fields/references
+  OrderItem     OrderItem[]
 
-  @@index([id])     
-  @@index([canteenId])     
-  
+  @@index([id])
+  @@index([canteenId])
   @@map("menu_items")
 }
 
+model OrderItem {
+  id         String          @id @default(cuid())
+  menuItem   MenuItem        @relation(fields: [menuItemId], references: [id])
+  menuItemId String
+  quantity   Int
+  status     OrderItemStatus @default(WAITING_FOR_PICKUP)
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id])
+
+  @@index([menuItemId])
+}
+
 model Order {
-  id          String   @id @default(cuid())
-  customer    User     @relation(fields: [userId], references: [id])
-  userId      String
-  canteen     Canteen  @relation(fields: [canteenId], references: [id])
-  canteenId   String
-  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
-  menuItemId  String
-  quantity    Int      // ensure it doesn't exceed MenuItem.limitPerOrder
-  status      OrderStatus @default(WAITING_FOR_PICKUP)
-  createdAt   DateTime @default(now())
+  id        String  @id @default(cuid())
+  customer  User    @relation(fields: [userId], references: [id])
+  userId    String
+  canteen   Canteen @relation(fields: [canteenId], references: [id])
+  canteenId String
+
+  createdAt  DateTime    @default(now())
+  MenuItem   MenuItem?   @relation(fields: [menuItemId], references: [id])
+  menuItemId String?
+  OrderItem  OrderItem[]
 
   @@index([id])
-  @@index([userId])     
-  @@index([menuItemId]) 
-  @@index([canteenId])  
-  
+  @@index([userId])
+  @@index([canteenId])
   @@map("orders")
 }
 
-enum OrderStatus {
+enum OrderItemStatus {
   COOKING
   WAITING_FOR_PICKUP
   SENT
