@@ -13,9 +13,6 @@
     "./client": "./src/index.ts",
     "./objectClient":"./src/objectStore.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.15.1"
   }
