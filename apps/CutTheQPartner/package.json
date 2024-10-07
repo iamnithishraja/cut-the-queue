@@ -3,11 +3,12 @@
   "main": "index.js",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8082",
+    "dev": "expo start --dev-client --port 8082",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
+    "android": "expo run:android --port 8082",
+    "ios": "expo run:ios --port 8082",
+    "web": "expo start --web --port 8082",
     "test": "jest --watchAll",
     "lint": "expo lint"
   },
