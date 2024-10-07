@@ -6,6 +6,7 @@
   "include": [
     "src/app",
     ".expo/types/**/*.ts",
+    "globals.d.ts",
     "expo-env.d.ts"
   ],
   "exclude": [
