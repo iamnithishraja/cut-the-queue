@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CutTheQ",
-    "slug": "CutTheQ",
+    "name": "CutTheQPartner",
+    "slug": "CutTheQPartner",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.nithish.CutTheQ"
+      "package": "com.nithish.CutTheQPartner"
     },
     "web": {
       "bundler": "metro",
