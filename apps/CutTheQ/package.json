@@ -35,13 +35,14 @@
     "react-native-safe-area-context": "4.10.5",
     "react-native-screens": "3.31.1",
     "react-native-web": "~0.19.10",
+    "tw-colors": "^3.3.2",
     "twrnc": "^4.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@repo/hooks": "*",
-    "@repo/ui": "*",
     "@repo/tailwind-config": "*",
+    "@repo/ui": "*",
     "@types/jest": "^29.5.12",
     "@types/react": "~18.2.45",
     "@types/react-test-renderer": "^18.0.7",

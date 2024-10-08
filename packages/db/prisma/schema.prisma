@@ -30,6 +30,7 @@ model User {
 model Canteen {
   id        String     @id @default(cuid())
   name      String
+  image     String
   menuItems MenuItem[] // relation to menu items
   orders    Order[] // relation to orders
 

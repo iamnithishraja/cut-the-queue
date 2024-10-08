@@ -1,1 +1,1 @@
-export { Colors } from "./Colors";
+export { dark, light } from "./Colors";
