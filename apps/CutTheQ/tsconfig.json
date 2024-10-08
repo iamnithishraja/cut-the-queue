@@ -4,9 +4,8 @@
     "outDir": "./dist"
   },
   "include": [
-    "src/app",
+    "./src/**/*.ts",
     ".expo/types/**/*.ts",
-    "globals.d.ts",
     "expo-env.d.ts"
   ],
   "exclude": [
