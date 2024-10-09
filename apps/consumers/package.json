@@ -1,12 +1,21 @@
 {
   "name": "consumers",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:sms": "npx nodemon ./packages/sms/src/index.ts",
+    "dev:mail": "npx nodemon ./packages/mail/src/index.ts",
+    "build": "npx tsc -b",
+    "docker:build": "docker-compose -f docker-compose.yaml build",
+    "docker:up": "docker-compose -f docker-compose.yaml up",
+    "docker:down": "docker-compose -f docker-compose.yaml down"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "nodemon": "^2.0.22",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
+  }
 }

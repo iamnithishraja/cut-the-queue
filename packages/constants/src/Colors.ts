@@ -1,0 +1,58 @@
+/**
+ * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
+ * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ */
+
+export const light = {
+  background: "white",
+  foreground: "zinc-950",
+  card: "white",
+  "card-foreground": "zinc-950",
+  popover: "white",
+  "popover-foreground": "zinc-950",
+  primary: "red-500",
+  "primary-foreground": "red-50",
+  secondary: "zinc-100",
+  "secondary-foreground": "zinc-900",
+  muted: "zinc-100",
+  "muted-foreground": "zinc-500",
+  accent: "zinc-100",
+  "accent-foreground": "zinc-900",
+  destructive: "red-500",
+  "destructive-foreground": "zinc-50",
+  border: "zinc-200",
+  input: "zinc-200",
+  ring: "red-500",
+  "chart-1": "blue-500",
+  "chart-2": "green-500",
+  "chart-3": "amber-500",
+  "chart-4": "violet-500",
+  "chart-5": "pink-500",
+};
+
+export const dark = {
+  background: "white",
+  foreground: "zinc-50",
+  card: "zinc-950",
+  "card-foreground": "zinc-50",
+  popover: "zinc-950",
+  "popover-foreground": "zinc-50",
+  primary: "red-500",
+  "primary-foreground": "red-50",
+  secondary: "zinc-800",
+  "secondary-foreground": "zinc-50",
+  muted: "zinc-800",
+  "muted-foreground": "zinc-400",
+  accent: "zinc-800",
+  "accent-foreground": "zinc-50",
+  destructive: "red-900",
+  "destructive-foreground": "zinc-50",
+  border: "zinc-800",
+  input: "zinc-800",
+  ring: "red-500",
+  "chart-1": "blue-500",
+  "chart-2": "green-500",
+  "chart-3": "amber-500",
+  "chart-4": "violet-500",
+  "chart-5": "pink-500",
+};
