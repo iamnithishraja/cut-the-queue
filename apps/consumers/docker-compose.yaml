@@ -18,24 +18,26 @@ services:
 
   sms-consumer:
     build:
-      context: ./packages/sms
+      context: .
     depends_on:
       - kafka
     environment:
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
       KAFKA_CLIENT_ID: sms-consumer-client  # Add a specific client ID
+      TYPE: sms
     networks:
       - kafka-network
 
   mail-consumer:
     build:
-      context: ./packages/mail
+      context: .
     depends_on:
       - kafka
     environment:
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
+      TYPE: 
     networks:
       - kafka-network
 

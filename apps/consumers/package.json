@@ -14,5 +14,8 @@
     "@repo/typescript-config": "*",
     "nodemon": "^2.0.22",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
   }
 }
