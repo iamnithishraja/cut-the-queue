@@ -1,8 +1,12 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./packages",
+    "composite": true, // Enable composite projects
+    "declaration": true, // Generate .d.ts files
+    "incremental": true // Enable incremental compilation
   },
-  "include": ["./src"],
+  "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist"]
 }
