@@ -1,22 +1,26 @@
 {
-  "name": "@repo/db",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "*"
-  },
-  "exports": {
-    "./client": "./src/index.ts",
-    "./objectClient":"./src/objectStore.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@prisma/client": "^5.15.1"
-  }
+	"name": "@repo/db",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"prisma:seed": "npx ts-node ./src/seed.ts",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "*",
+		"@types/node": "^22.7.5",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.6.3"
+	},
+	"exports": {
+		"./client": "./src/index.ts",
+		"./objectClient": "./src/objectStore.ts"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@prisma/client": "^5.15.1"
+	}
 }
