@@ -25,10 +25,11 @@ model User {
 } 
 
 model Canteen {
-  id        String     @id @default(cuid())
-  name      String
-  menuItems MenuItem[] // relation to menu items
-  orders    Order[]    // relation to orders
+  id            String     @id @default(cuid())
+  name          String
+  canteenImage  String?
+  menuItems     MenuItem[] // relation to menu items
+  orders        Order[]    // relation to orders
   
   @@index([id])
   @@map("canteens")
