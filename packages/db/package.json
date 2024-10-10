@@ -2,9 +2,13 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
+    "studio": "npx prisma studio",
+    "seed": "tsx ./src/seed.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "*"
@@ -14,6 +18,7 @@
     "./objectClient": "./src/objectStore.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.15.1"
+    "@prisma/client": "^5.15.1",
+    "tsx": "^4.19.1"
   }
 }
