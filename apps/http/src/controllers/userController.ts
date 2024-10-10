@@ -14,7 +14,7 @@ import {
   USER_ALREADY_EXISTS,
   USER_NOT_REGISTERED,
 } from "@repo/constants";
-import { CustomRequest } from "../../types/userTypes";
+import { CustomRequest } from "../types/userTypes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;

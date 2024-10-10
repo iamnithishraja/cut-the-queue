@@ -2,7 +2,6 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "main": "./src/index.ts",
   "scripts": {
     "prisma:migrate": "npx prisma migrate dev",

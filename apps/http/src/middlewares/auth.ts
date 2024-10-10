@@ -1,6 +1,6 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response, NextFunction } from "express";
-import { CustomRequest } from "../../types/userTypes";
+import { CustomRequest } from "../types/userTypes";
 import prisma from "@repo/db/client";
 import "dotenv/config";
 import { SERVER_ERROR, USER_ALREADY_EXISTS, USER_NOT_REGISTERED } from "@repo/constants";
