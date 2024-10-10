@@ -1,5 +1,7 @@
 import { Kafka, Consumer } from "kafkajs";
 import { MessageHandler, KafkaMessage } from "./types";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default class KafkaConsumerBase {
   protected kafka: Kafka;

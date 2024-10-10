@@ -6,9 +6,18 @@ import { loginSchema, registerSchema } from "../schemas/userSchemas";
 import prisma from "@repo/db/client";
 import { generateToken } from "@repo/utils";
 import z from "zod";
-import "dotenv/config";
+import {
+  INVALID_CREDENTIALS,
+  INVALID_GOOGLE_TOKEN,
+  INVALID_INPUT,
+  SERVER_ERROR,
+  USER_ALREADY_EXISTS,
+  USER_NOT_REGISTERED,
+} from "@repo/constants";
+import { CustomRequest } from "../../types/userTypes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const SALT_ROUNDS = 10;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const register = async (
@@ -22,19 +31,14 @@ const register = async (
 
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          {
-            email: email,
-          },
-          { phoneNumber: phoneNo },
-        ],
+        OR: [{ email: email }, { phoneNumber: phoneNo }],
       },
     });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: USER_ALREADY_EXISTS });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const newUser = await prisma.user.create({
       data: {
@@ -46,54 +50,47 @@ const register = async (
       },
     });
 
-    res.status(201).json(newUser);
+    const token = generateToken(newUser.id);
+    res.status(201).json({ user: newUser, token });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ message: "Invalid input", errors: error.errors });
+      res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
     } else {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: SERVER_ERROR });
     }
   }
 };
 
-async function login(req: Request, res: Response): Promise<any> {
+const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
-    // Find user
     const user = await prisma.user.findFirst({
       where: {
-        OR: [
-          {
-            email: email,
-          },
-          { phoneNumber: email },
-        ],
+        OR: [{ email: email }, { phoneNumber: email }],
       },
     });
     if (!user || user.password == null) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: INVALID_CREDENTIALS });
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: INVALID_CREDENTIALS });
     }
 
     const token = generateToken(user.id);
-
     res.json({ token });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ message: "Invalid input", errors: error.errors });
+      res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
     } else {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: SERVER_ERROR });
     }
   }
-}
+};
 
-async function googleLogin(req: Request, res: Response): Promise<any> {
+const googleLogin = async (req: Request, res: Response): Promise<any> => {
   try {
     const { token } = req.body;
     const ticket = await googleClient.verifyIdToken({
@@ -103,34 +100,42 @@ async function googleLogin(req: Request, res: Response): Promise<any> {
 
     const payload = ticket.getPayload();
     if (!payload || !payload.email) {
-      return res.status(400).json({ message: "Invalid Google token" });
+      return res.status(400).json({ message: INVALID_GOOGLE_TOKEN });
     }
 
     let user = await prisma.user.findFirst({
-      where: {
-        email: payload.email,
-      },
+      where: { email: payload.email },
     });
     if (!user) {
-      return res.status(400).json({
-        message: "User not registered",
-      });
+      return res.status(400).json({ message: USER_NOT_REGISTERED });
     }
+
     await prisma.user.update({
-      data: {
-        googleId: token,
-      },
-      where: {
-        email: payload.email,
-      },
+      data: { googleId: token },
+      where: { email: payload.email },
     });
 
     const jwtToken = generateToken(user.id);
-
     res.json({ token: jwtToken });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: SERVER_ERROR });
   }
-}
+};
 
-export { register, login, googleLogin };
+const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user?.id,
+      },
+    });
+    if (!user) {
+      return res.status(400).json({ message: USER_NOT_REGISTERED });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: SERVER_ERROR });
+  }
+};
+
+export { register, login, googleLogin, getProfile };

@@ -1,5 +1,7 @@
 import EmailConsumer from "./emailConsumer";
 import SMSConsumer from "./smsConsumer";
+import dotenv from "dotenv";
+dotenv.config();
 
 class ConsumerManager {
   private emailConsumer: EmailConsumer;
