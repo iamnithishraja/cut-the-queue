@@ -30,7 +30,6 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <ScrollView style={tw`flex-1 bg-${light.background}`}>
