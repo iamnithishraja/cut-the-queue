@@ -5,7 +5,10 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "docker:build": "docker-compose -f docker-compose.yaml build",
+    "docker:up": "docker-compose -f docker-compose.yaml up",
+    "docker:down": "docker-compose -f docker-compose.yaml down"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

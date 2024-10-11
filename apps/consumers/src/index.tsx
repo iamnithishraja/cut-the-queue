@@ -14,7 +14,7 @@ class ConsumerManager {
 
   async run(): Promise<void> {
     try {
-      const consumerType = process.env.TYPE;
+      const consumerType = process.env.CONSUMER_TYPE;
 
       if (consumerType === "email") {
         await this.emailConsumer.connect();
