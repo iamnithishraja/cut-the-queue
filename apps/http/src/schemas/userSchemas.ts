@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { number, z } from "zod";
 
 export const registerSchema = z.object({
   firstName: z.string().min(1),
@@ -12,3 +12,19 @@ export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
+
+export const requestOtpSchema = z.object({
+  number: z.string(),
+});
+
+export const submitOtpSchema = z.object({
+  number: z.string(),
+  otp: z.string(),
+});
+
+export const smsMessage = z.object({
+  to: z.string(),
+  content: z.string(),
+});
+
+export type SMSMessage = Zod.infer<typeof smsMessage>;

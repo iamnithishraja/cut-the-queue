@@ -18,7 +18,7 @@ CREATE TABLE "users" (
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "resetPasswordToken" TEXT,
     "expire" TIMESTAMP(3),
-    "otp" INTEGER,
+    "otp" TEXT,
     "password" TEXT,
     "googleId" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'USER',

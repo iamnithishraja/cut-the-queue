@@ -3,7 +3,12 @@ import { Response, NextFunction } from "express";
 import { CustomRequest } from "../types/userTypes";
 import prisma from "@repo/db/client";
 import "dotenv/config";
-import { SERVER_ERROR, USER_ALREADY_EXISTS, USER_NOT_REGISTERED } from "@repo/constants";
+import {
+  SERVER_ERROR,
+  USER_ALREADY_EXISTS,
+  USER_NOT_REGISTERED,
+} from "@repo/constants";
+import { USER_NOT_VERIFIED } from "../../../../packages/constants/src/userContenstents";
 
 export async function isAuthenticatedUser(
   req: CustomRequest,
@@ -21,7 +26,7 @@ export async function isAuthenticatedUser(
       token,
       process.env.JWT_SECRET || ""
     ) as JwtPayload;
-    
+
     const user = await prisma.user.findUnique({
       where: {
         id: decoded_data.id,
@@ -30,6 +35,10 @@ export async function isAuthenticatedUser(
 
     if (!user) {
       res.status(404).json({ message: USER_ALREADY_EXISTS });
+      return;
+    }
+    if (!user.isVerified) {
+      res.status(401).json({ message: USER_NOT_VERIFIED });
       return;
     }
 

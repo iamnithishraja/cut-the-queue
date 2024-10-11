@@ -2,9 +2,18 @@ import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import "dotenv/config";
-import { loginSchema, registerSchema } from "../schemas/userSchemas";
+import {
+  loginSchema,
+  registerSchema,
+  requestOtpSchema,
+  submitOtpSchema,
+} from "../schemas/userSchemas";
 import prisma from "@repo/db/client";
-import { generateToken } from "@repo/utils";
+import {
+  createVerificationMessage,
+  generateOTP,
+  generateToken,
+} from "@repo/utils";
 import z from "zod";
 import {
   INVALID_CREDENTIALS,
@@ -13,8 +22,12 @@ import {
   SERVER_ERROR,
   USER_ALREADY_EXISTS,
   USER_NOT_REGISTERED,
+  INVALID_OTP,
+  OTP_VERIFICATION_SUCCESSFUL,
+  OTP_SENT,
 } from "@repo/constants";
 import { CustomRequest } from "../types/userTypes";
+import KafkaProducer from "../publisher/kafka";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
@@ -122,6 +135,52 @@ const googleLogin = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+const requestOtp = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { number } = requestOtpSchema.parse(req.body);
+    const otp = generateOTP();
+    const updatedUser = await prisma.user.update({
+      where: {
+        phoneNumber: number,
+      },
+      data: {
+        otp: otp,
+      },
+    });
+    const message = createVerificationMessage(otp);
+    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+    await kafkaProducer.publishToKafka("sms", { to: number, content: message });
+    res.status(200).json({ message: OTP_SENT });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ message: "Invalid input", errors: error.errors });
+    } else {
+      console.error("Error in requestOtp:", error);
+      res.status(500).json({ message: SERVER_ERROR });
+    }
+  }
+};
+
+const submitOtp = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { number, otp } = submitOtpSchema.parse(req.body);
+    const user = await prisma.user.findUnique({
+      where: {
+        phoneNumber: number,
+      },
+    });
+    if (!user) {
+      return res.status(400).json({ message: USER_NOT_REGISTERED });
+    }
+    if (user.otp !== otp) {
+      return res.status(401).json({ message: INVALID_OTP });
+    }
+    res.json({ message: OTP_VERIFICATION_SUCCESSFUL });
+  } catch (error) {
+    res.status(500).json({ message: SERVER_ERROR });
+  }
+};
+
 const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
   try {
     const user = await prisma.user.findUnique({
@@ -138,4 +197,4 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
   }
 };
 
-export { register, login, googleLogin, getProfile };
+export { register, login, googleLogin, getProfile, requestOtp, submitOtp };

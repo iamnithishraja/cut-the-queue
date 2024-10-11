@@ -17,7 +17,7 @@ model User {
   isVerified         Boolean   @default(false)
   resetPasswordToken String?
   expire             DateTime?
-  otp                Int?
+  otp                String?
   password           String? // nullable for Google auth users
   googleId           String?   @unique // for Google auth users
   role               UserRole  @default(USER)
@@ -28,12 +28,12 @@ model User {
 }
 
 model Canteen {
-  id            String     @id @default(cuid())
-  name          String
-  canteenImage  String?
-  menuItems     MenuItem[] // relation to menu items
-  orders        Order[]    // relation to orders
-  
+  id           String     @id @default(cuid())
+  name         String
+  canteenImage String?
+  menuItems    MenuItem[] // relation to menu items
+  orders       Order[] // relation to orders
+
   @@index([id])
   @@map("canteens")
 }

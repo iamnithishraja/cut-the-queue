@@ -53,7 +53,7 @@ services:
       dockerfile: ./apps/consumers/Dockerfile
     environment:
       KAFKA_HOST: kafka:9092 
-      KAFKA_CLIENT_ID: sms-consumer-client
+      KAFKA_CLIENT_ID: consumers
       CONSUMER_TYPE: sms
 
   email-consumer:
@@ -65,5 +65,5 @@ services:
       dockerfile: ./apps/consumers/Dockerfile
     environment:
       KAFKA_HOST: kafka:9092  
-      KAFKA_CLIENT_ID: email-consumer-client
+      KAFKA_CLIENT_ID: consumers
       CONSUMER_TYPE: email
