@@ -7,8 +7,8 @@ import {
   SERVER_ERROR,
   USER_ALREADY_EXISTS,
   USER_NOT_REGISTERED,
+  USER_NOT_VERIFIED,
 } from "@repo/constants";
-import { USER_NOT_VERIFIED } from "../../../../packages/constants/src/userContenstents";
 
 export async function isAuthenticatedUser(
   req: CustomRequest,
@@ -16,7 +16,13 @@ export async function isAuthenticatedUser(
   next: NextFunction
 ): Promise<void> {
   try {
-    const token = req.cookies?.token;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ message: USER_NOT_REGISTERED });
+      return;
+    }
+
+    const token = authHeader.split(" ")[1];
     if (!token) {
       res.status(401).json({ message: USER_NOT_REGISTERED });
       return;
@@ -38,7 +44,7 @@ export async function isAuthenticatedUser(
       return;
     }
     if (!user.isVerified) {
-      res.status(401).json({ message: USER_NOT_VERIFIED });
+      res.status(408).json({ message: USER_NOT_VERIFIED });
       return;
     }
 

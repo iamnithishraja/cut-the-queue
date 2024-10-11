@@ -5,6 +5,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
+import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { dark, light } from "@repo/constants";
 import { useEffect } from "react";
@@ -72,6 +73,7 @@ export default function RootLayout() {
             </Text>
           </View>
         </View>
+        <Slot />
       </ScrollView>
     </ThemeProvider>
   );
