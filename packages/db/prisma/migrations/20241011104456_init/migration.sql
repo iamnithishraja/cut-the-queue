@@ -42,7 +42,7 @@ CREATE TABLE "menu_items" (
     "description" TEXT,
     "itemImage" TEXT,
     "price" DOUBLE PRECISION NOT NULL,
-    "limitPerOrder" INTEGER NOT NULL,
+    "avilableLimit" INTEGER,
     "status" "AvailabilityStatus" NOT NULL DEFAULT 'AVAILABLE',
     "canteenId" TEXT NOT NULL,
 

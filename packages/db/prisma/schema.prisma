@@ -44,7 +44,7 @@ model MenuItem {
   description   String?
   itemImage     String?
   price         Float
-  limitPerOrder Int
+  avilableLimit Int?
   status        AvailabilityStatus @default(AVAILABLE)
   canteen       Canteen            @relation(fields: [canteenId], references: [id])
   canteenId     String

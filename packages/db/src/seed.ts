@@ -14,7 +14,7 @@ async function main() {
             description:
               "Crispy and savory rice pancake served with chutney and sambar",
             price: 40.0,
-            limitPerOrder: 2,
+            avilableLimit: 2,
             status: "AVAILABLE",
             itemImage: `${process.env.CLOUDFLARE_R2_URL}/dosa.png`,
           },
@@ -23,7 +23,7 @@ async function main() {
             description:
               "Steamed rice cakes served with coconut chutney and sambar",
             price: 30.0,
-            limitPerOrder: 3,
+            avilableLimit: 3,
             status: "AVAILABLE",
             itemImage: `${process.env.CLOUDFLARE_R2_URL}/idli.png`,
           },
@@ -31,7 +31,7 @@ async function main() {
             name: "Samosa",
             description: "Crispy fried pastry with potato filling",
             price: 12.0,
-            limitPerOrder: 5,
+            avilableLimit: 5,
             status: "AVAILABLE",
             itemImage: `${process.env.CLOUDFLARE_R2_URL}/samosa.png`,
           },
