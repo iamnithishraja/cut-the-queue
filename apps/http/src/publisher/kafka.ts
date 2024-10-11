@@ -1,4 +1,4 @@
-import { Kafka } from "kafkajs";;
+import { Kafka } from "kafkajs";
 import { EmailMessage, SMSMessage } from "../types/types";
 
 export default class KafkaProducer {
