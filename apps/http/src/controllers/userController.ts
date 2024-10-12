@@ -61,6 +61,16 @@ const register = async (
         phoneNumber: phoneNo,
         password: hashedPassword,
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+      },
     });
 
     const token = generateToken(newUser.id);
@@ -82,6 +92,17 @@ const login = async (req: Request, res: Response): Promise<any> => {
       where: {
         OR: [{ email: email }, { phoneNumber: email }],
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+        password: true,
+      },
     });
     if (!user || user.password == null) {
       return res.status(400).json({ message: INVALID_CREDENTIALS });
@@ -93,7 +114,8 @@ const login = async (req: Request, res: Response): Promise<any> => {
     }
 
     const token = generateToken(user.id);
-    res.json({ token });
+    user.password = null;
+    res.status(200).json({ user, token });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
@@ -118,6 +140,16 @@ const googleLogin = async (req: Request, res: Response): Promise<any> => {
 
     let user = await prisma.user.findFirst({
       where: { email: payload.email },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+      },
     });
     if (!user) {
       return res.status(400).json({ message: USER_NOT_REGISTERED });
@@ -139,7 +171,7 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
   try {
     const { number } = requestOtpSchema.parse(req.body);
     const otp = generateOTP();
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: {
         phoneNumber: number,
       },
@@ -168,6 +200,17 @@ const submitOtp = async (req: Request, res: Response): Promise<any> => {
       where: {
         phoneNumber: number,
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+        otp: true,
+      },
     });
     if (!user) {
       return res.status(400).json({ message: USER_NOT_REGISTERED });
@@ -175,7 +218,25 @@ const submitOtp = async (req: Request, res: Response): Promise<any> => {
     if (user.otp !== otp) {
       return res.status(401).json({ message: INVALID_OTP });
     }
-    res.json({ message: OTP_VERIFICATION_SUCCESSFUL });
+    const updatedUser = await prisma.user.update({
+      where: {
+        phoneNumber: number,
+      },
+      data: {
+        isVerified: true,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+      },
+    });
+    res.status(200).json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: SERVER_ERROR });
   }
@@ -186,6 +247,16 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
     const user = await prisma.user.findUnique({
       where: {
         id: req.user?.id,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
       },
     });
     if (!user) {
