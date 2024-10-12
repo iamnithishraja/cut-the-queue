@@ -17,6 +17,10 @@ app.use(
 app.use(bodyParser.json({ limit: "35mb" }));
 app.use(cookieParser());
 
+app.get("/", (req, res) => {
+  res.send("Api test route");
+});
+
 app.use("/api/v1", userRoute);
 
 app.listen(process.env.PORT, () => {

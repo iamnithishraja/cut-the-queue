@@ -12,18 +12,18 @@ export default class SMSConsumer extends KafkaConsumerBase {
 
     const {
       TWILIO_ACCOUNT_SID,
-      TWILIO_AUTH_SID,
+      TWILIO_AUTH_TOKEN,
       TWILIO_MESSAGING_SERVICE_ID,
     } = process.env;
 
     this.validateEnvironmentVariables({
       TWILIO_ACCOUNT_SID,
-      TWILIO_AUTH_SID,
+      TWILIO_AUTH_TOKEN,
       TWILIO_MESSAGING_SERVICE_ID,
     });
 
     this.messagingServiceSid = TWILIO_MESSAGING_SERVICE_ID!;
-    this.client = twilio(TWILIO_ACCOUNT_SID!, TWILIO_AUTH_SID!);
+    this.client = twilio(TWILIO_ACCOUNT_SID!, TWILIO_AUTH_TOKEN!);
   }
 
   private validateEnvironmentVariables(
