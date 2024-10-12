@@ -1,44 +1,29 @@
 import KafkaConsumerBase from "./KafkaConsumerBase";
 import { KafkaMessage, smsMessage, SMSMessage } from "./types";
-import { MessagesApi, Configuration, MessageRequest } from "bandwidth-sdk";
+import twilio, { Twilio } from "twilio";
 import dotenv from "dotenv";
 dotenv.config();
 
 export default class SMSConsumer extends KafkaConsumerBase {
-  private readonly messagesApi: MessagesApi;
-  private readonly accountId: string;
-  private readonly applicationId: string;
-  private readonly fromNumber: string;
-
+  private client: Twilio;
+  private readonly messagingServiceSid: string;
   constructor() {
     super("sms-group");
 
     const {
-      BW_ACCOUNT_ID,
-      BW_MESSAGING_APPLICATION_ID,
-      BW_NUMBER,
-      BW_USERNAME,
-      BW_PASSWORD,
+      TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_SID,
+      TWILIO_MESSAGING_SERVICE_ID,
     } = process.env;
 
     this.validateEnvironmentVariables({
-      BW_ACCOUNT_ID,
-      BW_MESSAGING_APPLICATION_ID,
-      BW_NUMBER,
-      BW_USERNAME,
-      BW_PASSWORD,
+      TWILIO_ACCOUNT_SID,
+      TWILIO_AUTH_SID,
+      TWILIO_MESSAGING_SERVICE_ID,
     });
 
-    this.accountId = BW_ACCOUNT_ID!;
-    this.applicationId = BW_MESSAGING_APPLICATION_ID!;
-    this.fromNumber = BW_NUMBER!;
-
-    const config = new Configuration({
-      username: BW_USERNAME,
-      password: BW_PASSWORD,
-    });
-
-    this.messagesApi = new MessagesApi(config);
+    this.messagingServiceSid = TWILIO_MESSAGING_SERVICE_ID!;
+    this.client = twilio(TWILIO_ACCOUNT_SID!, TWILIO_AUTH_SID!);
   }
 
   private validateEnvironmentVariables(
@@ -76,14 +61,14 @@ export default class SMSConsumer extends KafkaConsumerBase {
   }
 
   private async sendSMS(smsMessage: SMSMessage): Promise<void> {
-    const messageRequest: MessageRequest = {
-      from: this.fromNumber,
-      to: new Set<string>([smsMessage.to]),
-      text: smsMessage.content,
-      applicationId: this.applicationId,
-    };
-
-    await this.messagesApi.createMessage(this.accountId, messageRequest);
+    const messageRequest = await this.client.messages
+    .create({
+        body: smsMessage.content,
+        messagingServiceSid: this.messagingServiceSid,
+        to: smsMessage.to
+    })
+    // add the logic to use the response 
+    console.log(messageRequest);
   }
 
   private handleError(error: unknown): void {
