@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.3",
-    "bandwidth-sdk": "^3.1.2",
     "kafkajs": "^2.2.4",
+    "twilio": "^5.3.3",
     "zod": "^3.23.8"
   }
 }
