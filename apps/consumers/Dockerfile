@@ -9,6 +9,7 @@ COPY ./apps/consumers/tsconfig.json ./
 RUN npm install
 
 COPY ./apps/consumers/src ./src
+COPY ./apps/consumers/.env ./
 
 RUN npx tsc --build
 

@@ -12,11 +12,27 @@ async function getAllDishes(req: Request, res: Response): Promise<any> {
          res.json(items);
       }
       else {
-         res.json({ "sucess": false });
+         res.sendStatus(404);
       }
    }
    catch (e) {
+      res.sendStatus(500);
       console.log(e);
    }
 }
-export { getAllDishes };
+
+async function getAllCanteen(req:Request,res:Response){
+   try{
+      const canteens=await prisma.canteen.findMany();
+      if(canteens){
+         res.json(canteens);
+      }
+      else{
+         res.sendStatus(404);
+      }
+   }
+   catch(e){
+      res.sendStatus(500);
+   }
+}
+export { getAllDishes,getAllCanteen };

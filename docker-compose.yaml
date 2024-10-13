@@ -7,11 +7,17 @@ services:
       ZOOKEEPER_INIT_LIMIT: 10
     ports:
       - 2181:2181
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   
   kafka:
     image: confluentinc/cp-kafka:latest
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     ports:
       - 9092:9092
       - 29092:29092
@@ -31,7 +37,8 @@ services:
   kafka-init:
     image: confluentinc/cp-kafka:latest
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     entrypoint: >
@@ -42,12 +49,16 @@ services:
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists && 
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
       echo 'Kafka topics created.'"
-    restart: 'no'  
-
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--describe", "--topic", "sms", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
   sms-consumer:
     depends_on:
-      - kafka
-      - kafka-init  
+      kafka:
+        condition: service_healthy
     build:
       context: ./
       dockerfile: ./apps/consumers/Dockerfile
@@ -55,11 +66,12 @@ services:
       KAFKA_HOST: kafka:9092 
       KAFKA_CLIENT_ID: consumers
       CONSUMER_TYPE: sms
+    restart: always  
 
   email-consumer:
     depends_on:
-      - kafka
-      - kafka-init 
+      kafka:
+        condition: service_healthy
     build:
       context: ./
       dockerfile: ./apps/consumers/Dockerfile
@@ -67,3 +79,4 @@ services:
       KAFKA_HOST: kafka:9092  
       KAFKA_CLIENT_ID: consumers
       CONSUMER_TYPE: email
+    restart: always

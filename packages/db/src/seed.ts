@@ -6,7 +6,7 @@ async function main() {
   const dolphinCanteen = await prisma.canteen.create({
     data: {
       name: "Dolphin Canteen",
-      canteenImage: `${process.env.CLOUDFLARE_R2_URL}/dolphin-canteen.png`,
+      canteenImage: "https://example.com/canteen.jpg",  // Replace with an actual image URL
       menuItems: {
         create: [
           {
@@ -16,7 +16,7 @@ async function main() {
             price: 40.0,
             avilableLimit: 2,
             status: "AVAILABLE",
-            itemImage: `${process.env.CLOUDFLARE_R2_URL}/dosa.png`,
+            itemImage: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Dosa.jpg",  // Dosa image URL
           },
           {
             name: "Idli",
@@ -25,7 +25,7 @@ async function main() {
             price: 30.0,
             avilableLimit: 3,
             status: "AVAILABLE",
-            itemImage: `${process.env.CLOUDFLARE_R2_URL}/idli.png`,
+            itemImage: "https://upload.wikimedia.org/wikipedia/commons/4/42/Idli.jpg",  // Idli image URL
           },
           {
             name: "Samosa",
@@ -33,7 +33,7 @@ async function main() {
             price: 12.0,
             avilableLimit: 5,
             status: "AVAILABLE",
-            itemImage: `${process.env.CLOUDFLARE_R2_URL}/samosa.png`,
+            itemImage: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Samosa.jpg",  // Samosa image URL
           },
         ],
       },
