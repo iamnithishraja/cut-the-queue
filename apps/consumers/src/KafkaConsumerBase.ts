@@ -1,4 +1,4 @@
-import { Kafka, Consumer } from "kafkajs";
+import { Kafka, Consumer, EachMessagePayload } from "kafkajs";
 import { MessageHandler, KafkaMessage } from "./types";
 import dotenv from "dotenv";
 dotenv.config();
@@ -17,26 +17,44 @@ export default class KafkaConsumerBase {
   }
 
   async connect(): Promise<void> {
-    await this.consumer.connect();
-    console.log("Consumer connected");
+    try {
+      await this.consumer.connect();
+      console.log("Consumer connected");
+    } catch (error) {
+      console.error("Error connecting to Kafka:", error);
+    }
   }
 
   async subscribe(topic: string): Promise<void> {
-    await this.consumer.subscribe({ topic, fromBeginning: true });
-    console.log(`Subscribed to topic: ${topic}`);
+    try {
+      await this.consumer.subscribe({ topic, fromBeginning: true });
+      console.log(`Subscribed to topic: ${topic}`);
+    } catch (error) {
+      console.error(`Error subscribing to topic ${topic}:`, error);
+    }
   }
 
   async run(messageHandler: MessageHandler): Promise<void> {
-    await this.consumer.run({
-      eachMessage: async ({ topic, partition, message }: KafkaMessage) => {
-        console.log(`Received message: ${message.value?.toString()}`);
-        await messageHandler({ topic, partition, message });
-      },
-    });
+    try {
+      await this.consumer.run({
+        eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+          console.log(`Received message on topic ${topic}, partition ${partition}: ${message.value?.toString()}`);
+
+          // Bind 'this' to the message handler in case it refers to class methods from subclasses
+          await messageHandler.call(this, { topic, partition, message });
+        },
+      });
+    } catch (error) {
+      console.error("Error while running the consumer:", error);
+    }
   }
 
   async disconnect(): Promise<void> {
-    await this.consumer.disconnect();
-    console.log("Consumer disconnected");
+    try {
+      await this.consumer.disconnect();
+      console.log("Consumer disconnected");
+    } catch (error) {
+      console.error("Error disconnecting the consumer:", error);
+    }
   }
 }
