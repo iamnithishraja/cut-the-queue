@@ -181,7 +181,10 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
     });
     const message = createVerificationMessage(otp);
     const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-    await kafkaProducer.publishToKafka("sms", { to: number, content: message });
+    await kafkaProducer.publishToKafka("sms", {
+      to: "+91" + number,
+      content: message,
+    });
     res.status(200).json({ message: OTP_SENT });
   } catch (error) {
     if (error instanceof z.ZodError) {

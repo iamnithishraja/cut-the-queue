@@ -27,7 +27,7 @@ export default class KafkaConsumerBase {
 
   async subscribe(topic: string): Promise<void> {
     try {
-      await this.consumer.subscribe({ topic, fromBeginning: true });
+      await this.consumer.subscribe({ topic, fromBeginning: false });
       console.log(`Subscribed to topic: ${topic}`);
     } catch (error) {
       console.error(`Error subscribing to topic ${topic}:`, error);

@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -28,6 +30,8 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_MS: 86400000  # 24 hours in milliseconds
+      KAFKA_LOG_CLEANUP_POLICY: delete
     healthcheck:
       test: ["CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092"]
       interval: 10s
@@ -79,4 +83,22 @@ services:
       KAFKA_HOST: kafka:9092  
       KAFKA_CLIENT_ID: consumers
       CONSUMER_TYPE: email
+    restart: always
+
+  kafka-cleanup:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: >
+      bash -c "
+      while true; do
+        echo 'Clearing Kafka data...';
+        kafka-topics --bootstrap-server kafka:9092 --list | xargs -I {} kafka-topics --bootstrap-server kafka:9092 --delete --topic {};
+        echo 'Kafka data cleared. Recreating topics...';
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists;
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
+        echo 'Kafka topics recreated. Sleeping for 24 hours...';
+        sleep 86400;
+      done"
     restart: always
