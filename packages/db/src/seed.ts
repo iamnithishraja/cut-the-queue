@@ -6,7 +6,7 @@ async function main() {
   const dolphinCanteen = await prisma.canteen.create({
     data: {
       name: "Dolphin Canteen",
-      canteenImage: "https://example.com/canteen.jpg",  // Replace with an actual image URL
+      canteenImage: "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",  
       menuItems: {
         create: [
           {

@@ -1,11 +1,14 @@
 import { isAuthenticatedUser } from "../middlewares/auth";
-import express from 'express';
+import express from "express";
 import { getAllCanteen, getAllDishes } from "../controllers/canteenController";
 
-const canteenRoutes=express.Router();
+const canteenRoutes = express.Router();
 
-canteenRoutes.get('/getAllDishes/:canteenId',getAllDishes);
-canteenRoutes.get('/getAllCanteen',getAllCanteen);
-//didnt add isauthenticated as u said
- 
-export default canteenRoutes
+canteenRoutes.get(
+  "/getAllDishes/:canteenId",
+  isAuthenticatedUser,
+  getAllDishes
+);
+canteenRoutes.get("/getAllCanteen", isAuthenticatedUser, getAllCanteen);
+
+export default canteenRoutes;

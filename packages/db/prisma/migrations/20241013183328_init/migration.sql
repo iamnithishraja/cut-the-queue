@@ -31,6 +31,7 @@ CREATE TABLE "canteens" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "canteenImage" TEXT,
+    "isOpen" BOOLEAN NOT NULL DEFAULT true,
 
     CONSTRAINT "canteens_pkey" PRIMARY KEY ("id")
 );

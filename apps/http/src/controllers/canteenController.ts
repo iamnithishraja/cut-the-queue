@@ -28,7 +28,7 @@ async function getAllCanteen(req: Request, res: Response) {
   try {
     const canteens = await prisma.canteen.findMany();
     if (canteens.length > 0) {
-      res.json({ canteens });
+      res.json({ canteens, length: canteens.length });
     } else {
       res.status(404).json({ message: CANTEENS_NOT_FOUND });
     }

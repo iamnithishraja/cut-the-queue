@@ -31,6 +31,7 @@ model Canteen {
   id           String     @id @default(cuid())
   name         String
   canteenImage String?
+  isOpen       Boolean    @default(true)
   menuItems    MenuItem[] // relation to menu items
   orders       Order[] // relation to orders
 
