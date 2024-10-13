@@ -9,6 +9,7 @@
     "build": "npx tsc -b"
   },
   "devDependencies": {
+    "@repo/constants": "*",
     "@repo/db": "*",
     "@repo/typescript-config": "*",
     "@repo/utils": "*"

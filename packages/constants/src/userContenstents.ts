@@ -8,3 +8,5 @@ export const USER_NOT_REGISTERED = "User not registered";
 export const OTP_SENT = "OTP sent successfully";
 export const INVALID_OTP = "INVALID OTP";
 export const OTP_VERIFICATION_SUCCESSFUL = "INVALID OTP";
+export const CANTEENS_NOT_FOUND = "No canteens available";
+export const DISHES_NOT_FOUND = "No dishes found";

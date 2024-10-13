@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import userRoute from "./routes/userRoutes";
 import "dotenv/config";
-
+import canteenRoutes from "./routes/canteenRoutes";
 const app = express();
 
 app.use(
@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1", userRoute);
-
+app.use("/api/v1",canteenRoutes);
 app.listen(process.env.PORT, () => {
   console.log("Listening on port " + process.env.PORT);
 });
