@@ -16,7 +16,7 @@ async function main() {
             price: 40.0,
             avilableLimit: 2,
             status: "AVAILABLE",
-            itemImage: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Dosa.jpg",  // Dosa image URL
+            itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/dosa.png",  // Dosa image URL
           },
           {
             name: "Idli",
@@ -25,7 +25,7 @@ async function main() {
             price: 30.0,
             avilableLimit: 3,
             status: "AVAILABLE",
-            itemImage: "https://upload.wikimedia.org/wikipedia/commons/4/42/Idli.jpg",  // Idli image URL
+            itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/idli.png",  // Idli image URL
           },
           {
             name: "Samosa",
@@ -33,7 +33,7 @@ async function main() {
             price: 12.0,
             avilableLimit: 5,
             status: "AVAILABLE",
-            itemImage: "https://upload.wikimedia.org/wikipedia/commons/2/2b/Samosa.jpg",  // Samosa image URL
+            itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/samosa.png",  // Samosa image URL
           },
         ],
       },

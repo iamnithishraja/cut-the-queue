@@ -45,6 +45,7 @@ model MenuItem {
   description   String?
   itemImage     String?
   price         Float
+  isVegetarian  Boolean            @default(true)
   avilableLimit Int?
   status        AvailabilityStatus @default(AVAILABLE)
   canteen       Canteen            @relation(fields: [canteenId], references: [id])
@@ -70,16 +71,18 @@ model OrderItem {
 }
 
 model Order {
-  id        String  @id @default(cuid())
-  customer  User    @relation(fields: [userId], references: [id])
-  userId    String
-  canteen   Canteen @relation(fields: [canteenId], references: [id])
-  canteenId String
-
-  createdAt  DateTime    @default(now())
-  MenuItem   MenuItem?   @relation(fields: [menuItemId], references: [id])
-  menuItemId String?
-  OrderItem  OrderItem[]
+  id           String      @id @default(cuid())
+  customer     User        @relation(fields: [userId], references: [id])
+  userId       String
+  canteen      Canteen     @relation(fields: [canteenId], references: [id])
+  canteenId    String
+  isPaid       Boolean     @default(false)
+  paymentId    String?
+  paymentToken String
+  createdAt    DateTime    @default(now())
+  MenuItem     MenuItem?   @relation(fields: [menuItemId], references: [id])
+  menuItemId   String?
+  OrderItem    OrderItem[]
 
   @@index([id])
   @@index([userId])
