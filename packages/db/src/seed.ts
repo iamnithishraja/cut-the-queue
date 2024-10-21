@@ -6,7 +6,7 @@ async function main() {
   const dolphinCanteen = await prisma.canteen.create({
     data: {
       name: "Dolphin Canteen",
-      canteenImage: "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",  
+      canteenImage: "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",
       menuItems: {
         create: [
           {
@@ -31,6 +31,7 @@ async function main() {
             name: "Samosa",
             description: "Crispy fried pastry with potato filling",
             price: 12.0,
+            type: "Instant",
             avilableLimit: 5,
             status: "AVAILABLE",
             itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/samosa.png",  // Samosa image URL

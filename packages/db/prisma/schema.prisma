@@ -41,6 +41,7 @@ model Canteen {
 
 model MenuItem {
   id            String             @id @default(cuid())
+  type          MenuItemType       @default(TimeConsuming)
   name          String
   description   String?
   itemImage     String?
@@ -104,4 +105,9 @@ enum AvailabilityStatus {
 enum UserRole {
   USER
   PARTNER
+}
+
+enum MenuItemType {
+  Instant
+  TimeConsuming
 }
