@@ -114,30 +114,68 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         const isAuthentic = expectedSignature === razorpay_signature;
 
         if (isAuthentic) {
-            // Find the order in the database
-            const order = await prisma.order.findFirst({
-                where: { paymentToken: razorpay_order_id },
-                include: { OrderItem: true }
-            });
+            // Use a transaction to ensure data consistency
+            const result = await prisma.$transaction(async (prismaClient) => {
+                // Find the order in the database
+                const order = await prismaClient.order.findFirst({
+                    where: { paymentToken: razorpay_order_id },
+                    include: {
+                        OrderItem: {
+                            include: {
+                                menuItem: true
+                            }
+                        }
+                    }
+                });
 
-            if (!order) {
-                return res.status(404).json({ error: "Order not found" });
-            }
-
-            // Update the order status
-            await prisma.order.update({
-                where: { id: order.id },
-                data: {
-                    isPaid: true,
-                    paymentId: razorpay_payment_id
+                if (!order) {
+                    throw new Error("Order not found");
                 }
+
+                // Update inventory for each order item
+                for (const orderItem of order.OrderItem) {
+                    const menuItem = orderItem.menuItem;
+
+                    // Skip if menu item doesn't have an available limit
+                    if (menuItem.avilableLimit === null) continue;
+
+                    // Check if we have enough inventory
+                    if (menuItem.avilableLimit < orderItem.quantity) {
+                        throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
+                    }
+
+                    // Update the menu item's available limit
+                    await prismaClient.menuItem.update({
+                        where: { id: menuItem.id },
+                        data: {
+                            avilableLimit: {
+                                decrement: orderItem.quantity
+                            },
+                            // Automatically set status to UNAVAILABLE if inventory reaches 0
+                            status: menuItem.avilableLimit - orderItem.quantity <= 0
+                                ? 'UNAVAILABLE'
+                                : undefined
+                        }
+                    });
+                }
+
+                // Update the order status
+                const updatedOrder = await prismaClient.order.update({
+                    where: { id: order.id },
+                    data: {
+                        isPaid: true,
+                        paymentId: razorpay_payment_id
+                    }
+                });
+
+                return updatedOrder;
             });
-            
+
             // TODO: do api call to ws server.
             res.status(200).json({
                 success: true,
-                message: "Payment verified successfully",
-                orderId: order.id
+                message: "Payment verified and inventory updated successfully",
+                orderId: result.id
             });
         } else {
             res.status(400).json({
@@ -147,6 +185,16 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         }
     } catch (error) {
         console.error('Payment verification error:', error);
+
+        // Handle specific error cases
+        if (error instanceof Error && error.message.includes("Insufficient inventory")) {
+            return res.status(400).json({
+                success: false,
+                error: 'Inventory Error',
+                message: error.message
+            });
+        }
+
         res.status(500).json({
             success: false,
             error: 'Failed to verify payment',
@@ -154,6 +202,5 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         });
     }
 }
-
 
 export { checkout, paymentVerification };
