@@ -154,7 +154,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                             // Automatically set status to UNAVAILABLE if inventory reaches 0
                             status: menuItem.avilableLimit - orderItem.quantity <= 0
                                 ? 'UNAVAILABLE'
-                                : undefined
+                                : 'AVAILABLE'
                         }
                     });
                 }
