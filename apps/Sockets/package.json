@@ -1,0 +1,25 @@
+{
+  "name": "Socket",
+  "version": "1.0.0",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx nodemon ./src/index.ts",
+    "start": "node ./src/index.ts",
+    "build": "npx tsc -b"
+  },
+  "devDependencies": {
+    "@repo/constants": "*",
+    "@repo/db": "*",
+    "@repo/typescript-config": "*",
+    "@repo/utils": "*"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/ws": "^8.5.12",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "ws": "^8.18.0"
+  }
+}
