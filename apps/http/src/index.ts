@@ -5,7 +5,7 @@ import cors from "cors";
 import userRoute from "./routes/userRoutes";
 import "dotenv/config";
 import canteenRoutes from "./routes/canteenRoutes";
-import paymentRouter from "./routes/orderRoutes";
+import orderRouter from "./routes/orderRoutes";
 import Razorpay from "razorpay";
 
 const app = express();
@@ -32,7 +32,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", userRoute);
 app.use("/api/v1",canteenRoutes);
-app.use("/api/v1", paymentRouter);
+app.use("/api/v1", orderRouter);
 
 app.listen(process.env.PORT, () => {
   console.log("Listening on port " + process.env.PORT);

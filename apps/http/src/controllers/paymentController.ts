@@ -5,8 +5,9 @@ import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
 import z from "zod";
 import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
+import { SERVER_ERROR } from "@repo/constants";
 
-
+// TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
     try {
         const validatedInput = CheckoutInputSchema.parse(req.body);
@@ -211,4 +212,27 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
     }
 }
 
-export { checkout, paymentVerification };
+const getAllOrders = async (req: CustomRequest, res: Response) => {
+    const canteenId = req.params.canteenId;
+    try {
+        const items = await prisma.order.findMany({
+            where: {
+                userId: req.user?.id,
+                orderStatus: "PROCESSING"
+            },
+            include: {
+                OrderItem: {
+                    include: {
+                        menuItem: true
+                    }
+                }
+            }
+        });
+        res.json({ items });
+    } catch (e) {
+        res.status(500).json({ mesage: SERVER_ERROR });
+        console.log(e);
+    }
+}
+
+export { checkout, paymentVerification, getAllOrders };

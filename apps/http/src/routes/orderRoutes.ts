@@ -1,10 +1,10 @@
 import { isAuthenticatedUser } from "../middlewares/auth";
 import express from "express";
-import { checkout, paymentVerification } from "../controllers/paymentController";
+import { checkout, getAllOrders, paymentVerification } from "../controllers/paymentController";
 
-const paymentRouter = express.Router();
-paymentRouter.route("/checkout").post(isAuthenticatedUser, checkout);
+const orderRouter = express.Router();
+orderRouter.route("/checkout").post(isAuthenticatedUser, checkout);
+orderRouter.get("/getAllOrders/:canteenId",isAuthenticatedUser,getAllOrders);
+orderRouter.route("/paymentverification").post(paymentVerification);
 
-paymentRouter.route("/paymentverification").post(paymentVerification);
-
-export default paymentRouter;
+export default orderRouter;
