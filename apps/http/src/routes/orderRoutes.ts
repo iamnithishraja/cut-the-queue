@@ -4,7 +4,7 @@ import { checkout, getAllOrders, paymentVerification } from "../controllers/paym
 
 const orderRouter = express.Router();
 orderRouter.route("/checkout").post(isAuthenticatedUser, checkout);
-orderRouter.get("/getAllOrders/:canteenId",isAuthenticatedUser,getAllOrders);
+orderRouter.get("/getAllOrders",isAuthenticatedUser,getAllOrders);
 orderRouter.route("/paymentverification").post(paymentVerification);
 
 export default orderRouter;

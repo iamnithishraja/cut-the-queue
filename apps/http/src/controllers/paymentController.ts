@@ -213,7 +213,6 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
 }
 
 const getAllOrders = async (req: CustomRequest, res: Response) => {
-    const canteenId = req.params.canteenId;
     try {
         const items = await prisma.order.findMany({
             where: {
