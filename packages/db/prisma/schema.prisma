@@ -75,6 +75,7 @@ model Order {
   id           String      @id @default(cuid())
   customer     User        @relation(fields: [userId], references: [id])
   userId       String
+  orderStatus  OrderStatus @default(PROCESSING)
   canteen      Canteen     @relation(fields: [canteenId], references: [id])
   canteenId    String
   isPaid       Boolean     @default(false)
@@ -95,6 +96,11 @@ enum OrderItemStatus {
   COOKING
   WAITING_FOR_PICKUP
   SENT
+}
+
+enum OrderStatus {
+  PROCESSING
+  DONE
 }
 
 enum AvailabilityStatus {

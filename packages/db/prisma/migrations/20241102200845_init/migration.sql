@@ -2,10 +2,16 @@
 CREATE TYPE "OrderItemStatus" AS ENUM ('COOKING', 'WAITING_FOR_PICKUP', 'SENT');
 
 -- CreateEnum
+CREATE TYPE "OrderStatus" AS ENUM ('PROCESSING', 'DONE');
+
+-- CreateEnum
 CREATE TYPE "AvailabilityStatus" AS ENUM ('AVAILABLE', 'UNAVAILABLE');
 
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('USER', 'PARTNER');
+
+-- CreateEnum
+CREATE TYPE "MenuItemType" AS ENUM ('Instant', 'TimeConsuming');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -39,10 +45,12 @@ CREATE TABLE "canteens" (
 -- CreateTable
 CREATE TABLE "menu_items" (
     "id" TEXT NOT NULL,
+    "type" "MenuItemType" NOT NULL DEFAULT 'TimeConsuming',
     "name" TEXT NOT NULL,
     "description" TEXT,
     "itemImage" TEXT,
     "price" DOUBLE PRECISION NOT NULL,
+    "isVegetarian" BOOLEAN NOT NULL DEFAULT true,
     "avilableLimit" INTEGER,
     "status" "AvailabilityStatus" NOT NULL DEFAULT 'AVAILABLE',
     "canteenId" TEXT NOT NULL,
@@ -65,7 +73,11 @@ CREATE TABLE "OrderItem" (
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "orderStatus" "OrderStatus" NOT NULL DEFAULT 'PROCESSING',
     "canteenId" TEXT NOT NULL,
+    "isPaid" BOOLEAN NOT NULL DEFAULT false,
+    "paymentId" TEXT,
+    "paymentToken" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "menuItemId" TEXT,
 
