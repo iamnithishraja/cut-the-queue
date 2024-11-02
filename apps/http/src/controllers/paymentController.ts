@@ -3,14 +3,14 @@ import { CustomRequest } from "../types/userTypes";
 import { razorpayInstance } from "..";
 import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
 import z from "zod";
-import { CheckoutInputSchema } from "../schemas/ordersSchemas";
+import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
 
 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
     try {
         const validatedInput = CheckoutInputSchema.parse(req.body);
-        const { items, userId, canteenId } = validatedInput;
+        const { items, canteenId } = validatedInput;
 
         // Fetch menu items to verify prices and availability
         const menuItemIds = items.map(item => item.menuItemId);
@@ -53,11 +53,10 @@ async function checkout(req: CustomRequest, res: Response): Promise<any> {
         };
 
         const razorpayOrder = await razorpayInstance.orders.create(razorpayOptions);
-
         // Create order in database
         const order = await prisma.order.create({
             data: {
-                userId,
+                userId: req.user!.id,
                 canteenId,
                 paymentToken: razorpayOrder.id,
                 isPaid: false,
@@ -101,90 +100,99 @@ async function checkout(req: CustomRequest, res: Response): Promise<any> {
 
 async function paymentVerification(req: CustomRequest, res: Response): Promise<any> {
     try {
-        // Extract the payment details from the request body
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET!;
+        const signature = req.headers['x-razorpay-signature'];
 
-        // Verify the payment signature
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-            .update(body.toString())
-            .digest("hex");
-
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (isAuthentic) {
-            // Use a transaction to ensure data consistency
-            const result = await prisma.$transaction(async (prismaClient) => {
-                // Find the order in the database
-                const order = await prismaClient.order.findFirst({
-                    where: { paymentToken: razorpay_order_id },
-                    include: {
-                        OrderItem: {
-                            include: {
-                                menuItem: true
-                            }
-                        }
-                    }
-                });
-
-                if (!order) {
-                    throw new Error("Order not found");
-                }
-
-                // Update inventory for each order item
-                for (const orderItem of order.OrderItem) {
-                    const menuItem = orderItem.menuItem;
-
-                    // Skip if menu item doesn't have an available limit
-                    if (menuItem.avilableLimit === null) continue;
-
-                    // Check if we have enough inventory
-                    if (menuItem.avilableLimit < orderItem.quantity) {
-                        throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
-                    }
-
-                    // Update the menu item's available limit
-                    await prismaClient.menuItem.update({
-                        where: { id: menuItem.id },
-                        data: {
-                            avilableLimit: {
-                                decrement: orderItem.quantity
-                            },
-                            // Automatically set status to UNAVAILABLE if inventory reaches 0
-                            status: menuItem.avilableLimit - orderItem.quantity <= 0
-                                ? 'UNAVAILABLE'
-                                : 'AVAILABLE'
-                        }
-                    });
-                }
-
-                // Update the order status
-                const updatedOrder = await prismaClient.order.update({
-                    where: { id: order.id },
-                    data: {
-                        isPaid: true,
-                        paymentId: razorpay_payment_id
-                    }
-                });
-
-                return updatedOrder;
-            });
-
-            // TODO: do api call to ws server.
-            res.status(200).json({
-                success: true,
-                message: "Payment verified and inventory updated successfully",
-                orderId: result.id
-            });
-        } else {
-            res.status(400).json({
+        if (!signature) {
+            return res.status(400).json({
                 success: false,
-                error: "Invalid signature"
+                error: 'Missing signature'
             });
         }
+
+        const shasum = crypto.createHmac('sha256', webhookSecret);
+        shasum.update(JSON.stringify(req.body));
+        const digest = shasum.digest('hex');
+
+        if (digest !== signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid signature'
+            });
+        }
+
+        const { payload } = req.body;
+        const { payment: { entity } } = payload;
+        const razorpay_payment_id = entity.id;
+        const razorpay_order_id = entity.order_id;
+
+        const result = await prisma.$transaction(async (prismaClient) => {
+            const order = await prismaClient.order.findFirst({
+                where: { paymentToken: razorpay_order_id },
+                include: {
+                    OrderItem: {
+                        include: {
+                            menuItem: true
+                        }
+                    }
+                }
+            });
+
+            if (!order) {
+                throw new Error("Order not found");
+            }
+
+            if (order.isPaid) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Payment already processed",
+                    orderId: order.id
+                });
+            }
+
+            for (const orderItem of order.OrderItem) {
+                const menuItem = orderItem.menuItem;
+
+                if (menuItem.avilableLimit === null) continue;
+
+                if (menuItem.avilableLimit < orderItem.quantity) {
+                    throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
+                }
+
+                await prismaClient.menuItem.update({
+                    where: { id: menuItem.id },
+                    data: {
+                        avilableLimit: {
+                            decrement: orderItem.quantity
+                        },
+                        status: menuItem.avilableLimit - orderItem.quantity <= 0
+                            ? 'UNAVAILABLE'
+                            : 'AVAILABLE'
+                    }
+                });
+            }
+
+            // Update the order status
+            const updatedOrder = await prismaClient.order.update({
+                where: { id: order.id },
+                data: {
+                    isPaid: true,
+                    paymentId: razorpay_payment_id
+                }
+            });
+
+            return updatedOrder;
+        });
+
+
+        // TODO: do api call to ws server.
+        res.status(200).json({
+            success: true,
+            message: "Webhook processed successfully",
+        });
+
     } catch (error) {
-        console.error('Payment verification error:', error);
+        console.error('Webhook processing error:', error);
 
         // Handle specific error cases
         if (error instanceof Error && error.message.includes("Insufficient inventory")) {
@@ -197,7 +205,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
 
         res.status(500).json({
             success: false,
-            error: 'Failed to verify payment',
+            error: 'Failed to process webhook',
             message: error instanceof Error ? error.message : 'Unknown error'
         });
     }

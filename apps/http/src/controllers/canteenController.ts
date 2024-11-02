@@ -13,11 +13,7 @@ async function getAllDishes(req: Request, res: Response): Promise<any> {
         canteenId: canteenId,
       },
     });
-    if (items.length > 0) {
-      res.json({ items });
-    } else {
-      res.status(404).json({ message: DISHES_NOT_FOUND });
-    }
+    res.json({ items });
   } catch (e) {
     res.status(500).json({ mesage: SERVER_ERROR });
     console.log(e);
@@ -26,12 +22,12 @@ async function getAllDishes(req: Request, res: Response): Promise<any> {
 
 async function getAllCanteen(req: Request, res: Response) {
   try {
-    const canteens = await prisma.canteen.findMany();
-    if (canteens.length > 0) {
-      res.json({ canteens, length: canteens.length });
-    } else {
-      res.status(404).json({ message: CANTEENS_NOT_FOUND });
-    }
+    const canteens = await prisma.canteen.findMany({
+      where: {
+        isOpen: true
+      }
+    });
+    res.json({ canteens, length: canteens.length });
   } catch (e) {
     res.status(500).json({ message: SERVER_ERROR });
     console.log(e);

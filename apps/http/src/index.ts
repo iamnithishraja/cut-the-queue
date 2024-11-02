@@ -5,7 +5,7 @@ import cors from "cors";
 import userRoute from "./routes/userRoutes";
 import "dotenv/config";
 import canteenRoutes from "./routes/canteenRoutes";
-import paymentRouter from "./routes/paymentRoutes";
+import paymentRouter from "./routes/orderRoutes";
 import Razorpay from "razorpay";
 
 const app = express();
