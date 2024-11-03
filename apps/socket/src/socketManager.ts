@@ -1,36 +1,26 @@
 import { WebSocket } from "ws";
 
-class socketManager {
-  private static instance: socketManager;
-  public connectedDevices: Record<string, WebSocket> = {};
+const connectedDevices: Record<string, WebSocket> = {};
 
-  private constructor() {
-    this.connectedDevices = {};
-  }
+export function getAllSockets() {
+  return Object.values(connectedDevices);
+}
 
-  public static getInstance() {
-    if (!socketManager.instance) {
-      socketManager.instance = new socketManager();
-    }
-    return socketManager.instance;
-  }
-  public getAllSockets() {
-    const sockets = Object.values(this.connectedDevices);
-    return sockets;
-  }
+export function addDevices(ws: WebSocket, id: string) {
+  connectedDevices[id] = ws;
+}
 
-  public async addDevices(ws: WebSocket, id: string) {
-    this.connectedDevices[id] = ws;
-  }
-
-  public removeDevice(ws: WebSocket) {
-    for (const [key, value] of Object.entries(this.connectedDevices)) {
-      if (value.CLOSED) {
-        delete this.connectedDevices[key];
-        break;
-      }
+export function removeDevice(ws: WebSocket) {
+  for (const [key, value] of Object.entries(connectedDevices)) {
+    if (value.CLOSED) {
+      delete connectedDevices[key];
+      break;
     }
   }
 }
 
-export default socketManager;
+export default {
+  getAllSockets,
+  addDevices,
+  removeDevice
+};
