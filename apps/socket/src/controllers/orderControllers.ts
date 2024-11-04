@@ -5,7 +5,7 @@ import {
 } from "@repo/constants";
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
-import { getAllSockets } from "../socketManager";
+import { broadcastToConnectedDevices } from "../utils/socketUtils";
 
 export const broadcastQuantity = async (
 	req: Request,
@@ -23,14 +23,8 @@ export const broadcastQuantity = async (
 			res.status(404).json({ message: DISHES_NOT_FOUND });
 			return;
 		}
-		const data = JSON.stringify({
-			type: "UPDATE_MENU_ITEMS",
-			payload: updatedMenuItems,
-		});
-		const connectedDevices = getAllSockets();
-		connectedDevices.forEach((device) => {
-			device.send(data);
-		});
+
+		broadcastToConnectedDevices("UPDATE_MENU_ITEMS", updatedMenuItems);
 		res.status(200).json({ message: BROADCAST_QUANTITY });
 	} catch (e) {
 		console.error(e);
@@ -96,17 +90,7 @@ export const handleOrderHandover = async (
 			},
 		});
 
-		// Prepare notification data
-		const notificationData = JSON.stringify({
-			type: "ORDER_HANDOVER",
-			payload: updatedOrder,
-		});
-
-		// Broadcast to connected devices
-		const connectedDevices = getAllSockets();
-		connectedDevices.forEach((device) => {
-			device.send(notificationData);
-		});
+		broadcastToConnectedDevices("ORDER_HANDOVER", updatedOrder);
 
 		// Send response to canteen
 		return res.status(200).json({
