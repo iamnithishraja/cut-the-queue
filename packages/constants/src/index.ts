@@ -12,5 +12,6 @@ export {
   OTP_VERIFICATION_SUCCESSFUL,
   CANTEENS_NOT_FOUND,
   DISHES_NOT_FOUND,
-  BROADCAST_QUANTITY
-} from "./userContenstents";
+  BROADCAST_QUANTITY,
+  ORDER_HANDOVER
+} from "./userConstants";

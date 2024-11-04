@@ -1,6 +1,7 @@
 import {
 	BROADCAST_QUANTITY,
 	DISHES_NOT_FOUND,
+	ORDER_HANDOVER,
 	SERVER_ERROR,
 } from "@repo/constants";
 import prisma from "@repo/db/client";
@@ -94,7 +95,7 @@ export const handleOrderHandover = async (
 
 		// Send response to canteen
 		return res.status(200).json({
-			message: "Order items updated successfully",
+			message: ORDER_HANDOVER,
 			order: updatedOrder,
 		});
 	} catch (error) {

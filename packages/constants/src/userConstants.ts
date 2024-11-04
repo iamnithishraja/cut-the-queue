@@ -11,3 +11,4 @@ export const OTP_VERIFICATION_SUCCESSFUL = "INVALID OTP";
 export const CANTEENS_NOT_FOUND = "No canteens available";
 export const DISHES_NOT_FOUND = "No dishes found";
 export const BROADCAST_QUANTITY = "Updated quantity successfully broadcasted";
+export const ORDER_HANDOVER = "Order handover successful";
