@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import WebSocket, { WebSocketServer } from "ws";
 import clientRouter from "./routes/orderRoutes";
+import { socketMessageSchema } from "./schemas/validationSchemas";
 import { addDevices, removeDevice } from "./socketManager";
 
 const app = express();
@@ -29,9 +30,15 @@ const wss = new WebSocketServer({ server: httpServer });
 wss.on("connection", (ws: WebSocket) => {
 	console.log("A user connected");
 	ws.on("message", (data: string) => {
-		const parsedData = JSON.parse(data);
-		if (parsedData.type === "init") {
-			addDevices(ws, parsedData.id);
+		try {
+			const parsedData = JSON.parse(data);
+			const validatedData = socketMessageSchema.parse(parsedData);
+			
+			if (validatedData.type === "init") {
+				addDevices(ws, validatedData.id);
+			}
+		} catch (error) {
+			ws.send(JSON.stringify({ error: "Invalid message format" }));
 		}
 	});
 

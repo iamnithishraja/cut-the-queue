@@ -6,18 +6,23 @@ import {
 } from "@repo/constants";
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
+import { canteenIdSchema, orderIdSchema } from "../schemas/validationSchemas";
 import { broadcastToConnectedDevices } from "../utils/socketUtils";
 
 export const broadcastQuantity = async (
 	req: Request,
 	res: Response
 ): Promise<any> => {
-	const canteenId = req.params.canteenId;
 	try {
+		// Validate params
+		const result = canteenIdSchema.safeParse({ params: req.params });
+		if (!result.success) {
+			return res.status(400).json(result.error);
+		}
+
+		const canteenId = req.params.canteenId;
 		const updatedMenuItems = await prisma.menuItem.findMany({
-			where: {
-				canteenId: canteenId,
-			},
+			where: { canteenId },
 		});
 
 		if (!updatedMenuItems || updatedMenuItems.length === 0) {
@@ -37,9 +42,15 @@ export const handleOrderHandover = async (
 	req: Request,
 	res: Response
 ): Promise<any> => {
-	const orderId = req.params.orderId;
-
 	try {
+		// Validate params
+		const result = orderIdSchema.safeParse({ params: req.params });
+		if (!result.success) {
+			return res.status(400).json(result.error);
+		}
+
+		const orderId = req.params.orderId;
+
 		// Get order with its items
 		const order = await prisma.orders.findUnique({
 			where: { id: orderId },
