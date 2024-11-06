@@ -12,10 +12,21 @@ export const orderIdSchema = z.object({
   })
 });
 
-export const socketMessageSchema = z.object({
-  type: z.string(),
-  id: z.string().uuid()
-});
+export const socketMessageSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('init'),
+    token: z.string()
+  }),
+  z.object({
+    type: z.literal('subscribe'),
+    screen: z.enum(['MENU', 'ORDERS']),
+    active: z.boolean()
+  }),
+  z.object({
+    type: z.literal('unsubscribe'),
+    screen: z.enum(['MENU', 'ORDERS'])
+  })
+]);
 
 export type CanteenIdSchema = z.infer<typeof canteenIdSchema>;
 export type OrderIdSchema = z.infer<typeof orderIdSchema>;
