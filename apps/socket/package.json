@@ -12,7 +12,7 @@
     "@repo/constants": "*",
     "@repo/db": "*",
     "@repo/typescript-config": "*",
-    "@repo/utils": "*"
+    "@types/jsonwebtoken": "^9.0.7"
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
@@ -20,6 +20,7 @@
     "@types/ws": "^8.5.12",
     "cors": "^2.8.5",
     "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
   }
