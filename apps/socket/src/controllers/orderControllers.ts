@@ -7,14 +7,16 @@ import {
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
 import { canteenIdSchema, orderIdSchema } from "../schemas/validationSchemas";
-import { broadcastToConnectedDevices } from "../utils/socketUtils";
+import {
+	broadcastMenuUpdate,
+	broadcastOrderUpdate,
+} from "../utils/socketUtils";
 
 export const broadcastQuantity = async (
 	req: Request,
 	res: Response
 ): Promise<any> => {
 	try {
-		// Validate params
 		const result = canteenIdSchema.safeParse({ params: req.params });
 		if (!result.success) {
 			return res.status(400).json(result.error);
@@ -30,7 +32,7 @@ export const broadcastQuantity = async (
 			return;
 		}
 
-		broadcastToConnectedDevices("UPDATE_MENU_ITEMS", updatedMenuItems);
+		broadcastMenuUpdate(updatedMenuItems);
 		res.status(200).json({ message: BROADCAST_QUANTITY });
 	} catch (e) {
 		console.error(e);
@@ -102,7 +104,7 @@ export const handleOrderHandover = async (
 			},
 		});
 
-		broadcastToConnectedDevices("ORDER_HANDOVER", updatedOrder);
+		broadcastOrderUpdate(updatedOrder);
 
 		// Send response to canteen
 		return res.status(200).json({
