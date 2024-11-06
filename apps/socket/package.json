@@ -12,6 +12,7 @@
     "@repo/constants": "*",
     "@repo/db": "*",
     "@repo/typescript-config": "*",
+    "@repo/utils": "*",
     "@types/jsonwebtoken": "^9.0.7"
   },
   "dependencies": {
