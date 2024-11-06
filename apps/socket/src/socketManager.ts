@@ -1,26 +1,65 @@
 import { WebSocket } from "ws";
+import { UserType } from "@repo/db/client";
 
-const connectedDevices: Record<string, WebSocket> = {};
+const consumerSockets: Map<string, WebSocket> = new Map();
+const adminSockets: Map<string, WebSocket> = new Map();
+const activeMenuUsers: Set<string> = new Set();
+const activeOrderAdmins: Set<string> = new Set();
 
-export function getAllSockets() {
-  return Object.values(connectedDevices);
+export function getConsumerSockets() {
+  return Array.from(consumerSockets.values());
 }
 
-export function addDevices(ws: WebSocket, id: string) {
-  connectedDevices[id] = ws;
+export function getAdminSockets() {
+  return Array.from(adminSockets.values());
 }
 
-export function removeDevice(ws: WebSocket) {
-  for (const [key, value] of Object.entries(connectedDevices)) {
-    if (value.CLOSED) {
-      delete connectedDevices[key];
-      break;
-    }
+export function addDevice(ws: WebSocket, user: UserType) {
+  if (user.role === 'ADMIN') {
+    adminSockets.set(user.id, ws);
+  } else {
+    consumerSockets.set(user.id, ws);
   }
 }
 
+export function removeDevice(userId: string, role: string) {
+  if (role === 'ADMIN') {
+    adminSockets.delete(userId);
+    activeOrderAdmins.delete(userId);
+  } else {
+    consumerSockets.delete(userId);
+    activeMenuUsers.delete(userId);
+  }
+}
+
+export function setScreenActive(userId: string, screen: 'MENU' | 'ORDERS', active: boolean) {
+  if (screen === 'MENU') {
+    if (active) activeMenuUsers.add(userId);
+    else activeMenuUsers.delete(userId);
+  } else {
+    if (active) activeOrderAdmins.add(userId);
+    else activeOrderAdmins.delete(userId);
+  }
+}
+
+export function getActiveMenuSockets(): WebSocket[] {
+  return Array.from(activeMenuUsers)
+    .map(id => consumerSockets.get(id))
+    .filter((socket): socket is WebSocket => socket !== undefined);
+}
+
+export function getActiveOrderSockets(): WebSocket[] {
+  return Array.from(activeOrderAdmins)
+    .map(id => adminSockets.get(id))
+    .filter((socket): socket is WebSocket => socket !== undefined);
+}
+
 export default {
-  getAllSockets,
-  addDevices,
-  removeDevice
+  getConsumerSockets,
+  getAdminSockets,
+  addDevice,
+  removeDevice,
+  setScreenActive,
+  getActiveMenuSockets,
+  getActiveOrderSockets
 };

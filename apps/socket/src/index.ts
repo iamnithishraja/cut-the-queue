@@ -4,7 +4,8 @@ import express from "express";
 import WebSocket, { WebSocketServer } from "ws";
 import clientRouter from "./routes/orderRoutes";
 import { socketMessageSchema } from "./schemas/validationSchemas";
-import { addDevices, removeDevice } from "./socketManager";
+import { addDevice, removeDevice, setScreenActive } from "./socketManager";
+import { verifyAndGetUser } from "@repo/utils";
 
 const app = express();
 
@@ -28,22 +29,49 @@ const httpServer = app.listen(process.env.PORT, () => {
 const wss = new WebSocketServer({ server: httpServer });
 
 wss.on("connection", (ws: WebSocket) => {
-	console.log("A user connected");
-	ws.on("message", (data: string) => {
+	let userId: string | null = null;
+	let userRole: string | null = null;
+
+	ws.on("message", async (data: string) => {
 		try {
 			const parsedData = JSON.parse(data);
 			const validatedData = socketMessageSchema.parse(parsedData);
-			
-			if (validatedData.type === "init") {
-				addDevices(ws, validatedData.id);
+
+			switch (validatedData.type) {
+				case "init": {
+					const user = await verifyAndGetUser(validatedData.token);
+					userId = user.id;
+					userRole = user.role;
+					addDevice(ws, user);
+					break;
+				}
+				case "subscribe": {
+					if (!userId) {
+						ws.send(JSON.stringify({ error: "Not initialized" }));
+						return;
+					}
+					setScreenActive(userId, validatedData.screen, true);
+					break;
+				}
+				case "unsubscribe": {
+					if (!userId) {
+						ws.send(JSON.stringify({ error: "Not initialized" }));
+						return;
+					}
+					setScreenActive(userId, validatedData.screen, false);
+					break;
+				}
 			}
 		} catch (error) {
-			ws.send(JSON.stringify({ error: "Invalid message format" }));
+			ws.send(
+				JSON.stringify({ error: "Invalid message or authentication failed" })
+			);
 		}
 	});
 
 	ws.on("close", () => {
-		const socket = ws;
-		removeDevice(socket);
+		if (userId && userRole) {
+			removeDevice(userId, userRole);
+		}
 	});
 });
