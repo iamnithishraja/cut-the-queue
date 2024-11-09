@@ -31,6 +31,7 @@ const wss = new WebSocketServer({ server: httpServer });
 wss.on("connection", (ws: WebSocket) => {
 	let userId: string | null = null;
 	let userRole: string | null = null;
+	let canteenId: string | null = null;
 
 	ws.on("message", async (data: string) => {
 		try {
@@ -42,23 +43,23 @@ wss.on("connection", (ws: WebSocket) => {
 					const user = await verifyAndGetUser(validatedData.token);
 					userId = user.id;
 					userRole = user.role;
-					addDevice(ws, user);
+					canteenId = validatedData.id;
+					
+					addDevice(ws, user, canteenId);
 					break;
 				}
-				case "subscribe": {
-					if (!userId) {
-						ws.send(JSON.stringify({ error: "Not initialized" }));
-						return;
-					}
-					setScreenActive(userId, validatedData.screen, true);
-					break;
-				}
+				case "subscribe":
 				case "unsubscribe": {
-					if (!userId) {
+					if (!userId || !canteenId) {
 						ws.send(JSON.stringify({ error: "Not initialized" }));
 						return;
 					}
-					setScreenActive(userId, validatedData.screen, false);
+					setScreenActive(
+						userId,
+						validatedData.screen,
+						validatedData.type === "subscribe",
+						canteenId
+					);
 					break;
 				}
 			}
@@ -69,9 +70,10 @@ wss.on("connection", (ws: WebSocket) => {
 		}
 	});
 
+	// This close handler is also scoped to this specific connection
 	ws.on("close", () => {
-		if (userId && userRole) {
-			removeDevice(userId, userRole);
+		if (userId && userRole && canteenId) {
+			removeDevice(userId, userRole, canteenId);
 		}
 	});
 });

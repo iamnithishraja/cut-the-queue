@@ -1,66 +1,83 @@
-import { WebSocket } from "ws";
 import { UserType } from "@repo/db/client";
-import { Screen } from "./types/screen";
+import { WebSocket } from "ws";
+import { CanteenSockets, Screen } from "./types/socketTypes";
 
-const consumerSockets: Map<string, WebSocket> = new Map();
-const adminSockets: Map<string, WebSocket> = new Map();
-const activeMenuUsers: Set<string> = new Set();
-const activeOrderAdmins: Set<string> = new Set();
+const canteens: Map<string, CanteenSockets> = new Map();
 
-export function getConsumerSockets() {
-  return Array.from(consumerSockets.values());
+function getOrCreateCanteen(canteenId: string): CanteenSockets {
+	if (!canteens.has(canteenId)) {
+		canteens.set(canteenId, {
+			consumers: new Map(),
+			admins: new Map(),
+			activeMenu: new Set(),
+			activeOrders: new Set(),
+		});
+	}
+	return canteens.get(canteenId)!;
 }
 
-export function getAdminSockets() {
-  return Array.from(adminSockets.values());
+export function addDevice(ws: WebSocket, user: UserType, canteenId: string) {
+	const canteen = getOrCreateCanteen(canteenId);
+	if (user.role === "ADMIN") {
+		canteen.admins.set(user.id, ws);
+	} else {
+		canteen.consumers.set(user.id, ws);
+	}
 }
 
-export function addDevice(ws: WebSocket, user: UserType) {
-  if (user.role === 'ADMIN') {
-    adminSockets.set(user.id, ws);
-  } else {
-    consumerSockets.set(user.id, ws);
-  }
+export function removeDevice(userId: string, role: string, canteenId: string) {
+	const canteen = canteens.get(canteenId);
+	if (!canteen) return;
+
+	if (role === "ADMIN") {
+		canteen.admins.delete(userId);
+		canteen.activeOrders.delete(userId);
+	} else {
+		canteen.consumers.delete(userId);
+		canteen.activeMenu.delete(userId);
+	}
 }
 
-export function removeDevice(userId: string, role: string) {
-  if (role === 'ADMIN') {
-    adminSockets.delete(userId);
-    activeOrderAdmins.delete(userId);
-  } else {
-    consumerSockets.delete(userId);
-    activeMenuUsers.delete(userId);
-  }
+export function setScreenActive(
+	userId: string,
+	screen: Screen,
+	active: boolean,
+	canteenId: string
+) {
+	const canteen = canteens.get(canteenId);
+	if (!canteen) return;
+
+	const targetSet =
+		screen === Screen.MENU ? canteen.activeMenu : canteen.activeOrders;
+	if (active) {
+		targetSet.add(userId);
+	} else {
+		targetSet.delete(userId);
+	}
 }
 
-export function setScreenActive(userId: string, screen: Screen, active: boolean) {
-  if (screen === 'MENU') {
-    if (active) activeMenuUsers.add(userId);
-    else activeMenuUsers.delete(userId);
-  } else {
-    if (active) activeOrderAdmins.add(userId);
-    else activeOrderAdmins.delete(userId);
-  }
+export function getActiveMenuSockets(canteenId: string): WebSocket[] {
+	const canteen = canteens.get(canteenId);
+	if (!canteen) return [];
+
+	return Array.from(canteen.activeMenu)
+		.map((id) => canteen.consumers.get(id))
+		.filter((socket): socket is WebSocket => socket !== undefined);
 }
 
-export function getActiveMenuSockets(): WebSocket[] {
-  return Array.from(activeMenuUsers)
-    .map(id => consumerSockets.get(id))
-    .filter((socket): socket is WebSocket => socket !== undefined);
-}
+export function getActiveOrderSockets(canteenId: string): WebSocket[] {
+	const canteen = canteens.get(canteenId);
+	if (!canteen) return [];
 
-export function getActiveOrderSockets(): WebSocket[] {
-  return Array.from(activeOrderAdmins)
-    .map(id => adminSockets.get(id))
-    .filter((socket): socket is WebSocket => socket !== undefined);
+	return Array.from(canteen.activeOrders)
+		.map((id) => canteen.admins.get(id))
+		.filter((socket): socket is WebSocket => socket !== undefined);
 }
 
 export default {
-  getConsumerSockets,
-  getAdminSockets,
-  addDevice,
-  removeDevice,
-  setScreenActive,
-  getActiveMenuSockets,
-  getActiveOrderSockets
+	addDevice,
+	removeDevice,
+	setScreenActive,
+	getActiveMenuSockets,
+	getActiveOrderSockets,
 };
