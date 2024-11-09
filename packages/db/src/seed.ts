@@ -7,6 +7,7 @@ async function main() {
     data: {
       name: "Dolphin Canteen",
       canteenImage: "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",
+      password:"abc12",
       menuItems: {
         create: [
           {

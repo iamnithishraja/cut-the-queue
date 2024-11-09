@@ -34,6 +34,7 @@ model Canteen {
   isOpen       Boolean    @default(true)
   menuItems    MenuItem[] // relation to menu items
   orders       Order[] // relation to orders
+  password     String
 
   @@index([id])
   @@map("canteens")
