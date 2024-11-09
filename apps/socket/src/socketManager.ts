@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 import { UserType } from "@repo/db/client";
+import { Screen } from "./types/screen";
 
 const consumerSockets: Map<string, WebSocket> = new Map();
 const adminSockets: Map<string, WebSocket> = new Map();
@@ -32,7 +33,7 @@ export function removeDevice(userId: string, role: string) {
   }
 }
 
-export function setScreenActive(userId: string, screen: 'MENU' | 'ORDERS', active: boolean) {
+export function setScreenActive(userId: string, screen: Screen, active: boolean) {
   if (screen === 'MENU') {
     if (active) activeMenuUsers.add(userId);
     else activeMenuUsers.delete(userId);

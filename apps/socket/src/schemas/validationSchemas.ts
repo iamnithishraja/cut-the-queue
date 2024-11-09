@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Screen } from '../types/screen';
 
 export const canteenIdSchema = z.object({
   params: z.object({
@@ -19,12 +20,12 @@ export const socketMessageSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('subscribe'),
-    screen: z.enum(['MENU', 'ORDERS']),
+    screen: z.nativeEnum(Screen),
     active: z.boolean()
   }),
   z.object({
     type: z.literal('unsubscribe'),
-    screen: z.enum(['MENU', 'ORDERS'])
+    screen: z.nativeEnum(Screen)
   })
 ]);
 
