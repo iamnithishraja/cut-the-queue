@@ -7,7 +7,10 @@ export const registerSchema = z.object({
   phoneNo: z.string().min(10),
   password: z.string().min(8),
 });
-
+export const registerAdminSchema=z.object({
+  canteenId: z.string(),
+  password: z.string().min(8)
+})
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),

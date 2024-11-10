@@ -1,13 +1,16 @@
 import { PrismaClient } from "@prisma/client";
-
+import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 async function main() {
+  const password = await bcrypt.hash("abcd1234", 10);
+
   const dolphinCanteen = await prisma.canteen.create({
     data: {
       name: "Dolphin Canteen",
-      canteenImage: "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",
-      password:"abc12",
+      canteenImage:
+        "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",
+      password: password,
       menuItems: {
         create: [
           {
@@ -17,7 +20,8 @@ async function main() {
             price: 40.0,
             avilableLimit: 2,
             status: "AVAILABLE",
-            itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/dosa.png",  // Dosa image URL
+            itemImage:
+              "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/dosa.png", // Dosa image URL
           },
           {
             name: "Idli",
@@ -26,7 +30,8 @@ async function main() {
             price: 30.0,
             avilableLimit: 3,
             status: "AVAILABLE",
-            itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/idli.png",  // Idli image URL
+            itemImage:
+              "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/idli.png", // Idli image URL
           },
           {
             name: "Samosa",
@@ -35,7 +40,8 @@ async function main() {
             type: "Instant",
             avilableLimit: 5,
             status: "AVAILABLE",
-            itemImage: "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/samosa.png",  // Samosa image URL
+            itemImage:
+              "https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev/samosa.png", // Samosa image URL
           },
         ],
       },

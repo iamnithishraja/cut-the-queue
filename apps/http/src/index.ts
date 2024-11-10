@@ -7,7 +7,6 @@ import "dotenv/config";
 import canteenRoutes from "./routes/canteenRoutes";
 import orderRouter from "./routes/orderRoutes";
 import Razorpay from "razorpay";
-
 const app = express();
 
 app.use(

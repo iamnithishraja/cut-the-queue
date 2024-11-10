@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from 'bcrypt' 
 import { OAuth2Client } from "google-auth-library";
 import "dotenv/config";
 import {
   loginSchema,
+  registerAdminSchema,
   registerSchema,
   requestOtpSchema,
   submitOtpSchema,
@@ -14,7 +15,7 @@ import {
   generateOTP,
   generateToken,
 } from "@repo/utils";
-import z from "zod";
+import {z} from "zod";
 import {
   INVALID_CREDENTIALS,
   INVALID_GOOGLE_TOKEN,
@@ -39,6 +40,74 @@ const register = async (
   next: NextFunction
 ): Promise<any> => {
   try {
+    const { canteenId, canteenPassword } = req.body;
+    if (canteenId && canteenPassword) {
+      registerAdminSchema.parse({
+        canteenId: canteenId,
+        password: canteenPassword,
+      });
+      const canteen = await prisma.canteen.findUnique({
+        where: {
+          id: canteenId,
+        },
+      });
+      if (canteen) {
+        const validPartnerPassword = await bcrypt.compare(canteenPassword, canteen.password);
+        if (!validPartnerPassword) {
+          res.json({ message: INVALID_CREDENTIALS });
+          return;
+        }
+
+        const {
+          partnerFirstName,
+          partnerLastName,
+          partnerEmail,
+          partnerPhoneNo,
+          partnerPassword,
+        } = req.body;
+        registerSchema.parse({
+          firstName: partnerFirstName,
+          lastName: partnerLastName,
+          email: partnerEmail,
+          phoneNo: partnerPhoneNo,
+          password: partnerPassword,
+        });
+        const hashedPartnerPassword=await bcrypt.hash(partnerPassword,SALT_ROUNDS);
+        const newPartner = await prisma.user.create({
+          data: {
+            firstName: partnerFirstName,
+            lastName: partnerLastName,
+            email: partnerEmail,
+            phoneNumber: partnerPhoneNo,
+            password: hashedPartnerPassword,
+            role: "PARTNER",
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            userProfile: true,
+            email: true,
+            phoneNumber: true,
+            isVerified: true,
+            role: true,
+          },
+        });
+        if(newPartner){
+        const partnerToken = generateToken(newPartner.id);
+        res.status(201).json({ user: newPartner, partnerToken });
+        return;
+        }
+        else{
+          res.json({message:'couldnt create user'});
+          return;
+        }
+
+      } else {
+        res.json({ message: "no canteen found" });
+        return;
+      }
+    }
     const { firstName, lastName, email, phoneNo, password } =
       registerSchema.parse(req.body);
 
