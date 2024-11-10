@@ -65,7 +65,7 @@ export const handleOrderHandover = async (
 		}
 
 		// Update order items status to SENT
-		const updatedItems = await prisma.orderItem.updateMany({
+		await prisma.orderItem.updateMany({
 			where: {
 				orderId: orderId,
 				status: "WAITING_FOR_PICKUP",
