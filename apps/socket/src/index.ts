@@ -50,20 +50,27 @@ wss.on("connection", (ws: WebSocket) => {
 				}
 				case "subscribe":
 				case "unsubscribe": {
-					if (!userId || !canteenId) {
+					if (!userId || !canteenId || !userRole) {
 						ws.send(JSON.stringify({ error: "Not initialized" }));
 						return;
 					}
-					setScreenActive(
+					
+					const success = setScreenActive(
 						userId,
 						validatedData.screen,
 						validatedData.type === "subscribe",
-						canteenId
+						canteenId,
+						userRole
 					);
+
+					if (!success) {
+						ws.send(JSON.stringify({ error: "User not authorized to access" }));
+					}
 					break;
 				}
 			}
 		} catch (error) {
+			console.error(error);
 			ws.send(
 				JSON.stringify({ error: "Invalid message or authentication failed" })
 			);

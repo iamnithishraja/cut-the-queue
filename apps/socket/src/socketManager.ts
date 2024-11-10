@@ -42,11 +42,14 @@ export function setScreenActive(
 	userId: string,
 	screen: Screen,
 	active: boolean,
-	canteenId: string
-) {
-	const canteen = canteens.get(canteenId);
-	if (!canteen) return;
+	canteenId: string,
+	role: string
+): boolean {
+	if (screen === Screen.ORDERS && role !== "PARTNER") {
+		return false;
+	}
 
+	const canteen = canteens.get(canteenId)!;
 	const targetSet =
 		screen === Screen.MENU ? canteen.activeMenu : canteen.activeOrders;
 	if (active) {
@@ -54,6 +57,7 @@ export function setScreenActive(
 	} else {
 		targetSet.delete(userId);
 	}
+	return true;
 }
 
 export function getActiveMenuSockets(canteenId: string): WebSocket[] {
