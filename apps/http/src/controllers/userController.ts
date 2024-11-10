@@ -26,6 +26,7 @@ import {
   INVALID_OTP,
   OTP_VERIFICATION_SUCCESSFUL,
   OTP_SENT,
+  CANTEENS_NOT_FOUND,
 } from "@repo/constants";
 import { CustomRequest } from "../types/userTypes";
 import KafkaProducer from "../publisher/kafka";
@@ -41,6 +42,22 @@ const register = async (
 ): Promise<any> => {
   try {
     const { canteenId, canteenPassword } = req.body;
+
+    const {
+      partnerFirstName,
+      partnerLastName,
+      partnerEmail,
+      partnerPhoneNo,
+      partnerPassword,
+    } = req.body;
+    const existingPartner = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: partnerEmail }, { phoneNumber: partnerPhoneNo }],
+      },
+    });
+    if (existingPartner) {
+      return res.status(400).json({ message: USER_ALREADY_EXISTS });
+    }
     if (canteenId && canteenPassword) {
       registerAdminSchema.parse({
         canteenId: canteenId,
@@ -54,17 +71,9 @@ const register = async (
       if (canteen) {
         const validPartnerPassword = await bcrypt.compare(canteenPassword, canteen.password);
         if (!validPartnerPassword) {
-          res.json({ message: INVALID_CREDENTIALS });
-          return;
+          return res.status(400).json({ message: INVALID_CREDENTIALS });
         }
 
-        const {
-          partnerFirstName,
-          partnerLastName,
-          partnerEmail,
-          partnerPhoneNo,
-          partnerPassword,
-        } = req.body;
         registerSchema.parse({
           firstName: partnerFirstName,
           lastName: partnerLastName,
@@ -95,17 +104,17 @@ const register = async (
         });
         if(newPartner){
         const partnerToken = generateToken(newPartner.id);
-        res.status(201).json({ user: newPartner, partnerToken });
-        return;
+        return res.status(201).json({ user: newPartner, partnerToken });
+        
         }
         else{
-          res.json({message:'couldnt create user'});
-          return;
+          //if newPartner couldn't be registered
+          return res.status(500).json({message:SERVER_ERROR});
         }
 
       } else {
-        res.json({ message: "no canteen found" });
-        return;
+        return res.json({ message: CANTEENS_NOT_FOUND });
+        
       }
     }
     const { firstName, lastName, email, phoneNo, password } =
