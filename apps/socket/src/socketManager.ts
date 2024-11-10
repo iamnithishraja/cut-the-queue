@@ -8,7 +8,7 @@ function getOrCreateCanteen(canteenId: string): CanteenSockets {
 	if (!canteens.has(canteenId)) {
 		canteens.set(canteenId, {
 			consumers: new Map(),
-			admins: new Map(),
+			partners: new Map(),
 			activeMenu: new Set(),
 			activeOrders: new Set(),
 		});
@@ -18,8 +18,8 @@ function getOrCreateCanteen(canteenId: string): CanteenSockets {
 
 export function addDevice(ws: WebSocket, user: UserType, canteenId: string) {
 	const canteen = getOrCreateCanteen(canteenId);
-	if (user.role === "ADMIN") {
-		canteen.admins.set(user.id, ws);
+	if (user.role === "PARTNER") {
+		canteen.partners.set(user.id, ws);
 	} else {
 		canteen.consumers.set(user.id, ws);
 	}
@@ -29,8 +29,8 @@ export function removeDevice(userId: string, role: string, canteenId: string) {
 	const canteen = canteens.get(canteenId);
 	if (!canteen) return;
 
-	if (role === "ADMIN") {
-		canteen.admins.delete(userId);
+	if (role === "PARTNER") {
+		canteen.partners.delete(userId);
 		canteen.activeOrders.delete(userId);
 	} else {
 		canteen.consumers.delete(userId);
@@ -70,7 +70,7 @@ export function getActiveOrderSockets(canteenId: string): WebSocket[] {
 	if (!canteen) return [];
 
 	return Array.from(canteen.activeOrders)
-		.map((id) => canteen.admins.get(id))
+		.map((id) => canteen.partners.get(id))
 		.filter((socket): socket is WebSocket => socket !== undefined);
 }
 

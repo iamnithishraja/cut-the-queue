@@ -8,7 +8,7 @@ export enum Screen {
 
 export type CanteenSockets = {
   consumers: Map<string, WebSocket>;
-  admins: Map<string, WebSocket>;
+	partners: Map<string, WebSocket>;
   activeMenu: Set<string>;
   activeOrders: Set<string>;
 };
