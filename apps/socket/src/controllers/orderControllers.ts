@@ -7,7 +7,11 @@ import {
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
 import { canteenIdSchema, orderIdSchema } from "../schemas/validationSchemas";
-import { broadcastMenuUpdate, sendUpdatedOrder } from "../utils/socketUtils";
+import {
+	broadcastMenuUpdate,
+	sendUpdatedOrderToUser,
+	broadcastOrderUpdate
+} from "../utils/socketUtils";
 
 export const broadcastQuantity = async (
 	req: Request,
@@ -101,12 +105,12 @@ export const handleOrderHandover = async (
 			},
 		});
 
-		res.status(200).json({
-			message: ORDER_HANDOVER,
-			order: updatedOrder,
-		});
+		sendUpdatedOrderToUser(updatedOrder, order!.canteenId);
+		broadcastOrderUpdate(updatedOrder, order!.canteenId);
 
-		sendUpdatedOrder(updatedOrder, order!.canteenId);
+		res.status(200).json({
+			message: ORDER_HANDOVER
+		});
 	} catch (error) {
 		console.error(error);
 		return res.status(500).json({ message: SERVER_ERROR });
