@@ -23,13 +23,13 @@ export function verifyToken(token: string): string {
 		throw new Error(USER_NOT_REGISTERED);
 	}
 
-	const decoded_data = jwt.verify(token, JWT_SECRET) as JwtPayload;
+	const decodedData = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-	if (!decoded_data.userId) {
+	if (!decodedData.userId) {
 		throw new Error(USER_NOT_REGISTERED);
 	}
 
-	return decoded_data.userId;
+	return decodedData.userId;
 }
 
 export async function getVerifiedUser(userId: string) {
