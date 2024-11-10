@@ -2,7 +2,7 @@ import { UserType } from "@repo/db/client";
 import { WebSocket } from "ws";
 import { CanteenSockets, Screen } from "./types/socketTypes";
 
-const canteens: Map<string, CanteenSockets> = new Map();
+export const canteens: Map<string, CanteenSockets> = new Map();
 
 function getOrCreateCanteen(canteenId: string): CanteenSockets {
 	if (!canteens.has(canteenId)) {

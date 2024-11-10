@@ -1,17 +1,28 @@
-import { getActiveMenuSockets, getActiveOrderSockets } from "../socketManager";
+import {
+	canteens,
+	getActiveMenuSockets,
+	getActiveOrderSockets,
+} from "../socketManager";
 
-export const broadcastMenuUpdate = (payload: any): void => {
-  const data = JSON.stringify({ type: "UPDATE_MENU_ITEMS", payload });
-  const activeSockets = getActiveMenuSockets();
-  activeSockets.forEach((socket) => {
-    socket.send(data);
-  });
+export const broadcastMenuUpdate = (payload: any, canteenId: string): void => {
+	const data = JSON.stringify({ type: "UPDATE_MENU_ITEMS", payload });
+	const activeSockets = getActiveMenuSockets(canteenId);
+	activeSockets.forEach((socket) => {
+		socket.send(data);
+	});
 };
 
-export const broadcastOrderUpdate = (payload: any): void => {
-  const data = JSON.stringify({ type: "ORDER_UPDATE", payload });
-  const activeSockets = getActiveOrderSockets();
-  activeSockets.forEach((socket) => {
-    socket.send(data);
-  });
+export const sendUpdatedOrder = (payload: any, canteenId: string): void => {
+	const data = JSON.stringify({ type: "ORDER_UPDATE", payload });
+
+	const activeSockets = getActiveOrderSockets(canteenId);
+	activeSockets.forEach((socket) => {
+		socket.send(data);
+	});
+
+	const canteen = canteens.get(canteenId);
+	const userSocket = canteen?.consumers.get(payload.userId);
+	if (userSocket) {
+		userSocket.send(data);
+	}
 };
