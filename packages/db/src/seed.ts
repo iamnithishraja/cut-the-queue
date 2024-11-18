@@ -6,6 +6,7 @@ async function main() {
   const dolphinCanteen = await prisma.canteen.create({
     data: {
       name: "Dolphin Canteen",
+      password: "$2b$10$195nw6jCzG8m1sIcXnNgmu687qCWhDSNNFv.T2CovT1Unu2rymrWS",
       canteenImage: "https://www.dolphinproject.com/wp-content/uploads/2020/07/Wild-copy.jpg",
       menuItems: {
         create: [

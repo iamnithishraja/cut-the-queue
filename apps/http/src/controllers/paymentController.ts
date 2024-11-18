@@ -237,14 +237,23 @@ const getAllOrders = async (req: CustomRequest, res: Response) => {
 
 const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
     try {
-        const canteenId = req.user?.canteenId;
+        const canteenId = req.user!.canteenId;
+
         if (!canteenId) {
             res.status(405).json({ message: USER_NOT_AUTHORISED });
             return;
         }
         const orders = await prisma.order.findMany({
             where: {
-                canteenId: canteenId
+                canteenId: canteenId,
+                orderStatus: "PROCESSING"
+            },
+            include: {
+                OrderItem: {
+                    include: {
+                        menuItem: true
+                    }
+                }
             }
         });
         res.json({ items: orders });

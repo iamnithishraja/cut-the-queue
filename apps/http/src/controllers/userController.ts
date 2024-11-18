@@ -271,4 +271,42 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
   }
 };
 
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp };
+const registerPartner = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { canteenId, canteenPassword } = req.body;
+    if (!canteenId || !canteenPassword) {
+      return res.status(400).json({ message: INVALID_CREDENTIALS });
+    }
+    const canteen = await prisma.canteen.findUnique({
+      where: {
+        id: canteenId
+      }
+    });
+
+    if (!canteen) {
+      return res.status(400).json({ message: INVALID_CREDENTIALS });
+    }
+    const isPasswordValid = await bcrypt.compare(canteenPassword, canteen.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: INVALID_CREDENTIALS });
+    }
+    const user = await prisma.user.update({
+      where: {
+        id: req.user!.id
+      },
+      data: {
+        canteenId: canteen.id,
+        role: "PARTNER"
+      }
+    });
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ message: SERVER_ERROR });
+  }
+}
+
+export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner };

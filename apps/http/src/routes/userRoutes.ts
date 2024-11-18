@@ -5,6 +5,7 @@ import {
   googleLogin,
   getProfile,
   requestOtp,
+  registerPartner,
   submitOtp,
 } from "../controllers/userController";
 import { isAuthenticatedUser } from "../middlewares/auth";
@@ -17,5 +18,9 @@ userRoute.post("/google", googleLogin);
 userRoute.post("/otp", requestOtp);
 userRoute.post("/submitOtp", submitOtp);
 userRoute.get("/profile", isAuthenticatedUser, getProfile);
+
+
+// partner routes
+userRoute.post("/registerPartner", isAuthenticatedUser, registerPartner);
 
 export default userRoute;
