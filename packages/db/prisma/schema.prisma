@@ -15,6 +15,8 @@ model User {
   email              String    @unique
   phoneNumber        String    @unique
   isVerified         Boolean   @default(false)
+  canteenId          String?
+  canteen            Canteen?   @relation(fields: [canteenId], references: [id])
   resetPasswordToken String?
   expire             DateTime?
   otp                String?
@@ -32,8 +34,10 @@ model Canteen {
   name         String
   canteenImage String?
   isOpen       Boolean    @default(true)
-  menuItems    MenuItem[] // relation to menu items
-  orders       Order[] // relation to orders
+  menuItems    MenuItem[]
+  password     String
+  orders       Order[]
+  User         User[]
 
   @@index([id])
   @@map("canteens")
@@ -111,6 +115,7 @@ enum AvailabilityStatus {
 enum UserRole {
   USER
   PARTNER
+  ADMIN
 }
 
 enum MenuItemType {

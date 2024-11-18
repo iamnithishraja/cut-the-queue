@@ -8,7 +8,7 @@ CREATE TYPE "OrderStatus" AS ENUM ('PROCESSING', 'DONE');
 CREATE TYPE "AvailabilityStatus" AS ENUM ('AVAILABLE', 'UNAVAILABLE');
 
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('USER', 'PARTNER');
+CREATE TYPE "UserRole" AS ENUM ('USER', 'PARTNER', 'ADMIN');
 
 -- CreateEnum
 CREATE TYPE "MenuItemType" AS ENUM ('Instant', 'TimeConsuming');
@@ -22,6 +22,7 @@ CREATE TABLE "users" (
     "email" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "canteenId" TEXT,
     "resetPasswordToken" TEXT,
     "expire" TIMESTAMP(3),
     "otp" TEXT,
@@ -38,6 +39,7 @@ CREATE TABLE "canteens" (
     "name" TEXT NOT NULL,
     "canteenImage" TEXT,
     "isOpen" BOOLEAN NOT NULL DEFAULT true,
+    "password" TEXT NOT NULL,
 
     CONSTRAINT "canteens_pkey" PRIMARY KEY ("id")
 );
@@ -116,6 +118,9 @@ CREATE INDEX "orders_userId_idx" ON "orders"("userId");
 
 -- CreateIndex
 CREATE INDEX "orders_canteenId_idx" ON "orders"("canteenId");
+
+-- AddForeignKey
+ALTER TABLE "users" ADD CONSTRAINT "users_canteenId_fkey" FOREIGN KEY ("canteenId") REFERENCES "canteens"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_canteenId_fkey" FOREIGN KEY ("canteenId") REFERENCES "canteens"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

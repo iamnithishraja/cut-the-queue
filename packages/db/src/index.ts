@@ -1,4 +1,4 @@
-import { PrismaClient, User, MenuItemType, OrderItemStatus } from "@prisma/client";
+import { PrismaClient, User, MenuItemType, OrderItemStatus,UserRole } from "@prisma/client";
 
 const prismaClientSingleton = () => {
   return new PrismaClient();
@@ -19,6 +19,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export type UserType = User;
 export {
+  UserRole,
   MenuItemType,
   OrderItemStatus
 }

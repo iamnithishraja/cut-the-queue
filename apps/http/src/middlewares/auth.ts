@@ -1,11 +1,12 @@
 import jwt, { JsonWebTokenError, JwtPayload } from "jsonwebtoken";
 import { Response, NextFunction } from "express";
 import { CustomRequest } from "../types/userTypes";
-import prisma from "@repo/db/client";
+import prisma, { UserRole } from "@repo/db/client";
 import "dotenv/config";
 import {
   SERVER_ERROR,
   USER_ALREADY_EXISTS,
+  USER_NOT_AUTHORISED,
   USER_NOT_REGISTERED,
   USER_NOT_VERIFIED,
 } from "@repo/constants";
@@ -67,4 +68,28 @@ export async function isAuthenticatedUser(
       console.log(e);
     }
   }
+}
+
+export async function checkRole(
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction,
+  roles: UserRole[]
+) {
+  if (!req.user) {
+    res.status(401).json({ message: USER_NOT_REGISTERED });
+    return;
+  }
+  let isAuthorised = false;
+  for (let i = 0; i < roles.length; i++) {
+    const role = roles[i]
+    if (role === req.user.role) {
+      isAuthorised = true;
+    }
+  }
+  if (!isAuthorised) {
+    res.status(405).json({ message: USER_NOT_AUTHORISED });
+    return;
+  }
+  next();
 }
