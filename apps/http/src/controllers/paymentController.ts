@@ -217,6 +217,7 @@ const getAllOrders = async (req: CustomRequest, res: Response) => {
         const items = await prisma.order.findMany({
             where: {
                 userId: req.user?.id,
+                isPaid: true,
                 orderStatus: "PROCESSING"
             },
             include: {

@@ -52,7 +52,7 @@ export const handleOrderHandover = async (
 		const orderId = req.params.orderId;
 
 		// Get order with its items
-		const order = await prisma.orders.findUnique({
+		const order = await prisma.order.findUnique({
 			where: { id: orderId },
 			include: {
 				OrderItem: {
