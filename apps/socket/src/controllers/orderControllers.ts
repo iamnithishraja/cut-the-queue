@@ -7,14 +7,17 @@ import {
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
 import { canteenIdSchema, orderIdSchema } from "../schemas/validationSchemas";
-import { broadcastToConnectedDevices } from "../utils/socketUtils";
+import {
+	broadcastMenuUpdate,
+	sendUpdatedOrderToUser,
+	broadcastOrderUpdate
+} from "../utils/socketUtils";
 
 export const broadcastQuantity = async (
 	req: Request,
 	res: Response
 ): Promise<any> => {
 	try {
-		// Validate params
 		const result = canteenIdSchema.safeParse({ params: req.params });
 		if (!result.success) {
 			return res.status(400).json(result.error);
@@ -30,7 +33,7 @@ export const broadcastQuantity = async (
 			return;
 		}
 
-		broadcastToConnectedDevices("UPDATE_MENU_ITEMS", updatedMenuItems);
+		broadcastMenuUpdate(updatedMenuItems, canteenId!);
 		res.status(200).json({ message: BROADCAST_QUANTITY });
 	} catch (e) {
 		console.error(e);
@@ -66,7 +69,7 @@ export const handleOrderHandover = async (
 		}
 
 		// Update order items status to SENT
-		const updatedItems = await prisma.orderItem.updateMany({
+		await prisma.orderItem.updateMany({
 			where: {
 				orderId: orderId,
 				status: "WAITING_FOR_PICKUP",
@@ -102,12 +105,11 @@ export const handleOrderHandover = async (
 			},
 		});
 
-		broadcastToConnectedDevices("ORDER_HANDOVER", updatedOrder);
+		sendUpdatedOrderToUser(updatedOrder, order!.canteenId);
+		broadcastOrderUpdate(updatedOrder, order!.canteenId);
 
-		// Send response to canteen
-		return res.status(200).json({
-			message: ORDER_HANDOVER,
-			order: updatedOrder,
+		res.status(200).json({
+			message: ORDER_HANDOVER
 		});
 	} catch (error) {
 		console.error(error);
