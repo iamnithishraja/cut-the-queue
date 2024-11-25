@@ -13,3 +13,13 @@ export const PaymentVerificationSchema = z.object({
     razorpay_order_id: z.string(),
     razorpay_signature: z.string()
 });
+
+export const toogleSchema = z.object({
+    menuItemId: z.string().cuid(),
+    status: z.boolean(),
+})
+
+export const updateQuantitySchema = z.object({
+    menuItemId: z.string().cuid(),
+    quantity: z.number().nonnegative(),
+})

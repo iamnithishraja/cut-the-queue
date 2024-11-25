@@ -256,6 +256,7 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
         firstName: true,
         lastName: true,
         userProfile: true,
+        canteenId: true,
         email: true,
         phoneNumber: true,
         isVerified: true,
