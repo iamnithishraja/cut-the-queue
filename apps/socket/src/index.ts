@@ -4,7 +4,8 @@ import express from "express";
 import WebSocket, { WebSocketServer } from "ws";
 import clientRouter from "./routes/orderRoutes";
 import { socketMessageSchema } from "./schemas/validationSchemas";
-import { addDevices, removeDevice } from "./socketManager";
+import { addDevice, removeDevice, setScreenActive } from "./socketManager";
+import { verifyAndGetUser } from "@repo/utils";
 
 const app = express();
 
@@ -28,22 +29,58 @@ const httpServer = app.listen(process.env.PORT, () => {
 const wss = new WebSocketServer({ server: httpServer });
 
 wss.on("connection", (ws: WebSocket) => {
-	console.log("A user connected");
-	ws.on("message", (data: string) => {
+	let userId: string | null = null;
+	let userRole: string | null = null;
+	let canteenId: string | null = null;
+
+	ws.on("message", async (data: string) => {
 		try {
 			const parsedData = JSON.parse(data);
 			const validatedData = socketMessageSchema.parse(parsedData);
-			
-			if (validatedData.type === "init") {
-				addDevices(ws, validatedData.id);
+
+			switch (validatedData.type) {
+				case "init": {
+					const user = await verifyAndGetUser(validatedData.token);
+					userId = user.id;
+					userRole = user.role;
+					canteenId = validatedData.id;
+					
+					addDevice(ws, user, canteenId);
+					break;
+				}
+				case "subscribe":
+				case "unsubscribe": {
+					if (!userId || !canteenId || !userRole) {
+						ws.send(JSON.stringify({ error: "Not initialized" }));
+						return;
+					}
+					
+					const success = setScreenActive(
+						userId,
+						validatedData.screen,
+						validatedData.type === "subscribe",
+						canteenId,
+						userRole
+					);
+
+					if (!success) {
+						ws.send(JSON.stringify({ error: "User not authorized to access" }));
+					}
+					break;
+				}
 			}
 		} catch (error) {
-			ws.send(JSON.stringify({ error: "Invalid message format" }));
+			console.error(error);
+			ws.send(
+				JSON.stringify({ error: "Invalid message or authentication failed" })
+			);
 		}
 	});
 
+	// This close handler is also scoped to this specific connection
 	ws.on("close", () => {
-		const socket = ws;
-		removeDevice(socket);
+		if (userId && userRole && canteenId) {
+			removeDevice(userId, userRole, canteenId);
+		}
 	});
 });
