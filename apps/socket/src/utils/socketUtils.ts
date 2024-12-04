@@ -12,11 +12,11 @@ export const broadcastMenuUpdate = (payload: any, canteenId: string): void => {
 	});
 };
 
-export const sendUpdatedOrderToUser = (payload: any, canteenId: string): void => {
+export const sendUpdatedOrderToUser = (payload: any, canteenId: string, userId: string): void => {
 	const data = JSON.stringify({ type: "ORDER_UPDATE", payload });
 
 	const canteen = canteens.get(canteenId);
-	const userSocket = canteen?.consumers.get(payload.userId);
+	const userSocket = canteen?.consumers.get(userId);
 	if (userSocket) {
 		userSocket.send(data);
 	}
