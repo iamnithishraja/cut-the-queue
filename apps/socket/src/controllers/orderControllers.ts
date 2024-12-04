@@ -105,7 +105,7 @@ export const handleOrderHandover = async (
 			},
 		});
 
-		sendUpdatedOrderToUser(updatedOrder, order!.canteenId);
+		sendUpdatedOrderToUser(updatedOrder, order!.canteenId, order!.userId);
 		broadcastOrderUpdate(updatedOrder, order!.canteenId);
 
 		res.status(200).json({
