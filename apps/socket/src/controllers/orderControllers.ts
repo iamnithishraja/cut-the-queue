@@ -162,3 +162,51 @@ export const handleItemCooked = async (
 		res.status(500).json({ message: SERVER_ERROR });
 	}
 };
+
+export const handleScanHandover = async (
+	req: Request,
+	res: Response
+): Promise<any> => {
+	try {
+		const result = orderItemSchema.safeParse({
+			params: req.params,
+			body: req.body
+		});
+		
+		if (!result.success) {
+			return res.status(400).json(result.error);
+		}
+
+		const { order_item_id } = req.params;
+		const { user_id } = req.body;
+
+		const updatedOrderItem = await prisma.orderItem.update({
+			where: { id: order_item_id },
+			data: { status: "SENT" },
+			include: {
+				order: {
+					include: {
+						OrderItem: {
+							include: { menuItem: true }
+						}
+					}
+				}
+			}
+		});
+
+		if (updatedOrderItem.order) {
+			sendUpdatedOrderToUser(
+				updatedOrderItem.order,
+				updatedOrderItem.order.canteenId,
+				user_id
+			);
+
+			res.status(200).json(updatedOrderItem.order);
+		} else {
+			res.status(404).json({ message: "Order not found" });
+		}
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: SERVER_ERROR });
+	}
+};
