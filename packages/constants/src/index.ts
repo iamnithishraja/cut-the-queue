@@ -1,4 +1,3 @@
-export { dark, light } from "./Colors";
 export {
   INVALID_CREDENTIALS,
   INVALID_GOOGLE_TOKEN,
