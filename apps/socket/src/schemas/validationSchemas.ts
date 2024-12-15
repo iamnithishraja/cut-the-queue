@@ -29,6 +29,16 @@ export const socketMessageSchema = z.discriminatedUnion("type", [
 	}),
 ]);
 
+export const orderItemSchema = z.object({
+  params: z.object({
+    order_item_id: z.string().uuid(),
+  }),
+  body: z.object({
+    user_id: z.string().uuid(),
+  }),
+});
+
 export type CanteenIdSchema = z.infer<typeof canteenIdSchema>;
 export type OrderIdSchema = z.infer<typeof orderIdSchema>;
 export type SocketMessageSchema = z.infer<typeof socketMessageSchema>;
+export type OrderItemSchema = z.infer<typeof orderItemSchema>;
