@@ -1,32 +1,30 @@
 import { INVALID_INPUT, SERVER_ERROR } from "@repo/constants";
 import { Response } from "express";
 import { CustomRequest } from "../types/userTypes";
-import { toogleSchema, updateQuantitySchema } from "../schemas/ordersSchemas";
 import prisma from "@repo/db/client";
 import z from "zod";
+import { menuItemSchema } from "../schemas/ordersSchemas";
+import items from "razorpay/dist/types/items";
 
-async function changeItemStatus(req: CustomRequest, res: Response) {
+async function updateItem(req: CustomRequest, res: Response) {
     try {
-        const { menuItemId, status } = toogleSchema.parse(req.body);
-        const menuItem = prisma.menuItem.update({
+        const parsedMenuItem = menuItemSchema.parse(req.body);
+        await prisma.menuItem.update({
             where: {
-                id: menuItemId
+                id: parsedMenuItem.id
             },
-            data: {
-                status: status ? "AVAILABLE" : "UNAVAILABLE"
-            }
-        });
-        if (!menuItem) {
-            res.status(400).json({ message: INVALID_INPUT });
-            return;
-        }
-        const items = prisma.menuItem.findMany({
+            data: parsedMenuItem
+        })
+        const items = await prisma.menuItem.findMany({
             where: {
-                id: menuItemId
+                canteenId: parsedMenuItem.canteenId
             }
         })
         // TODO: brodacst menu items.
-        res.json({ items });
+        res.json({
+            canteenId: parsedMenuItem.id,
+            items
+        });
     } catch (error) {
         if (error instanceof z.ZodError) {
             res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
@@ -36,35 +34,5 @@ async function changeItemStatus(req: CustomRequest, res: Response) {
     }
 }
 
-async function changeItemQuantity(req: CustomRequest, res: Response) {
-    try {
-        const { menuItemId, quantity } = updateQuantitySchema.parse(req.body);
-        const menuItem = prisma.menuItem.update({
-            where: {
-                id: menuItemId
-            },
-            data: {
-                avilableLimit: quantity
-            }
-        });
-        if (!menuItem) {
-            res.status(400).json({ message: INVALID_INPUT });
-            return;
-        }
-        const items = prisma.menuItem.findMany({
-            where: {
-                id: menuItemId
-            }
-        })
-        // TODO: brodacst menu items.
-        res.json({ items });
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
-        } else {
-            res.status(500).json({ message: SERVER_ERROR });
-        }
-    }
-}
 
-export { changeItemStatus, changeItemQuantity }
+export { updateItem }
