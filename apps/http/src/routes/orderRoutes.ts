@@ -1,11 +1,11 @@
-import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
-import express, {NextFunction, Response} from "express";
-import { checkout, getAllOrders, paymentVerification } from "../controllers/paymentController";
 import { UserRole } from "@repo/db/client";
-import { updateItem,chageToPickup, getAllOrdersByCanteenId,finishOrder } from "../controllers/adminController";
+import express, { NextFunction, Response, Router } from "express";
+import { chageToPickup, finishOrder, getAllOrdersByCanteenId, updateItem } from "../controllers/adminController";
+import { checkout, getAllOrders, paymentVerification } from "../controllers/paymentController";
+import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
 import { CustomRequest } from "../types/userTypes";
 
-const orderRouter = express.Router();
+const orderRouter: Router = express.Router();
 orderRouter.route("/checkout").post(isAuthenticatedUser, checkout);
 orderRouter.get("/getAllOrders", isAuthenticatedUser, getAllOrders);
 orderRouter.route("/paymentverification").post(paymentVerification);

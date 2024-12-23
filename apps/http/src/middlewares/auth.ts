@@ -1,7 +1,7 @@
 import jwt, { JsonWebTokenError, JwtPayload } from "jsonwebtoken";
 import { Response, NextFunction } from "express";
 import { CustomRequest } from "../types/userTypes";
-import prisma, { UserRole } from "@repo/db/client";
+import prisma, { UserRole } from "@cut-the-queue/db/client";
 import "dotenv/config";
 import {
   SERVER_ERROR,
@@ -9,7 +9,7 @@ import {
   USER_NOT_AUTHORISED,
   USER_NOT_REGISTERED,
   USER_NOT_VERIFIED,
-} from "@repo/constants";
+} from "@cut-the-queue/constants";
 import dotenv from "dotenv";
 dotenv.config();
 
