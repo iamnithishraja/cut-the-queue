@@ -10,7 +10,7 @@ export default class KafkaConsumerBase {
   constructor(groupId: string) {
     this.kafka = new Kafka({
       clientId: process.env.KAFKA_CLIENT_ID,
-      brokers: [`${process.env.KAFKA_HOST}`],
+      brokers: [`${process.env.KAFKA_BROKER}`],
     });
 
     this.consumer = this.kafka.consumer({ groupId });

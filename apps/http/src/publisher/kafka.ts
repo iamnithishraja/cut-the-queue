@@ -7,7 +7,7 @@ export default class KafkaProducer {
   constructor(clientId: string) {
     this.kafka = new Kafka({
       clientId: clientId,
-      brokers: ["localhost:29092"],
+      brokers: [process.env.KAFKA_BROKER || "http://localhost:29092"],
     });
     this.producer = this.kafka.producer({ createPartitioner: Partitioners.LegacyPartitioner });
   }

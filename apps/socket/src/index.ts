@@ -5,7 +5,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import clientRouter from "./routes/orderRoutes";
 import { socketMessageSchema } from "./schemas/validationSchemas";
 import { addDevice, removeDevice, setScreenActive } from "./socketManager";
-import { verifyAndGetUser } from "@repo/utils";
+import { verifyAndGetUser } from "@cut-the-queue/utils";
 
 const app = express();
 

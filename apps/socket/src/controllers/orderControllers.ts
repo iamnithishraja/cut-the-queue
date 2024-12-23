@@ -3,8 +3,8 @@ import {
 	DISHES_NOT_FOUND,
 	ORDER_HANDOVER,
 	SERVER_ERROR,
-} from "@repo/constants";
-import prisma from "@repo/db/client";
+} from "@cut-the-queue/constants";
+import prisma from "@cut-the-queue/db/client";
 import { Request, Response } from "express";
 import { canteenIdSchema, orderIdSchema } from "../schemas/validationSchemas";
 import {

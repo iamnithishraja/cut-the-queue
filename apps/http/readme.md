@@ -1,1 +1,2 @@
-npx prisma generate
+# Service: Http Server readme 
+*Coming soon*

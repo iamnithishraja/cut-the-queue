@@ -1,9 +1,9 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "@cut-the-queue/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["dist"]
 }
