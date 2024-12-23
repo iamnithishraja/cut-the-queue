@@ -16,7 +16,8 @@ const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
         const orders = await prisma.order.findMany({
             where: {
                 canteenId: canteenId,
-                orderStatus: "PROCESSING"
+                orderStatus: "PROCESSING",
+                isPaid: true
             },
             include: {
                 OrderItem: {
@@ -91,4 +92,76 @@ async function chageToPickup(req: CustomRequest, res: Response) {
     }
 }
 
-export { updateItem, chageToPickup, getAllOrdersByCanteenId }
+
+async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
+    const id = req.params.orderId;
+
+    if (!id) {
+        res.status(400).json({ message: INVALID_INPUT });
+    }
+
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            const itemsToUpdate = await tx.orderItem.findMany({
+                where: {
+                    orderId: id,
+                    status: "WAITING_FOR_PICKUP"
+                },
+                include: {
+                    menuItem: true
+                }
+            });
+
+            if (itemsToUpdate.length === 0) {
+                throw new Error("No valid order items found");
+            }
+
+            // Update these specific items
+            await tx.orderItem.updateMany({
+                where: {
+                    id: {
+                        in: itemsToUpdate.map(item => item.id)
+                    }
+                },
+                data: {
+                    status: "SENT"
+                }
+            });
+
+            const order = await tx.order.findUnique({
+                where: { id },
+                include: {
+                    OrderItem: true
+                }
+            });
+
+            if (!order) {
+                throw new Error("Order not found");
+            }
+
+            const allItemsSent = order.OrderItem.every(item => item.status === "SENT");
+
+            if (allItemsSent) {
+                await tx.order.update({
+                    where: { id },
+                    data: { orderStatus: "DONE" }
+                });
+            }
+            
+            return itemsToUpdate;
+        });
+
+        // TODO: reflect the updated orders in user's app.
+        res.json(result);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : SERVER_ERROR;
+        const statusCode = errorMessage === "No valid order items found" ? 400 : 500;
+
+        res.status(statusCode).json({
+            message: statusCode === 400 ? INVALID_INPUT : SERVER_ERROR,
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+        });
+    }
+}
+
+export { updateItem, chageToPickup, getAllOrdersByCanteenId, finishOrder }

@@ -310,4 +310,12 @@ const registerPartner = async (
   }
 }
 
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner };
+const logout = async (req: CustomRequest, res: Response): Promise<any> => {
+  try {
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ message: SERVER_ERROR });
+  }
+}; 
+
+export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, logout };
