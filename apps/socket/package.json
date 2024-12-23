@@ -1,27 +1,30 @@
 {
-  "name": "Socket",
+  "name": "@cut-the-queue/socket",
   "version": "1.0.0",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx nodemon ./src/index.ts",
-    "start": "node ./src/index.ts",
-    "build": "npx tsc -b"
+    "dev": "NODE_ENV=development tsx --watch src/index.ts",
+    "build": "tsc -b",
+    "start": "NODE_ENV=production node dist/index.js & > dist/log.txt"
   },
   "devDependencies": {
-    "@repo/constants": "*",
-    "@repo/db": "*",
-    "@repo/typescript-config": "*",
-    "@repo/utils": "*",
-    "@types/jsonwebtoken": "^9.0.7"
-  },
-  "dependencies": {
+    "@cut-the-queue/typescript-config": "workspace:*",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/ws": "^8.5.12",
+    "@types/jsonwebtoken": "^9.0.7",
+    "esbuild": "^0.24.0",
+    "tsx": "^4.19.0",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@cut-the-queue/db": "workspace:*",
+    "@cut-the-queue/constants": "workspace:*",
+    "@cut-the-queue/utils": "workspace:*",
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.5",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
   }

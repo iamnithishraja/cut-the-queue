@@ -1,4 +1,4 @@
-import { UserType } from "@repo/db/client";
+import { UserType } from "@cut-the-queue/db/client";
 import { WebSocket } from "ws";
 import { CanteenSockets, Screen } from "./types/socketTypes";
 

@@ -1,12 +1,12 @@
-import express from "express";
 import {
 	broadcastQuantity,
 	handleItemCooked,
 	handleOrderHandover,
 	handleScanHandover,
 } from "../controllers/orderControllers";
+import express, { Router} from "express";
 
-const clientRouter = express.Router();
+const clientRouter: Router = express.Router();
 
 clientRouter.get("/notifyQuantity/:canteenId", broadcastQuantity);
 clientRouter.post("/handover/:orderId", handleOrderHandover);

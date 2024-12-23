@@ -1,5 +1,12 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
-  "include": ["./src"],
-  "exclude": ["dist", "build", "node_modules"]
-}
+    "extends": "@cut-the-queue/typescript-config/base.json",
+    "compilerOptions": {
+      "outDir": "./dist"
+    },
+    "include": ["./src"],
+    "exclude": ["dist"],
+    "declarationDir": "./dist", 
+    "emitDeclarationOnly": false,
+    "strict": true 
+  }
+  
