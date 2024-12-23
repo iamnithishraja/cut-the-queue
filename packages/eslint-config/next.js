@@ -1,9 +1,9 @@
-const { resolve } = require("node:path");
+import  { resolve } from "node:path";
 
 const project = resolve(process.cwd(), "tsconfig.json");
 
 /** @type {import("eslint").Linter.Config} */
-module.exports = {
+const config = {
   extends: [
     "eslint:recommended",
     "prettier",
@@ -33,3 +33,5 @@ module.exports = {
   ],
   overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
 };
+
+export default config;

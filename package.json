@@ -1,26 +1,21 @@
 {
   "name": "cut-the-queue",
-  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "packageManager": "pnpm@9.4.0",
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "docker:build": "docker-compose -f docker-compose.yaml build",
-    "docker:up": "docker-compose -f docker-compose.yaml up",
-    "docker:down": "docker-compose -f docker-compose.yaml down"
+    "prisma:migrate": "pnpm --filter @cut-the-queue/db prisma:migrate",
+    "dev": "pnpm --stream -r dev",
+    "build:packages": "pnpm --stream -r install && pnpm prisma:migrate && pnpm --filter ./packages/** run build && pnpm --stream -r install",
+    "start": "pnpm --stream -r start"
   },
   "devDependencies": {
-    "prettier": "^3.2.5",
-    "turbo": "^2.1.3",
-    "typescript": "^5.4.5"
+    "@cut-the-queue/eslint-config": "workspace:*",
+    "@cut-the-queue/typescript-config": "workspace:*",
+    "prettier": "^3.2.5"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "npm@10.8.2",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

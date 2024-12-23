@@ -1,12 +1,16 @@
 {
-  "name": "@repo/constants",
+  "name": "@cut-the-queue/constants",
   "version": "1.0.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b tsconfig.json"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
+  },
+  "devDependencies": {
+    "@cut-the-queue/eslint-config": "workspace:*",
+    "typescript": "^4.5.4"
   },
   "dependencies": {
     "expo": "^45.0.8",

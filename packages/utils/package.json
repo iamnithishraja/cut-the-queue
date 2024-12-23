@@ -1,19 +1,23 @@
 {
-  "name": "@repo/utils",
+  "name": "@cut-the-queue/utils",
   "version": "1.0.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b tsconfig.json"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
+  "devDependencies": {
     "@types/dotenv": "^6.1.1",
-    "dotenv": "^16.4.5"
+    "@types/jsonwebtoken": "^9.0.7",
+    "@cut-the-queue/db": "workspace:*",
+    "@cut-the-queue/constants": "workspace:*",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.2"
   }
 }
