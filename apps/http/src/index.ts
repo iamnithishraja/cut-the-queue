@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 export const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY || "your-razorpay-keyid",
-  key_secret: process.env.RAZORPAY_APT_SECRET,
+  key_secret: process.env.RAZORPAY_API_SECRET,
 });
 
 

@@ -8,12 +8,12 @@ import {
   requestOtpSchema,
   submitOtpSchema,
 } from "../schemas/userSchemas";
-import prisma from "@repo/db/client";
+import prisma from "@cut-the-queue/db/client";
 import {
   createVerificationMessage,
   generateOTP,
   generateToken,
-} from "@repo/utils";
+} from "@cut-the-queue/utils";
 import z from "zod";
 import {
   INVALID_CREDENTIALS,
@@ -25,7 +25,7 @@ import {
   INVALID_OTP,
   OTP_VERIFICATION_SUCCESSFUL,
   OTP_SENT,
-} from "@repo/constants";
+} from "@cut-the-queue/constants";
 import { CustomRequest } from "../types/userTypes";
 import KafkaProducer from "../publisher/kafka";
 

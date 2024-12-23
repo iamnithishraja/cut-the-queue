@@ -1,10 +1,10 @@
 import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
-import express from "express";
+import express, { Router } from "express";
 import { checkout, getAllOrders, paymentVerification } from "../controllers/paymentController";
-import { UserRole } from "@repo/db/client";
+import { UserRole } from "@cut-the-queue/db/client";
 import { updateItem,chageToPickup, getAllOrdersByCanteenId } from "../controllers/adminController";
 
-const orderRouter = express.Router();
+const orderRouter: Router = express.Router();
 orderRouter.route("/checkout").post(isAuthenticatedUser, checkout);
 orderRouter.get("/getAllOrders", isAuthenticatedUser, getAllOrders);
 orderRouter.route("/paymentverification").post(paymentVerification);
