@@ -27,7 +27,7 @@ const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
                 }
             }
         });
-        res.json({ items: orders });
+        res.json(orders);
     }
     catch (e) {
         res.status(500).json({ mesage: SERVER_ERROR });
@@ -129,13 +129,13 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
             });
 
             const order = await tx.order.findUnique({
-                where: { id },
+                where: { id, isPaid:true},
                 include: {
                     OrderItem: true
                 }
             });
 
-            if (!order) {
+            if (!order || order.isPaid === false) {
                 throw new Error("Order not found");
             }
 
