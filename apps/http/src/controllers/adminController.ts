@@ -1,7 +1,7 @@
-import { INVALID_INPUT, SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
+import { INVALID_INPUT, SERVER_ERROR, USER_NOT_AUTHORISED } from "@cut-the-queue/constants";
 import { Response } from "express";
 import { CustomRequest } from "../types/userTypes";
-import prisma from "@repo/db/client";
+import prisma from "@cut-the-queue/db/client";
 import z from "zod";
 import { menuItemSchema } from "../schemas/ordersSchemas";
 

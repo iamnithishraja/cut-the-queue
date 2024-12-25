@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { USER_NOT_REGISTERED, USER_NOT_VERIFIED } from "@repo/constants";
-import prisma from "@repo/db/client";
+import { USER_NOT_REGISTERED, USER_NOT_VERIFIED } from "@cut-the-queue/constants";
+import prisma from "@cut-the-queue/db/client";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";

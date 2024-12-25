@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import prisma from "@repo/db/client";
+import prisma from "@cut-the-queue/db/client";
 import {
   CANTEENS_NOT_FOUND,
   DISHES_NOT_FOUND,
   SERVER_ERROR,
-} from "@repo/constants";
+} from "@cut-the-queue/constants";
 async function getAllDishes(req: Request, res: Response): Promise<any> {
   const canteenId = req.params.canteenId;
   try {

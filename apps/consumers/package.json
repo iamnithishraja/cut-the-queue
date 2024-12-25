@@ -1,16 +1,18 @@
 {
-  "name": "consumers",
+  "name": "@cut-the-queue/consumers",
   "version": "1.0.0",
+  "main": "./dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc -b"
+    "dev": "NODE_ENV=development tsx --watch src/index.ts",
+    "build": "tsc -b",
+    "start": "NODE_ENV=production node dist/index.js & > dist/log.txt"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*",
+    "@cut-the-queue/typescript-config": "workspace:*",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^22.7.5",
-    "nodemon": "^2.0.22",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "tsx": "^4.19.0"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.3",

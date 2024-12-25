@@ -1,23 +1,30 @@
 {
-  "name": "@repo/db",
+  "name": "@cut-the-queue/db",
   "version": "1.0.0",
-  "description": "",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "scripts": {
-    "prisma:migrate": "npx prisma migrate dev",
-    "prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
-    "studio": "npx prisma studio",
+    "build": "tsc -b tsconfig.json",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "studio": "prisma studio",
     "seed": "tsx ./src/seed.ts"
   },
   "devDependencies": {
-    "@repo/eslint-config": "*"
+    "@cut-the-queue/eslint-config": "workspace:*",
+    "@types/node": "^22.7.5",
+    "client-s3": "link:@types/@aws-sdk/client-s3",
+    "prisma": "^5.15.1",
+    "ts-node": "10.9.2",
+    "tsx": "^4.19.1",
+    "typescript": "^4.5.4"
   },
   "exports": {
-    "./client": "./src/index.ts",
-    "./objectClient": "./src/objectStore.ts"
+    "./client": "./dist/index.js",
+    "./objectClient": "./dist/objectStore.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "link:src/s3.ts",
     "@prisma/client": "^5.15.1",
-    "tsx": "^4.19.1"
+    "aws-sdk": "^2.1692.0"
   }
 }
