@@ -53,6 +53,8 @@ export class WSManager {
 
   private async handleInit(socket: CustomWebSocket, message: z.infer<typeof InitMessageSchema>) {
     try {
+      console.log('Init message', message);
+      
       const user = await verifyAndGetUser(message.token);
 
       this.stateManager.addUser(user.id, socket, user.role);
