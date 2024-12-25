@@ -27,4 +27,11 @@ export const smsMessage = z.object({
   content: z.string(),
 });
 
+
+export const calculateAmountSchema = z.array(z.object({
+  id: z.string(),      
+  quantity: z.number().gt(0)  
+}));
+
+
 export type SMSMessage = Zod.infer<typeof smsMessage>;

@@ -29,3 +29,4 @@ export const menuItemSchema = z.object({
     canteenId: z.string(),
     status: AvailabilityStatusEnum.default('AVAILABLE'),
   });
+  

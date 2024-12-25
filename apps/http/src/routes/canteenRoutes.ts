@@ -1,6 +1,6 @@
 import { isAuthenticatedUser } from "../middlewares/auth";
 import express from "express";
-import { getAllCanteen, getAllDishes } from "../controllers/canteenController";
+import { getAllCanteen, getAllDishes,calculateAmountForOrder} from "../controllers/canteenController";
 
 const canteenRoutes = express.Router();
 
@@ -10,5 +10,6 @@ canteenRoutes.get(
   getAllDishes
 );
 canteenRoutes.get("/getAllCanteen", isAuthenticatedUser, getAllCanteen);
+canteenRoutes.post("/calculateAmount", calculateAmountForOrder);
 
 export default canteenRoutes;
