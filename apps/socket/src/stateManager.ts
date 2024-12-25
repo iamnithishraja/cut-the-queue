@@ -93,10 +93,10 @@ export class StateManager {
     });
   }
 
-  public broadcastOrdersToUser(userId: string, orders: any[]) {
+  public broadcastOrdersToUser(userId: string) {
     const userSocket = this.users.get(userId);
     if (userSocket) {
-      const message = JSON.stringify({ type: 'ORDERS_UPDATE_USER', data: orders });
+      const message = JSON.stringify({ type: 'ORDERS_UPDATE_USER' });
       userSocket.send(message);
     }
   }

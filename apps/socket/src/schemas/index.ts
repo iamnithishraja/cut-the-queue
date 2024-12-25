@@ -23,3 +23,8 @@ export const MessageSchema = z.discriminatedUnion('type', [
 	SubscribeMessageSchema,
 	UnsubscribeMessageSchema
 ]);
+
+export const orderItemSchema = z.object({
+	userId: z.string().cuid(),
+	orderId: z.string().cuid()
+});

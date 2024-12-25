@@ -1,13 +1,14 @@
 import {
 	BROADCAST_QUANTITY,
 	DISHES_NOT_FOUND,
-	ORDER_HANDOVER,
 	SERVER_ERROR,
   } from "@repo/constants";
   import prisma from "@repo/db/client";
   import { Request, Response } from "express";
 import { StateManager } from "../stateManager";
-  
+import { orderItemSchema } from "../schemas";
+import {z} from "zod";
+
   export const broadcastMenuItems = async (
 	req: Request,
 	res: Response
@@ -121,54 +122,28 @@ import { StateManager } from "../stateManager";
 // 	}
 //   };
   
-//   export const handleItemCooked = async (
-// 	req: Request,
-// 	res: Response
-//   ): Promise<any> => {
-// 	try {
-// 	  const result = orderItemSchema.safeParse({
-// 		params: req.params,
-// 		body: req.body
-// 	  });
-	  
-// 	  if (!result.success) {
-// 		return res.status(400).json(result.error);
-// 	  }
-  
-// 	  const { order_item_id } = req.params;
-// 	  const { user_id } = req.body;
-  
-// 	  const updatedOrderItem = await prisma.orderItem.update({
-// 		where: { id: order_item_id },
-// 		data: { status: "WAITING_FOR_PICKUP" },
-// 		include: {
-// 		  order: {
-// 			include: {
-// 			  OrderItem: {
-// 				include: { menuItem: true },
-// 			  },
-// 			},
-// 		  },
-// 		},
-// 	  });
-  
-// 	  if (updatedOrderItem.order) {
-// 		socketManager.sendToUser(
-// 		  user_id,
-// 		  updatedOrderItem.order.canteenId,
-// 		  {
-// 			type: "ORDER_UPDATE",
-// 			payload: updatedOrderItem.order
-// 		  }
-// 		);
-// 	  }
-  
-// 	  res.status(200).json({ message: "Item marked as cooked successfully" });
-// 	} catch (error) {
-// 	  console.error(error);
-// 	  res.status(500).json({ message: SERVER_ERROR });
-// 	}
-//   };
+  export const handleItemCooked = async (
+	req: Request,
+	res: Response
+  ): Promise<any> => {
+	try {
+	const userId = req.params.userId;
+	if (!userId) {
+		res.status(400).json({ message: "OrderId is required" });
+		return;
+	}
+	StateManager.getInstance().broadcastOrdersToUser(userId);
+	res.status(200).json({ message: "Notified User Successfully" });
+	} catch (error) {
+	if (error instanceof z.ZodError) {
+		return res.status(400).json({
+			error: 'Invalid input',
+			details: error.errors
+		});
+	}
+	  res.status(500).json({ message: SERVER_ERROR });
+	}
+  };
   
 //   export const handleScanHandover = async (
 // 	req: Request,
