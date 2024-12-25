@@ -86,11 +86,11 @@ const register = async (
 
 const login = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, password } = loginSchema.parse(req.body);
+    const { email, password,phoneNumber } = loginSchema.parse(req.body);
 
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email: email }, { phoneNumber: email }],
+        OR: [{ email: email }, { phoneNumber: phoneNumber }],
       },
       select: {
         id: true,
@@ -107,8 +107,9 @@ const login = async (req: Request, res: Response): Promise<any> => {
     if (!user || user.password == null) {
       return res.status(400).json({ message: INVALID_CREDENTIALS });
     }
-
+    
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    
     if (!isPasswordValid) {
       return res.status(400).json({ message: INVALID_CREDENTIALS });
     }

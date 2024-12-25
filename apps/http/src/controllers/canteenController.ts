@@ -56,7 +56,8 @@ const calculateAmountForOrder = async(req: Request, res: Response):Promise<any> 
     }
     let totalAmount = 0;
     if(dishes.length!=orderItemList.length){
-      return res.status(404).json({ message :"mismatch"})
+      return res.status(404).json({ message :"mismatch"});
+      //this will most likely not occur but handling that as well
     }
     dishes.forEach(dish => {
       const quantity = orderItemMap.get(dish?.id);
