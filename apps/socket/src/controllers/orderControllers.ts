@@ -2,42 +2,41 @@ import {
 	BROADCAST_QUANTITY,
 	DISHES_NOT_FOUND,
 	SERVER_ERROR,
-  } from "@repo/constants";
-  import prisma from "@repo/db/client";
-  import { Request, Response } from "express";
+} from "@cut-the-queue/constants";
+import prisma from "@cut-the-queue/db/client";
+import { Request, Response } from "express";
+import { z } from "zod";
 import { StateManager } from "../stateManager";
-import { orderItemSchema } from "../schemas";
-import {z} from "zod";
 
-  export const broadcastMenuItems = async (
+export const broadcastMenuItems = async (
 	req: Request,
 	res: Response
-  ): Promise<any> => {
+): Promise<any> => {
 	try {
-	  const canteenId = req.params.canteenId;
-	  if (!canteenId) {
-		res.status(400).json({ message: "Canteen ID is required" });
-		return;
-	  }
+		const canteenId = req.params.canteenId;
+		if (!canteenId) {
+			res.status(400).json({ message: "Canteen ID is required" });
+			return;
+		}
 
-	  const updatedMenuItems = await prisma.menuItem.findMany({
-		where: { canteenId },
-	  });
-  
-	  if (!updatedMenuItems || updatedMenuItems.length === 0) {
-		res.status(404).json({ message: DISHES_NOT_FOUND });
-		return;
-	  }
-	  
-	  StateManager.getInstance().broadcastMenuItems(canteenId, updatedMenuItems);
-  
-	  res.status(200).json({ message: BROADCAST_QUANTITY });
+		const updatedMenuItems = await prisma.menuItem.findMany({
+			where: { canteenId },
+		});
+
+		if (!updatedMenuItems || updatedMenuItems.length === 0) {
+			res.status(404).json({ message: DISHES_NOT_FOUND });
+			return;
+		}
+
+		StateManager.getInstance().broadcastMenuItems(canteenId, updatedMenuItems);
+
+		res.status(200).json({ message: BROADCAST_QUANTITY });
 	} catch (e) {
-	  console.error(e);
-	  res.status(500).json({ message: SERVER_ERROR });
+		console.error(e);
+		res.status(500).json({ message: SERVER_ERROR });
 	}
-  };
-  
+};
+
 //   export const handleOrderHandover = async (
 // 	req: Request,
 // 	res: Response
@@ -47,9 +46,9 @@ import {z} from "zod";
 // 	  if (!result.success) {
 // 		return res.status(400).json(result.error);
 // 	  }
-  
+
 // 	  const orderId = req.params.orderId;
-  
+
 // 	  // Get order with its items
 // 	  const order = await prisma.order.findUnique({
 // 		where: { id: orderId },
@@ -59,11 +58,11 @@ import {z} from "zod";
 // 		  },
 // 		},
 // 	  });
-  
+
 // 	  if (!order) {
 // 		return res.status(404).json({ message: "Order not found" });
 // 	  }
-  
+
 // 	  // Update order items status to SENT
 // 	  await prisma.orderItem.updateMany({
 // 		where: {
@@ -74,7 +73,7 @@ import {z} from "zod";
 // 		  status: "SENT",
 // 		},
 // 	  });
-  
+
 // 	  // Check if all items in the order are now SENT
 // 	  const remainingItems = await prisma.orderItem.count({
 // 		where: {
@@ -82,7 +81,7 @@ import {z} from "zod";
 // 		  status: { not: "SENT" },
 // 		},
 // 	  });
-  
+
 // 	  // If no remaining items, update order status to DONE
 // 	  if (remainingItems === 0) {
 // 		await prisma.order.update({
@@ -90,7 +89,7 @@ import {z} from "zod";
 // 		  data: { orderStatus: "DONE" },
 // 		});
 // 	  }
-  
+
 // 	  // Get updated order for response
 // 	  const updatedOrder = await prisma.order.findUnique({
 // 		where: { id: orderId },
@@ -100,19 +99,19 @@ import {z} from "zod";
 // 		  },
 // 		},
 // 	  });
-  
+
 // 	  // Send update to specific user
 // 	  socketManager.sendToUser(order.userId, order.canteenId, {
 // 		type: "ORDER_UPDATE",
 // 		payload: updatedOrder
 // 	  });
-  
+
 // 	  // Broadcast to all partners
 // 	  socketManager.broadcastToOrders(order.canteenId, {
 // 		type: "ORDER_UPDATE",
 // 		payload: updatedOrder
 // 	  });
-  
+
 // 	  res.status(200).json({
 // 		message: ORDER_HANDOVER
 // 	  });
@@ -121,30 +120,30 @@ import {z} from "zod";
 // 	  return res.status(500).json({ message: SERVER_ERROR });
 // 	}
 //   };
-  
-  export const handleItemCooked = async (
+
+export const handleItemCooked = async (
 	req: Request,
 	res: Response
-  ): Promise<any> => {
+): Promise<any> => {
 	try {
-	const userId = req.params.userId;
-	if (!userId) {
-		res.status(400).json({ message: "OrderId is required" });
-		return;
-	}
-	StateManager.getInstance().broadcastOrdersToUser(userId);
-	res.status(200).json({ message: "Notified User Successfully" });
+		const userId = req.params.userId;
+		if (!userId) {
+			res.status(400).json({ message: "OrderId is required" });
+			return;
+		}
+		StateManager.getInstance().broadcastOrdersToUser(userId);
+		res.status(200).json({ message: "Notified User Successfully" });
 	} catch (error) {
-	if (error instanceof z.ZodError) {
-		return res.status(400).json({
-			error: 'Invalid input',
-			details: error.errors
-		});
+		if (error instanceof z.ZodError) {
+			return res.status(400).json({
+				error: "Invalid input",
+				details: error.errors,
+			});
+		}
+		res.status(500).json({ message: SERVER_ERROR });
 	}
-	  res.status(500).json({ message: SERVER_ERROR });
-	}
-  };
-  
+};
+
 //   export const handleScanHandover = async (
 // 	req: Request,
 // 	res: Response
@@ -154,14 +153,14 @@ import {z} from "zod";
 // 		params: req.params,
 // 		body: req.body
 // 	  });
-	  
+
 // 	  if (!result.success) {
 // 		return res.status(400).json(result.error);
 // 	  }
-  
+
 // 	  const { order_item_id } = req.params;
 // 	  const { user_id } = req.body;
-  
+
 // 	  const updatedOrderItem = await prisma.orderItem.update({
 // 		where: { id: order_item_id },
 // 		data: { status: "SENT" },
@@ -175,7 +174,7 @@ import {z} from "zod";
 // 		  }
 // 		}
 // 	  });
-  
+
 // 	  if (updatedOrderItem.order) {
 // 		socketManager.sendToUser(
 // 		  user_id,
@@ -185,7 +184,7 @@ import {z} from "zod";
 // 			payload: updatedOrderItem.order
 // 		  }
 // 		);
-  
+
 // 		res.status(200).json(updatedOrderItem.order);
 // 	  } else {
 // 		res.status(404).json({ message: "Order not found" });

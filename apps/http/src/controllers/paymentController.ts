@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { CustomRequest } from "../types/userTypes";
 import { razorpayInstance } from "..";
-import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
+import prisma, { MenuItemType, OrderItemStatus } from "@cut-the-queue/db/client";
 import z from "zod";
 import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
-import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
+import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@cut-the-queue/constants";
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
@@ -32,7 +32,7 @@ async function checkout(req: CustomRequest, res: Response): Promise<any> {
         // Calculate total and verify quantities
         let total = 0;
         const orderItems = items.map(item => {
-            const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+            const menuItem = menuItems.find((mi: any) => mi.id === item.menuItemId);
             if (!menuItem) throw new Error('Item not found');
 
             if (menuItem.avilableLimit && item.quantity > menuItem.avilableLimit) {
@@ -127,7 +127,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         const razorpay_payment_id = entity.id;
         const razorpay_order_id = entity.order_id;
 
-        const result = await prisma.$transaction(async (prismaClient) => {
+        const result = await prisma.$transaction(async (prismaClient: any) => {
             const order = await prismaClient.order.findFirst({
                 where: { paymentToken: razorpay_order_id },
                 include: {

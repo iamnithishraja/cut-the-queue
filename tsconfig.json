@@ -1,0 +1,4 @@
+{
+    "extends": "@cut-the-queue/typescript-config/base.json"
+}
+  

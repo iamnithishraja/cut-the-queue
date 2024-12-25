@@ -4,7 +4,7 @@ import {
 	handleItemCooked
 } from "../controllers/orderControllers";
 
-const clientRouter = express.Router();
+const clientRouter: Router = express.Router();
 
 clientRouter.get("/brodcastMenuItems/:canteenId", broadcastMenuItems);
 // clientRouter.post("/handover/:orderId", handleOrderHandover);
