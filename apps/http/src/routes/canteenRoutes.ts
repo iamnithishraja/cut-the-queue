@@ -10,6 +10,6 @@ canteenRoutes.get(
   getAllDishes
 );
 canteenRoutes.get("/getAllCanteen", isAuthenticatedUser, getAllCanteen);
-canteenRoutes.post("/calculateAmount", calculateAmountForOrder);
+canteenRoutes.post("/calculateAmount",isAuthenticatedUser, calculateAmountForOrder);
 
 export default canteenRoutes;
