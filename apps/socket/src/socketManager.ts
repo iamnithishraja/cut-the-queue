@@ -1,87 +1,88 @@
-import { UserType } from "@repo/db/client";
-import { WebSocket } from "ws";
-import { CanteenSockets, Screen } from "./types/socketTypes";
+import { MessageSchema, InitMessageSchema, SubscribeMessageSchema, UnsubscribeMessageSchema } from "./schemas";
+import { StateManager } from "./stateManager";
+import { z } from 'zod';
+import { CustomWebSocket, MessageType } from "./types";
+import { verifyAndGetUser } from "./utils";
 
-export const canteens: Map<string, CanteenSockets> = new Map();
+export class WSManager {
+  private static instance: WSManager | null = null;
+  private stateManager: StateManager;
 
-function getOrCreateCanteen(canteenId: string): CanteenSockets {
-	if (!canteens.has(canteenId)) {
-		canteens.set(canteenId, {
-			consumers: new Map(),
-			partners: new Map(),
-			activeMenu: new Set(),
-			activeOrders: new Set(),
-		});
-	}
-	return canteens.get(canteenId)!;
+  private constructor() {
+    this.stateManager = StateManager.getInstance();
+  }
+
+  public static getInstance(): WSManager {
+    if (!WSManager.instance) {
+      WSManager.instance = new WSManager();
+    }
+    return WSManager.instance;
+  }
+
+  // Prevent cloning
+  public clone(): never {
+    throw new Error('WSManager is a singleton and cannot be cloned');
+  }
+
+  public async handleConnection(socket: CustomWebSocket) {
+    socket.on('message', async (message: string) => {
+      try {
+        const parsedMessage = JSON.parse(message);
+        const validatedMessage = MessageSchema.parse(parsedMessage);
+
+        await this.handleMessage(socket, validatedMessage);
+      } catch (error) {
+        socket.send(JSON.stringify({ type: 'ERROR', message: 'Invalid message format' }));
+      }
+    });
+  }
+
+  private async handleMessage(socket: CustomWebSocket, message: z.infer<typeof MessageSchema>) {
+    switch (message.type) {
+      case MessageType.INIT:
+        await this.handleInit(socket, message);
+        break;
+      case MessageType.SUBSCRIBE:
+        await this.handleSubscribe(socket, message);
+        break;
+      case MessageType.UNSUBSCRIBE:
+        await this.handleUnsubscribe(socket, message);
+        break;
+    }
+  }
+
+  private async handleInit(socket: CustomWebSocket, message: z.infer<typeof InitMessageSchema>) {
+    try {
+      const user = await verifyAndGetUser(message.token);
+
+      this.stateManager.addUser(user.id, socket, user.role);
+      socket.userId = user.id;
+      socket.userRole = user.role;
+
+      socket.send(JSON.stringify({ type: 'INIT_SUCCESS' }));
+    } catch (error) {
+      // @ts-ignore
+      socket.send(JSON.stringify({ type: 'ERROR', message: error.message}));
+    }
+  }
+
+  private async handleSubscribe(socket: CustomWebSocket, message: z.infer<typeof SubscribeMessageSchema>) {
+    if (!socket.userId) {
+      socket.send(JSON.stringify({ type: 'ERROR', message: 'Not initialized' }));
+      return;
+    }
+
+    this.stateManager.addSubscription(message.canteenId, message.screen, socket.userId);
+    socket.send(JSON.stringify({ type: 'SUBSCRIBE_SUCCESS' }));
+  }
+
+  private async handleUnsubscribe(socket: CustomWebSocket, message: z.infer<typeof UnsubscribeMessageSchema>) {
+    if (!socket.userId) {
+      socket.send(JSON.stringify({ type: 'ERROR', message: 'Not initialized' }));
+      return;
+    }
+
+    this.stateManager.removeSubscription(message.canteenId, message.screen, socket.userId);
+    socket.send(JSON.stringify({ type: 'UNSUBSCRIBE_SUCCESS' }));
+  }
 }
-
-export function addDevice(ws: WebSocket, user: UserType, canteenId: string) {
-	const canteen = getOrCreateCanteen(canteenId);
-	if (user.role === "PARTNER") {
-		canteen.partners.set(user.id, ws);
-	} else {
-		canteen.consumers.set(user.id, ws);
-	}
-}
-
-export function removeDevice(userId: string, role: string, canteenId: string) {
-	const canteen = canteens.get(canteenId);
-	if (!canteen) return;
-
-	if (role === "PARTNER") {
-		canteen.partners.delete(userId);
-		canteen.activeOrders.delete(userId);
-	} else {
-		canteen.consumers.delete(userId);
-		canteen.activeMenu.delete(userId);
-	}
-}
-
-export function setScreenActive(
-	userId: string,
-	screen: Screen,
-	active: boolean,
-	canteenId: string,
-	role: string
-): boolean {
-	if (screen === Screen.ORDERS && role !== "PARTNER") {
-		return false;
-	}
-
-	const canteen = canteens.get(canteenId)!;
-	const targetSet =
-		screen === Screen.MENU ? canteen.activeMenu : canteen.activeOrders;
-	if (active) {
-		targetSet.add(userId);
-	} else {
-		targetSet.delete(userId);
-	}
-	return true;
-}
-
-export function getActiveMenuSockets(canteenId: string): WebSocket[] {
-	const canteen = canteens.get(canteenId);
-	if (!canteen) return [];
-
-	return Array.from(canteen.activeMenu)
-		.map((id) => canteen.consumers.get(id))
-		.filter((socket): socket is WebSocket => socket !== undefined);
-}
-
-export function getActiveOrderSockets(canteenId: string): WebSocket[] {
-	const canteen = canteens.get(canteenId);
-	if (!canteen) return [];
-
-	return Array.from(canteen.activeOrders)
-		.map((id) => canteen.partners.get(id))
-		.filter((socket): socket is WebSocket => socket !== undefined);
-}
-
-export default {
-	addDevice,
-	removeDevice,
-	setScreenActive,
-	getActiveMenuSockets,
-	getActiveOrderSockets,
-};

@@ -12,7 +12,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: "*",
     credentials: true,
   })
 );
@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1", userRoute);
-app.use("/api/v1",canteenRoutes);
+app.use("/api/v1", canteenRoutes);
 app.use("/api/v1", orderRouter);
 
 app.listen(process.env.PORT, () => {
