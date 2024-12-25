@@ -50,6 +50,7 @@ async function updateItem(req: CustomRequest, res: Response) {
             }
         })
         // TODO: brodacst menu items.
+        fetch(`${process.env.WS_URL}/brodcastMenuItems/${parsedMenuItem.canteenId}`);
         res.json({
             canteenId: parsedMenuItem.id,
             items
@@ -85,7 +86,17 @@ async function chageToPickup(req: CustomRequest, res: Response) {
                 status: "WAITING_FOR_PICKUP"
             }
         });
+        const order = await prisma.order.findUnique({
+            where: {
+                id: id
+            }
+        });
+        if (!order) {
+            res.status(400).json({ message: INVALID_INPUT });
+        }
+
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
+        fetch(`${process.env.WS_URL}/updateUserOrders/${order?.userId}`);
         getAllOrdersByCanteenId(req, res)
     } catch (error) {
         res.status(500).json({ message: SERVER_ERROR });
@@ -129,7 +140,7 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
             });
 
             const order = await tx.order.findUnique({
-                where: { id, isPaid:true},
+                where: { id, isPaid: true },
                 include: {
                     OrderItem: true
                 }
@@ -147,12 +158,13 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
                     data: { orderStatus: "DONE" }
                 });
             }
-            
-            return itemsToUpdate;
+
+            return { itemsToUpdate, order };
         });
 
         // TODO: reflect the updated orders in user's app.
-        res.json(result);
+        fetch(`${process.env.WS_URL}/updateUserOrders/${result.order.userId}`);
+        res.json(result.itemsToUpdate);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : SERVER_ERROR;
         const statusCode = errorMessage === "No valid order items found" ? 400 : 500;
