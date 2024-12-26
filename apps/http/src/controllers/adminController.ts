@@ -8,7 +8,6 @@ import { menuItemSchema } from "../schemas/ordersSchemas";
 const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
     try {
         const canteenId = req.user!.canteenId;
-
         if (!canteenId) {
             res.status(405).json({ message: USER_NOT_AUTHORISED });
             return;
@@ -68,6 +67,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         const id = req.params.orderId;
         if (!id) {
             res.status(400).json({ message: INVALID_INPUT });
+            return;
         }
         const orderItem = await prisma.orderItem.findUnique({
             where: {
@@ -77,6 +77,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
 
         if (!orderItem || orderItem.status != "COOKING") {
             res.status(400).json({ message: INVALID_INPUT });
+            return;
         }
         await prisma.orderItem.update({
             where: {
@@ -88,16 +89,17 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         });
         const order = await prisma.order.findUnique({
             where: {
-                id: id
+                id: orderItem.orderId
             }
         });
         if (!order) {
             res.status(400).json({ message: INVALID_INPUT });
+            return;
         }
 
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
         fetch(`${process.env.WS_URL}/updateUserOrders/${order?.userId}`);
-        getAllOrdersByCanteenId(req, res)
+        return getAllOrdersByCanteenId(req, res);
     } catch (error) {
         res.status(500).json({ message: SERVER_ERROR });
     }

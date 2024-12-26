@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "@repo/db/client";
 import {
-  CANTEENS_NOT_FOUND,
-  DISHES_NOT_FOUND,
   SERVER_ERROR,
   INVALID_INPUT
 } from "@repo/constants";
@@ -37,26 +35,26 @@ async function getAllCanteen(req: Request, res: Response) {
     console.log(e);
   }
 }
-const calculateAmountForOrder = async(req: Request, res: Response):Promise<any> => {
-   try{
+const calculateAmountForOrder = async (req: Request, res: Response): Promise<any> => {
+  try {
     const orderItemList = calculateAmountSchema.parse(req.body);
-    const ids=orderItemList.map((item)=>item.id);
-    const orderItemMap=new Map();
-    for( const order of orderItemList){
-       orderItemMap.set(order.id,order.quantity);
+    const ids = orderItemList.map((item) => item.id);
+    const orderItemMap = new Map();
+    for (const order of orderItemList) {
+      orderItemMap.set(order.id, order.quantity);
     }
-    const dishes= await prisma.menuItem.findMany({
-      where:{
-        id:{ in :ids}
+    const dishes = await prisma.menuItem.findMany({
+      where: {
+        id: { in: ids }
       },
     })
-    
-    if(dishes.length<=0){
-      return res.status(404).json({message : INVALID_INPUT});
+
+    if (dishes.length <= 0) {
+      return res.status(404).json({ message: INVALID_INPUT });
     }
     let totalAmount = 0;
-    if(dishes.length!=orderItemList.length){
-      return res.status(404).json({ message :"mismatch"});
+    if (dishes.length != orderItemList.length) {
+      return res.status(404).json({ message: "mismatch" });
       //this will most likely not occur but handling that as well
     }
     dishes.forEach(dish => {
@@ -65,17 +63,16 @@ const calculateAmountForOrder = async(req: Request, res: Response):Promise<any> 
         totalAmount += quantity * dish.price;
       }
     });
-    
-  return res.status(200).json({ totalAmount : totalAmount});
 
-   }
-   catch(e){
+    return res.status(200).json({ total: totalAmount });
+  }
+  catch (e) {
     if (e instanceof z.ZodError) {
       res.status(400).json({ message: INVALID_INPUT, errors: e.errors });
     } else {
       res.status(500).json({ message: SERVER_ERROR });
-    }  
-    
-   }
+    }
+
+  }
 }
 export { getAllDishes, getAllCanteen, calculateAmountForOrder };

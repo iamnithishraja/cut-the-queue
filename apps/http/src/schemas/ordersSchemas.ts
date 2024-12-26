@@ -28,5 +28,4 @@ export const menuItemSchema = z.object({
     avilableLimit: z.number().int().nullable().optional(),
     canteenId: z.string(),
     status: AvailabilityStatusEnum.default('AVAILABLE'),
-  });
-  
+});

@@ -10,8 +10,8 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string()
-})
+  password: z.string(),
+});
 
 
 export const requestOtpSchema = z.object({
@@ -29,10 +29,12 @@ export const smsMessage = z.object({
 });
 
 
-export const calculateAmountSchema = z.array(z.object({
-  id: z.string(),      
-  quantity: z.number().gt(0)  
-}));
+export const calculateAmountSchema = z.array(
+  z.object({
+    id: z.string(),
+    quantity: z.number().gt(0)
+  })
+);
 
 
 export type SMSMessage = Zod.infer<typeof smsMessage>;
