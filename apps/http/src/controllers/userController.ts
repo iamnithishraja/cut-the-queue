@@ -124,7 +124,6 @@ const login = async (req: Request, res: Response): Promise<any> => {
     }
   }
 };
-
 const googleLogin = async (req: Request, res: Response): Promise<any> => {
   try {
     const { token } = req.body;
