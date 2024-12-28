@@ -27,6 +27,7 @@ export type EmailMessage = z.infer<typeof EmailMessage>;
 export const NotificationMessage = z.object({
 	firebaseToken: z.string(),
 	title: z.string(),
+	body: z.string().optional(),
 	data: z.record(z.string()).optional(),
 });
 

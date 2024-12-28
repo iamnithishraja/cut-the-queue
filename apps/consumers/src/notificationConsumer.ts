@@ -35,6 +35,7 @@ export default class NotificationConsumer extends BaseMessageProcessor<Notificat
 				token: notification.firebaseToken,
 				notification: {
 					title: notification.title,
+					body: notification.body,
 				},
 				data: notification.data,
 			});

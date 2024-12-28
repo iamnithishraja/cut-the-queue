@@ -1,5 +1,5 @@
-import { Kafka, Partitioners} from "kafkajs";;
-import { EmailMessage, SMSMessage } from "../types/types";
+import { Kafka, Partitioners } from "kafkajs";;
+import { EmailMessage, SMSMessage, NotificationMessage } from "../types/types";
 
 export default class KafkaProducer {
   private kafka;
@@ -11,9 +11,9 @@ export default class KafkaProducer {
     });
     this.producer = this.kafka.producer({ createPartitioner: Partitioners.LegacyPartitioner });
   }
-  async publishToKafka(topic: string, message: SMSMessage | EmailMessage): Promise<void> {
+  async publishToKafka(topic: string, message: SMSMessage | EmailMessage | NotificationMessage): Promise<void> {
     try {
-      await this.producer.connect();  
+      await this.producer.connect();
       await this.producer.send({
         topic: topic,
         messages: [{ value: JSON.stringify(message) }],

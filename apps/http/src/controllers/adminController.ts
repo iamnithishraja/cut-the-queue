@@ -4,6 +4,7 @@ import { CustomRequest } from "../types/userTypes";
 import prisma from "@repo/db/client";
 import z from "zod";
 import { menuItemSchema } from "../schemas/ordersSchemas";
+import KafkaProducer from "../publisher/kafka";
 
 const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
     try {
@@ -72,6 +73,13 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         const orderItem = await prisma.orderItem.findUnique({
             where: {
                 id
+            },
+            include: {
+                menuItem: {
+                    select: {
+                        name: true
+                    }
+                }
             }
         });
 
@@ -90,6 +98,18 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         const order = await prisma.order.findUnique({
             where: {
                 id: orderItem.orderId
+            },
+            include: {
+                customer: {
+                    select: {
+                        fcmToken: true
+                    }
+                },
+                canteen: {
+                    select: {
+                        name: true
+                    }
+                }
             }
         });
         if (!order) {
@@ -98,6 +118,14 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         }
 
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
+        const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+        if (order.customer.fcmToken) {
+            await kafkaProducer.publishToKafka("notification", {
+                firebaseToken: order.customer.fcmToken,
+                title: `Your ${orderItem.menuItem.name} is ready.`,
+                body:  `Show the QR Code before collecting the order from ${order.canteen.name}`
+            });
+        }
         fetch(`${process.env.WS_URL}/updateUserOrders/${order?.userId}`);
         return getAllOrdersByCanteenId(req, res);
     } catch (error) {
