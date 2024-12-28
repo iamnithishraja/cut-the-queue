@@ -22,7 +22,7 @@ export default class NotificationConsumer extends BaseMessageProcessor<Notificat
 		this.firebaseApp = admin.initializeApp({
 			credential: admin.credential.cert({
 				projectId: FIREBASE_PROJECT_ID,
-				privateKey: FIREBASE_PRIVATE_KEY!,
+				privateKey: FIREBASE_PRIVATE_KEY!.replace(/\\n/gm, "\n").toString(),
 				clientEmail: FIREBASE_CLIENT_EMAIL,
 			}),
 		});
@@ -33,7 +33,9 @@ export default class NotificationConsumer extends BaseMessageProcessor<Notificat
 			const notification = this.parseMessage(message);
 			await this.firebaseApp.messaging().send({
 				token: notification.firebaseToken,
-				title: notification.title,
+				notification: {
+					title: notification.title,
+				},
 				data: notification.data,
 			});
 			console.log(
