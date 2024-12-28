@@ -315,6 +315,15 @@ const logout = async (req: CustomRequest, res: Response): Promise<any> => {
   } catch (error) {
     res.status(500).json({ message: SERVER_ERROR });
   }
-}; 
+};
+const updateFcmToken = async (req: CustomRequest, res: Response) => {
+  const { fcmToken } = req.body;
+  const userId = req.user!.id; 
+  await prisma.user.update({
+    where: { id: userId },
+    data: { fcmToken }
+  });
+  res.json({ success: true });
+}
 
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, logout };
+export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, logout, updateFcmToken };

@@ -7,7 +7,9 @@ import {
   requestOtp,
   registerPartner,
   submitOtp,
-  logout
+  logout,
+  updateFcmToken
+  
 } from "../controllers/userController";
 import { isAuthenticatedUser } from "../middlewares/auth";
 
@@ -19,6 +21,7 @@ userRoute.post("/google", googleLogin);
 userRoute.post("/otp", requestOtp);
 userRoute.post("/submitOtp", submitOtp);
 userRoute.get("/profile", isAuthenticatedUser, getProfile);
+userRoute.post('/updateFcmToken', isAuthenticatedUser, updateFcmToken);
 userRoute.get("/logout", isAuthenticatedUser,logout);
 
 // partner routes
