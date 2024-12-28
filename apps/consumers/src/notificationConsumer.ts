@@ -1,8 +1,10 @@
 import dotenv from "dotenv";
 import * as admin from "firebase-admin";
+import path from "path";
 import { BaseMessageProcessor } from "./KafkaConsumerBase";
 import { KafkaMessage, NotificationMessage } from "./types";
-dotenv.config();
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 export default class NotificationConsumer extends BaseMessageProcessor<NotificationMessage> {
 	private readonly firebaseApp: admin.app.App;
