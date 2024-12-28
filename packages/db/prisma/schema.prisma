@@ -20,6 +20,7 @@ model User {
   resetPasswordToken String?
   expire             DateTime?
   otp                String?
+  fcmToken           String?
   password           String? // nullable for Google auth users
   googleId           String?   @unique // for Google auth users
   role               UserRole  @default(USER)
