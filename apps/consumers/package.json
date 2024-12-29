@@ -2,8 +2,9 @@
   "name": "consumers",
   "version": "1.0.0",
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "npx tsc -b"
+    "start": "node ./dist/index.js",
+    "build": "npx tsc -b",
+    "dev": "npx nodemon ./src/index.ts"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

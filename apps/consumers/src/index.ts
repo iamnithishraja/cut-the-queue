@@ -1,14 +1,14 @@
-import EmailConsumer from "./emailConsumer";
+// import EmailConsumer from "./emailConsumer";
 import NotificationConsumer from "./notificationConsumer";
 import SMSConsumer from "./smsConsumer";
 
 class ConsumerManager {
-	private emailConsumer: EmailConsumer;
+	// private emailConsumer: EmailConsumer;
 	private smsConsumer: SMSConsumer;
 	private notificationConsumer: NotificationConsumer;
 
 	constructor() {
-		this.emailConsumer = new EmailConsumer();
+		// this.emailConsumer = new EmailConsumer();
 		this.smsConsumer = new SMSConsumer();
 		this.notificationConsumer = new NotificationConsumer();
 	}
@@ -19,9 +19,9 @@ class ConsumerManager {
 			let activeConsumer;
 
 			switch (consumerType) {
-				case "email":
-					activeConsumer = this.emailConsumer;
-					break;
+				// case "email":
+				// 	activeConsumer = this.emailConsumer;
+				// 	break;
 				case "sms":
 					activeConsumer = this.smsConsumer;
 					break;
@@ -41,7 +41,7 @@ class ConsumerManager {
 	}
 
 	async disconnect(): Promise<void> {
-		await this.emailConsumer.disconnect();
+		// await this.emailConsumer.disconnect();
 		await this.smsConsumer.disconnect();
 		await this.notificationConsumer.disconnect();
 	}

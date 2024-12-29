@@ -241,7 +241,7 @@ const submitOtp = async (req: Request, res: Response): Promise<any> => {
     res.status(200).json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: SERVER_ERROR });
-  }notification
+  }
 };
 
 const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {

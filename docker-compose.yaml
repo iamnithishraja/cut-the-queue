@@ -53,7 +53,8 @@ services:
       while ! nc -z kafka 9092; do sleep 1; done;
       echo 'Kafka is ready, creating topics...'; 
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists && 
-      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
+      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists &&
+      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
       echo 'Kafka topics created.'"
     healthcheck:
       test: ["CMD", "kafka-topics", "--describe", "--topic", "sms", "--bootstrap-server", "localhost:9092"]
@@ -81,7 +82,7 @@ services:
     restart: always  
 
   #Service: email-consumer
-  email-consumer:
+  notification-consumer:
     depends_on:
       kafka:
         condition: service_healthy
@@ -90,11 +91,13 @@ services:
       dockerfile: ./apps/consumers/Dockerfile
     environment:
       #Email broker environment variables
-      SENDGRID_API_KEY: <your_sendgrid_api_key> #edit-this
+      FIREBASE_PROJECT_ID: <your_firebase_project_id> #edit-this
+      FIREBASE_PRIVATE_KEY: <your_private_key>
+      FIREBASE_CLIENT_EMAIL: <your_client_email>
       #Kafka environment variables
       KAFKA_BROKER: kafka:9092
-      KAFKA_CLIENT_ID: email-consumer
-      CONSUMER_TYPE: email
+      KAFKA_CLIENT_ID: notification-consumer
+      CONSUMER_TYPE: notification
     restart: always
 
   #Service: kafka-cleanup
@@ -111,6 +114,7 @@ services:
         echo 'Kafka data cleared. Recreating topics...';
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
         echo 'Kafka topics recreated. Sleeping for 24 hours...';
         sleep 86400;
       done"
@@ -122,7 +126,6 @@ services:
       context: ./
       dockerfile: ./apps/http/Dockerfile
     environment:
-      CLIENT_URL: <your_app_client_url>
       PORT: 3000
       RAZORPAY_API_KEY: <your_razorpay_api_key>
       RAZORPAY_API_SECRET: <your_razorpay_api_secret>
@@ -130,6 +133,7 @@ services:
       GOOGLE_CLIENT_ID: <your_google_client_id>
       JWT_SECRET: <your_jwt_secret>
       KAFKA_CLIENT_ID: http-server 
+      WS_URL: <ws_url>
       KAFKA_BROKER: kafka:9092 # docker-network:port
     ports:
       - 3000:3000
@@ -142,7 +146,6 @@ services:
       dockerfile: ./apps/socket/Dockerfile
     environment:
       PORT: 3001
-      CLIENT_URL: <your_app_client_url>
     ports:
       - 3001:3001
     restart: always

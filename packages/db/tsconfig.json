@@ -4,7 +4,8 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "paths": {
-      "@repo/constants": ["../../packages/constants/src/index.ts"]
+      "@repo/db/client": ["../../packages/db/src/index.ts"],
+      "@repo/db/objectClient": ["../../packages/db/src/objectStore.ts"]
     }
   }
 }

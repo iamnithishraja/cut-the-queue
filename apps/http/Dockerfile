@@ -1,42 +1,61 @@
-#has some errors
-
 # Stage 1: Builder
 FROM node:20-slim AS builder
 
-WORKDIR /monorepo
+WORKDIR /app
 
-# Install global dependencies
-RUN npm install -g pnpm typescript
+# Install OpenSSL
+RUN apt-get update -y && apt-get install -y openssl
 
-# Copy root configuration files
-COPY ../../package.json ./
-COPY ../../pnpm-*.yaml ./
-COPY ../../tsconfig.json ./
+# Copy package files for all workspaces
+COPY package*.json ./
+COPY turbo.json ./
+COPY packages/db/package*.json ./packages/db/
+COPY packages/*/package*.json ./packages/
+COPY apps/http/package*.json ./apps/http/
 
-# Copy the entire packages and apps directory (this includes all workspaces)
-COPY ../../packages ./packages
-COPY ../../apps ./apps
+# Install dependencies
+RUN npm install
 
-# Install dependencies for all packages (in a single step)
-# Build all packages
-RUN pnpm --filter ./packages/** build
-RUN pnpm --filter ./apps/http install
-RUN pnpm --filter ./apps/http build
+# Copy all packages and app source code
+COPY packages ./packages
+COPY apps/http ./apps/http
 
-# Stage 2: Final Image
+# Generate Prisma Client
+WORKDIR /app/packages/db
+RUN npm install prisma --save-dev
+RUN npx prisma generate
+
+# Build the project
+WORKDIR /app
+RUN npx turbo build --filter=http...
+
+# Stage 2: Runtime
 FROM node:20-slim
 
 WORKDIR /app
 
-# Copy the built files and node_modules from the builder stage
-COPY --from=builder /monorepo/apps/http/dist ./dist
-COPY --from=builder /monorepo/node_modules ./node_modules
+# Install OpenSSL
+RUN apt-get update -y && apt-get install -y openssl
 
-# Ensure the required environment variables are set
+# Copy package files
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/apps/http/package*.json ./
+
+# Install production dependencies
+RUN npm install
+
+# Copy built assets and packages
+COPY --from=builder /app/apps/http/dist ./dist
+COPY --from=builder /app/packages ./packages
+
+# Generate Prisma Client in production
+WORKDIR /app/packages/db
+RUN npm install prisma --save-dev
+RUN npx prisma generate
+
+WORKDIR /app
+
 ENV NODE_ENV=production
-ENV PORT=3000
+EXPOSE 80
 
-EXPOSE 3000
-
-# Start the app
-ENTRYPOINT ["node", "dist/index.js"]
+CMD ["node", "dist/index.js"]

@@ -1,21 +1,29 @@
 {
   "name": "@repo/utils",
   "version": "1.0.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc -b"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@types/dotenv": "^6.1.1",
-    "@types/jsonwebtoken": "^9.0.7",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/jsonwebtoken": "^9.0.7"
   }
 }
