@@ -7,6 +7,7 @@ import "dotenv/config";
 import canteenRoutes from "./routes/canteenRoutes";
 import orderRouter from "./routes/orderRoutes";
 import Razorpay from "razorpay";
+import { prometheusMiddleware, register } from "./middlewares/prometheusMiddleware";
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.use(
     credentials: true,
   })
 );
-
+app.use(prometheusMiddleware)
 app.use(bodyParser.json({ limit: "35mb" }));
 app.use(cookieParser());
 
@@ -29,6 +30,25 @@ export const razorpayInstance = new Razorpay({
 app.get("/", (req, res) => {
   res.send("Api test route");
 });
+
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).end(err);
+  }
+});
+
+// very dangerous to use in prod.
+// app.get("/slow",async(req,res)=>{
+//   try {
+//     await new Promise((resolve)=>setTimeout(resolve,3000));
+//     res.send("done");
+//   } catch (err) {
+//     res.status(500).end(err);
+//   }
+// });
 
 app.use("/api/v1", userRoute);
 app.use("/api/v1", canteenRoutes);

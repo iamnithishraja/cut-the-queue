@@ -27,7 +27,7 @@ RUN npx prisma generate
 
 # Build the project
 WORKDIR /app
-RUN npx turbo build --filter=http...
+RUN npx turbo build
 
 # Stage 2: Runtime
 FROM node:20-slim

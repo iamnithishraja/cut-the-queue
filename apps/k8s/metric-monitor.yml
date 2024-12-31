@@ -1,0 +1,52 @@
+# Update the deployment to include Prometheus annotations
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: http-server
+  template:
+    metadata:
+      labels:
+        app: http-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: http-server
+        image: iamnithish/cuttheq_http:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        env:
+        - name: PORT
+          value: "3000"
+        envFrom:
+        - secretRef:
+            name: app-secrets
+---
+# ServiceMonitor to collect metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: http-server-monitor
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: http-server
+  endpoints:
+  - port: http
+    interval: 15s
+---

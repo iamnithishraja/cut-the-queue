@@ -14,6 +14,17 @@ services:
       retries: 5
     restart: always
 
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  pushgateway:
+    image: prom/pushgateway:latest
+    ports:
+      - "9091:9091"
+
   #Service: kafka
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -70,18 +81,20 @@ services:
     build:
       context: ./
       dockerfile: ./apps/consumers/Dockerfile
+      platforms:
+        - linux/amd64
     environment:
       #Sms broker environment variables
-      TWILIO_ACCOUNT_SID : <your_twilio_accound_sid> #edit-this
-      TWILIO_AUTH_TOKEN : <your_twilio_auth_token>  #edit-this
-      TWILIO_MESSAGING_SERVICE_ID : <your_twilio_messaging_service_id> #edit-this
-      #Kafka environment variables
+      TWILIO_ACCOUNT_SID : <your_twilio_accound_sid> 
+      TWILIO_AUTH_TOKEN : <your_twilio_auth_token>  
+      TWILIO_MESSAGING_SERVICE_ID : <your_twilio_messaging_service_id> 
       KAFKA_BROKER: kafka:9092 
       KAFKA_CLIENT_ID: sms-consumer
       CONSUMER_TYPE: sms
     restart: always  
 
-  #Service: email-consumer
+
+  #Service: notification-consumer
   notification-consumer:
     depends_on:
       kafka:
@@ -89,12 +102,12 @@ services:
     build:
       context: ./
       dockerfile: ./apps/consumers/Dockerfile
+      platforms:
+        - linux/amd64
     environment:
-      #Email broker environment variables
-      FIREBASE_PROJECT_ID: <your_firebase_project_id> #edit-this
+      FIREBASE_PROJECT_ID: <your_firebase_project_id>
       FIREBASE_PRIVATE_KEY: <your_private_key>
       FIREBASE_CLIENT_EMAIL: <your_client_email>
-      #Kafka environment variables
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: notification-consumer
       CONSUMER_TYPE: notification
@@ -125,6 +138,8 @@ services:
     build:
       context: ./
       dockerfile: ./apps/http/Dockerfile
+      platforms:
+        - linux/amd64
     environment:
       PORT: 3000
       RAZORPAY_API_KEY: <your_razorpay_api_key>
@@ -134,7 +149,7 @@ services:
       JWT_SECRET: <your_jwt_secret>
       KAFKA_CLIENT_ID: http-server 
       WS_URL: <ws_url>
-      KAFKA_BROKER: kafka:9092 # docker-network:port
+      KAFKA_BROKER: kafka:9092
     ports:
       - 3000:3000
     restart: always
@@ -144,9 +159,10 @@ services:
     build:
       context: ./
       dockerfile: ./apps/socket/Dockerfile
+      platforms:
+        - linux/amd64
     environment:
       PORT: 3001
     ports:
       - 3001:3001
     restart: always
-
