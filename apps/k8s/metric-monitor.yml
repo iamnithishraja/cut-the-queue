@@ -1,52 +1,144 @@
-# Update the deployment to include Prometheus annotations
-apiVersion: apps/v1
-kind: Deployment
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: prometheus-config
+# data:
+#   prometheus.yml: |
+#     global:
+#       scrape_interval: 15s
+#       evaluation_interval: 15s  
+      
+#     scrape_configs:
+#       - job_name: 'kubernetes-pods'
+#         kubernetes_sd_configs:
+#           - role: pod
+#         relabel_configs:
+#           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+#             action: keep
+#             regex: true
+#           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+#             action: replace
+#             target_label: __metrics_path__
+#             regex: (.+)
+#           - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+#             action: replace
+#             regex: ([^:]+)(?::\d+)?;(\d+)
+#             replacement: $1:$2
+#             target_label: __address__
+#           - source_labels: [__meta_kubernetes_pod_label_app]
+#             action: replace
+#             target_label: app
+#           - source_labels: [__meta_kubernetes_namespace]
+#             action: replace
+#             target_label: kubernetes_namespace
+#           - source_labels: [__meta_kubernetes_pod_name]
+#             action: replace
+#             target_label: kubernetes_pod_name
+
+#       - job_name: 'pushgateway'
+#         honor_labels: true
+#         static_configs:
+#           - targets: ['pushgateway:9091']
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: prometheus
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: prometheus
+#   template:
+#     metadata:
+#       labels:
+#         app: prometheus
+#     spec:
+#       containers:
+#       - name: prometheus
+#         image: prom/prometheus:v2.45.0
+#         args:
+#           - "--config.file=/etc/prometheus/prometheus.yml"
+#           - "--storage.tsdb.retention.time=2d"
+#           - "--storage.tsdb.retention.size=2GB"
+#           - "--web.enable-lifecycle"
+#         ports:
+#         - containerPort: 9090
+#         resources:
+#           requests:
+#             cpu: "100m"     
+#             memory: "256Mi" 
+#           limits:
+#             cpu: "200m"    
+#             memory: "512Mi"
+#         volumeMounts:
+#         - name: prometheus-config
+#           mountPath: /etc/prometheus
+#       volumes:
+#       - name: prometheus-config
+#         configMap:
+#           name: prometheus-config
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pushgateway
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pushgateway
+#   template:
+#     metadata:
+#       labels:
+#         app: pushgateway
+#     spec:
+#       containers:
+#       - name: pushgateway
+#         image: prom/pushgateway:v1.6.0
+#         ports:
+#         - containerPort: 9091
+#         resources:
+#           requests:
+#             cpu: "50m"    
+#             memory: "64Mi" 
+#           limits:
+#             cpu: "100m"     
+#             memory: "128Mi"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: prometheus
+# spec:
+#   type: ClusterIP 
+#   selector:
+#     app: prometheus
+#   ports:
+#   - port: 9090
+#     targetPort: 9090
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pushgateway
+# spec:
+#   type: ClusterIP  
+#   selector:
+#     app: pushgateway
+#   ports:
+#   - port: 9091
+#     targetPort: 9091
+
+# only for GCP autopilot.
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
 metadata:
-  name: http-server
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: http-server
-  template:
-    metadata:
-      labels:
-        app: http-server
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3000"
-        prometheus.io/path: "/metrics"
-    spec:
-      containers:
-      - name: http-server
-        image: iamnithish/cuttheq_http:latest
-        ports:
-        - containerPort: 3000
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "500m"
-        env:
-        - name: PORT
-          value: "3000"
-        envFrom:
-        - secretRef:
-            name: app-secrets
----
-# ServiceMonitor to collect metrics
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: http-server-monitor
-  namespace: monitoring
+  name: http-server-monitoring
 spec:
   selector:
     matchLabels:
       app: http-server
   endpoints:
-  - port: http
-    interval: 15s
----
+  - port: http-metrics
+    interval: 30s
