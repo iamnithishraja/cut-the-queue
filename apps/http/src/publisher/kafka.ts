@@ -1,5 +1,7 @@
 import { Kafka, Partitioners } from "kafkajs";;
 import { EmailMessage, SMSMessage, NotificationMessage } from "../types/types";
+import dotenv from "dotenv"
+dotenv.config()
 
 export default class KafkaProducer {
   private kafka;
@@ -7,7 +9,7 @@ export default class KafkaProducer {
   constructor(clientId: string) {
     this.kafka = new Kafka({
       clientId: clientId,
-      brokers: ["localhost:29092"],
+      brokers: [process.env.KAFKA_BROKER ? process.env.KAFKA_BROKER : "localhost:29092"],
     });
     this.producer = this.kafka.producer({ createPartitioner: Partitioners.LegacyPartitioner });
   }

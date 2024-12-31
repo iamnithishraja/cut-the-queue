@@ -3,4 +3,6 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  WS_URL: "ws://socket-server:3001"
+  WS_URL: "http://34.126.215.236/api/v1"
+  KAFKA_BROKER: "kafka:9092"
+  KAFKA_CLIENT_ID: "consumers"

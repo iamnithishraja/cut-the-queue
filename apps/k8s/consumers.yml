@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sms-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sms-consumer
+  template:
+    metadata:
+      labels:
+        app: sms-consumer
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: sms-consumer
+        image: iamnithish/cuttheq_sms:latest
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        env:
+        - name: KAFKA_BROKER
+          value: "kafka:9092"
+        - name: KAFKA_CLIENT_ID
+          value: "sms-consumer"
+        - name: CONSUMER_TYPE
+          value: "sms"
+        envFrom:
+        - secretRef:
+            name: app-secrets
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-consumer
+  template:
+    metadata:
+      labels:
+        app: notification-consumer
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: notification-consumer
+        image: iamnithish/cuttheq_notification:latest
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        env:
+        - name: KAFKA_BROKER
+          value: "kafka:9092"
+        - name: KAFKA_CLIENT_ID
+          value: "notification-consumer"
+        - name: CONSUMER_TYPE
+          value: "notification"
+        envFrom:
+        - secretRef:
+            name: app-secrets
