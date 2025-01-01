@@ -23,12 +23,17 @@ spec:
     metadata:
       labels:
         app: http-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
       - name: http-server
         image: iamnithish/cuttheq_http:latest
         ports:
-        - containerPort: 3000
+        - name: http-metrics    # Named port for metrics
+          containerPort: 3000
         resources:
           requests:
             memory: "128Mi"
@@ -44,57 +49,3 @@ spec:
             name: app-secrets
         - configMapRef:
             name: app-config
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: http-metrics
-          initialDelaySeconds: 10
-          periodSeconds: 30
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: http-metrics
-          initialDelaySeconds: 10
-          periodSeconds: 30
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: http-server-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: http-server
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 30
-      policies:
-      - type: Pods
-        value: 3
-        periodSeconds: 30
-      - type: Percent
-        value: 100
-        periodSeconds: 30
-      selectPolicy: Max
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Pods
-        value: 1
-        periodSeconds: 300
