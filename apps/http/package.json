@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npx nodemon ./src/index.ts",
     "start": "node ./dist/index.js",
-    "build": "npx tsc -b"
+    "build": "npx tsc -b && cp -r public dist/public"
   },
   "devDependencies": {
     "@repo/constants": "*",

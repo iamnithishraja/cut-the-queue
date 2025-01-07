@@ -189,6 +189,8 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         // TODO: do api call to ws server.
         // @ts-ignore
         fetch(`${process.env.WS_URL}/brodcastMenuItems/${result.canteenId}`);
+        // @ts-ignore
+        fetch(`${process.env.WS_URL}/updateCanteenOrders/${result.canteenId}`);
         res.status(200).json({
             success: true,
             message: "Webhook processed successfully",

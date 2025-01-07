@@ -7,10 +7,10 @@ import "dotenv/config";
 import canteenRoutes from "./routes/canteenRoutes";
 import orderRouter from "./routes/orderRoutes";
 import Razorpay from "razorpay";
+import path from "path";
 import { prometheusMiddleware, register } from "./middlewares/prometheusMiddleware";
 
 const app = express();
-
 app.use(
   cors({
     origin: "*",
@@ -20,6 +20,7 @@ app.use(
 app.use(prometheusMiddleware)
 app.use(bodyParser.json({ limit: "35mb" }));
 app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
 export const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY || "your-razorpay-keyid",
@@ -28,7 +29,7 @@ export const razorpayInstance = new Razorpay({
 
 
 app.get("/", (req, res) => {
-  res.send("Api test route");
+  res.sendFile('index.html', { root: 'public' });
 });
 
 app.get('/metrics', async (req, res) => {
