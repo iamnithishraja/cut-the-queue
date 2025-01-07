@@ -14,7 +14,8 @@ export enum Screen {
 export enum MessageType {
   INIT = 'INIT',
   SUBSCRIBE = 'SUBSCRIBE',
-  UNSUBSCRIBE = 'UNSUBSCRIBE'
+  UNSUBSCRIBE = 'UNSUBSCRIBE',
+  PING = 'PING'
 }
 
 export interface CanteenState {

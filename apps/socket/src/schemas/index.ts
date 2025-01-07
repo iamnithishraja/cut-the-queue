@@ -18,10 +18,15 @@ export const UnsubscribeMessageSchema = z.object({
 	screen: z.nativeEnum(Screen)
 });
 
+export const pingSchema = z.object({
+	type: z.literal(MessageType.PING)
+})
+
 export const MessageSchema = z.discriminatedUnion('type', [
 	InitMessageSchema,
 	SubscribeMessageSchema,
-	UnsubscribeMessageSchema
+	UnsubscribeMessageSchema,
+	pingSchema
 ]);
 
 export const orderItemSchema = z.object({

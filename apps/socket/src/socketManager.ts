@@ -48,6 +48,9 @@ export class WSManager {
       case MessageType.UNSUBSCRIBE:
         await this.handleUnsubscribe(socket, message);
         break;
+      case MessageType.PING:
+        socket.send(JSON.stringify({ type: 'PONG' }))
+        break;
     }
   }
 

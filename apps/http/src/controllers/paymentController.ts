@@ -6,6 +6,7 @@ import z from "zod";
 import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
 import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
+import KafkaProducer from "../publisher/kafka";
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
@@ -179,6 +180,13 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                 data: {
                     isPaid: true,
                     paymentId: razorpay_payment_id
+                },
+                include: {
+                    customer: {
+                        select: {
+                            fcmToken: true
+                        }
+                    }
                 }
             });
 
@@ -191,6 +199,14 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         fetch(`${process.env.WS_URL}/brodcastMenuItems/${result.canteenId}`);
         // @ts-ignore
         fetch(`${process.env.WS_URL}/updateCanteenOrders/${result.canteenId}`);
+        const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+        await kafkaProducer.publishToKafka("notification", {
+            // @ts-ignore
+            firebaseToken: result.customer.fcmToken,
+            title: `Your Payment is Successful ✅`,
+            body: `Thank You for choosing CutTheQ`
+        });
+
         res.status(200).json({
             success: true,
             message: "Webhook processed successfully",
