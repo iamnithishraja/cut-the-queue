@@ -192,20 +192,20 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
 
             return updatedOrder;
         });
-
-
-        // TODO: do api call to ws server.
         // @ts-ignore
         fetch(`${process.env.WS_URL}/brodcastMenuItems/${result.canteenId}`);
         // @ts-ignore
         fetch(`${process.env.WS_URL}/updateCanteenOrders/${result.canteenId}`);
         const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-        await kafkaProducer.publishToKafka("notification", {
-            // @ts-ignore
-            firebaseToken: result.customer.fcmToken,
-            title: `Your Payment is Successful ✅`,
-            body: `Thank You for choosing CutTheQ`
-        });
+        // @ts-ignore
+        if (result.customer.fcmToken) {
+            await kafkaProducer.publishToKafka("notification", {
+                // @ts-ignore
+                firebaseToken: result.customer.fcmToken,
+                title: `Your Payment is Successful ✅`,
+                body: `Thank You for choosing CutTheQ`
+            });
+        }
 
         res.status(200).json({
             success: true,
