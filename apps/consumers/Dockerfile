@@ -12,7 +12,6 @@ COPY package*.json ./
 COPY turbo.json ./
 
 # Copy workspace package files maintaining directory structure
-COPY packages/db/package*.json ./packages/db/
 COPY packages/*/package*.json ./packages/
 COPY apps/consumers/package*.json ./apps/consumers/
 
@@ -24,9 +23,6 @@ COPY packages ./packages
 COPY apps/consumers ./apps/consumers
 
 # Generate Prisma Client (with explicit Prisma installation)
-WORKDIR /app/packages/db
-RUN npm install prisma --save-dev
-RUN npx prisma generate
 
 # Return to app root and build
 WORKDIR /app
@@ -49,11 +45,6 @@ RUN npm install
 # Copy built assets
 COPY --from=builder /app/apps/consumers/dist ./dist
 COPY --from=builder /app/packages ./packages
-
-# Generate Prisma Client in production (with explicit Prisma installation)
-WORKDIR /app/packages/db
-RUN npm install prisma --save-dev
-RUN npx prisma generate
 
 # Return to app root
 WORKDIR /app
