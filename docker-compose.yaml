@@ -27,7 +27,8 @@ services:
 
   #Service: kafka
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
     depends_on:
       zookeeper:
         condition: service_healthy
