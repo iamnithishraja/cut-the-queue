@@ -169,6 +169,20 @@ const googleLogin = async (req: Request, res: Response): Promise<any> => {
 const requestOtp = async (req: Request, res: Response): Promise<void> => {
   try {
     const { number } = requestOtpSchema.parse(req.body);
+    const user = await prisma.user.findUnique({
+      where: {
+        phoneNumber: number,
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    if (!user) {
+      res.status(400).json({ message: USER_NOT_REGISTERED });
+      return;
+    }
+
     const otp = generateOTP();
     await prisma.user.update({
       where: {
@@ -180,8 +194,9 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
     });
     const message = createVerificationMessage(otp);
     const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-    await kafkaProducer.publishToKafka("sms", {
-      to: "+91" + number,
+    await kafkaProducer.publishToKafka("email", {
+      to: user.email,
+      subject: "Your OTP for verification",
       content: message,
     });
     res.status(200).json({ message: OTP_SENT });

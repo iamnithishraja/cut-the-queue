@@ -10,6 +10,7 @@
     "@repo/typescript-config": "*",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^22.7.5",
+    "@types/nodemailer": "^6.4.17",
     "nodemon": "^2.0.22",
     "tsx": "^4.19.0",
     "typescript": "^5.0.0"
@@ -19,6 +20,7 @@
     "dotenv": "^16.4.5",
     "firebase-admin": "^13.0.2",
     "kafkajs": "^2.2.4",
+    "nodemailer": "^6.9.16",
     "twilio": "^5.3.3",
     "zod": "^3.23.8"
   }
