@@ -110,6 +110,23 @@ services:
       CONSUMER_TYPE: notification
     restart: always
 
+  #Service: email-consumer
+  email-consumer:
+    depends_on:
+      kafka:
+        condition: service_healthy
+    build:
+      context: ./
+      dockerfile: ./apps/consumers/Dockerfile
+    environment:
+      GMAIL_USER: 
+      GMAIL_APP_PASSWORD: 
+
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: email-consumer
+      CONSUMER_TYPE: email
+    restart: always
+
   #Service: kafka-cleanup
   kafka-cleanup:
     image: confluentinc/cp-kafka:latest
