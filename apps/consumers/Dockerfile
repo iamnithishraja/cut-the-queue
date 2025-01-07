@@ -26,7 +26,7 @@ COPY apps/consumers ./apps/consumers
 
 # Return to app root and build
 WORKDIR /app
-RUN npx turbo build
+RUN npx turbo build --filter=consumers...
 
 # Stage 2: Runtime
 FROM node:20-slim
@@ -43,7 +43,7 @@ COPY --from=builder /app/apps/consumers/package*.json ./apps/consumers/
 RUN npm install
 
 # Copy built assets
-COPY --from=builder /app/apps/consumers/dist ./dist
+COPY --from=builder /app/apps/consumers/dist ./apps/consumers/dist
 COPY --from=builder /app/packages ./packages
 
 # Return to app root
@@ -51,4 +51,4 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "apps/consumers/dist/index.js"]
