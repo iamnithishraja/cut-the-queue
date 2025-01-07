@@ -134,12 +134,57 @@
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: http-server-monitoring
+  name: pushgateway-monitoring
+  namespace: default
 spec:
   selector:
     matchLabels:
-      app: http-server
+      app: pushgateway
   endpoints:
-  - port: http-metrics
-    interval: 30s
+  - interval: 30s
+    port: pushgateway
     path: /metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pushgateway
+  labels:
+    app: pushgateway
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9091
+    targetPort: 9091
+    name: pushgateway
+  selector:
+    app: pushgateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pushgateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pushgateway
+  template:
+    metadata:
+      labels:
+        app: pushgateway
+    spec:
+      containers:
+      - name: pushgateway
+        image: prom/pushgateway:latest
+        ports:
+        - name: pushgateway
+          containerPort: 9091
+          protocol: TCP
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
