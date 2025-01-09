@@ -275,6 +275,38 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .contact-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .contact-item h3 {
+            color: var(--foreground);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-item p {
+            color: var(--muted-foreground);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .address-block {
+            padding: 1.5rem;
+            background-color: var(--card);
+            border-radius: 0.5rem;
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body>
@@ -330,7 +362,7 @@
         <h2 style="margin-bottom: 1rem; font-size: 2rem;">Download CutTheQ</h2>
         <p style="color: var(--muted-foreground); margin-bottom: 2rem;">Available soon on iOS and Android</p>
         <div class="store-buttons">
-            <a href="https://drive.google.com/file/d/1-NEdM6dWvA2A_0gsjr8jaO_nLXtuWbcL/view?usp=drive_link" class="store-button">
+            <a href="https://drive.google.com/file/d/1XX8A8vwGqUDshXIYd5jUig95LBbnN1lA/view?usp=sharing" class="store-button">
                 Download APK
             </a>
             <a href="#" class="store-button" style="opacity: 0.6; cursor: not-allowed;">
@@ -387,8 +419,24 @@
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <h2>Contact Us</h2>
-            <p>Email: support@cuttheq.in</p>
-            <p>Phone: +91 94135 94191</p>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <h3>Customer Support</h3>
+                    <p>Email: support@cuttheq.in</p>
+                    <p>Phone: +91 94135 94191</p>
+                </div>
+                <div class="contact-item">
+                    <h3>Business Hours</h3>
+                    <p>Monday - Saturday</p>
+                    <p>9:00 AM - 6:00 PM IST</p>
+                </div>
+            </div>
+            <div class="address-block">
+                <h3>Visit Us</h3>
+                <p>1, 3rd Cross, Siddaiah Road</p>
+                <p>Sudhama Nagar, Bengaluru</p>
+                <p>Karnataka - 560027</p>
+            </div>
         </div>
     </div>
 
@@ -400,7 +448,7 @@
                 <a onclick="openModal('refundsModal')">Refunds</a>
                 <a onclick="openModal('contactModal')">Contact</a>
             </div>
-            <p>© 2024 CutTheQ Technologies Pvt. Ltd. All rights reserved.</p>
+            <p>© 2024 CutTheQ. All rights reserved.</p>
         </div>
     </footer>
 
