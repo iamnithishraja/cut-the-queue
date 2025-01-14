@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import "dotenv/config";
+import crypto from "crypto";
+import sendEmail from "../utils/sendEmail";
 import {
   loginSchema,
   registerSchema,
@@ -341,4 +343,71 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
   res.json({ success: true });
 }
 
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, logout, updateFcmToken };
+async function getResetPasswordToken(user) {
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+  
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: resetPasswordExpire,
+    },
+  });
+
+  return resetToken;
+}
+
+
+async function forgetPassword(req: CustomRequest,res: Response):Promise<any> {
+  const user = await prisma.User.findOne({ email: req.body.email });
+  if (!user) {
+    return res.status(400).json({ message:  "no user exists with this email" });
+    }
+    const resetToken = await getResetPasswordToken(user);
+    const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
+    const message = `your password reset token is \n\n${resetPasswordUrl} \n\nif you have not requsted this email then, please ignore it`;
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: "CutTheQ Password Recovery",
+            message: message
+        }); 
+        return res.json({ success: true, message: `email sent to ${user.email} successfully` });
+  }catch(error:any){
+    user.resetPasswordToken=undefined;
+    return res.json({ success: false, message:error.message});
+    
+  }
+}
+async function resetPassword(req:Request, res:Response):Promise<any> {
+  const resetPasswordToken = crypto.createHash("sha256").update(req.params.token!).digest("hex");
+  const user = await prisma.user.findOne({ resetPasswordToken: resetPasswordToken });
+  if (!user) {
+      return res.json({ success: false, message: " token is invalid" });
+  } else {
+      if (req.body.password !== req.body.confirmPassword) {
+          return res.json({ success: false, message: "the password dosent match" });
+      } else {
+        const hashedPassword = await bcrypt.hash(req.body.password, 10); 
+      await prisma.user.update({
+      where: {
+      id: user.id, 
+    },
+    data: {
+      password: hashedPassword,
+      resetPasswordToken: null, 
+      resetPasswordExpire: null, 
+    },
+  });
+          
+    }
+  }
+}
+
+
+export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, resetPassword, logout, updateFcmToken,forgetPassword  };

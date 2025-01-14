@@ -8,8 +8,9 @@ import {
   registerPartner,
   submitOtp,
   logout,
-  updateFcmToken
-  
+  updateFcmToken,
+  forgetPassword,
+  resetPassword
 } from "../controllers/userController";
 import { isAuthenticatedUser } from "../middlewares/auth";
 
@@ -23,8 +24,11 @@ userRoute.post("/submitOtp", submitOtp);
 userRoute.get("/profile", isAuthenticatedUser, getProfile);
 userRoute.post('/updateFcmToken', isAuthenticatedUser, updateFcmToken);
 userRoute.get("/logout", isAuthenticatedUser,logout);
+userRoute.put("/password/reset/:token",resetPassword);
+userRoute.put('/password/forgetPassword',forgetPassword);
 
 // partner routes
 userRoute.post("/registerPartner", isAuthenticatedUser, registerPartner);
+
 
 export default userRoute;

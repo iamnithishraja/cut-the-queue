@@ -12,6 +12,7 @@
     "seed": "tsx ./src/seed.ts"
   },
   "devDependencies": {
+    "prisma": "^6.2.1",
     "typescript": "^5.0.0"
   },
   "exports": {
