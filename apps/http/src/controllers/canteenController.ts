@@ -75,4 +75,28 @@ const calculateAmountForOrder = async (req: Request, res: Response): Promise<any
 
   }
 }
-export { getAllDishes, getAllCanteen, calculateAmountForOrder };
+const toggleCanteenAvailability= async(req:Request,res:Response)=>{
+   const canteenId=req.params.canteenId;
+   const canteen=await prisma.canteen.findUnique({
+    where:{
+      canteenId:canteenId
+    },
+    select:{
+      isOpen:true,
+    }
+   });
+   if(!canteen){
+    return res.status(500).json({success:false,message:"no canteen found"});
+   }
+    const status= !canteen.isOpen;
+   await prisma.canteen.update({
+    where:{
+      canteenId:canteenId
+    },
+     data:{
+        isOpen:status,
+     }
+   })
+   return res.status(200).json({ success:true ,message:"toggled the availability of canteen"});
+}
+export { getAllDishes, getAllCanteen, calculateAmountForOrder,toggleCanteenAvailability };
