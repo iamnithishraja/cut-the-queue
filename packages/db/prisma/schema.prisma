@@ -16,7 +16,7 @@ model User {
   phoneNumber        String    @unique
   isVerified         Boolean   @default(false)
   canteenId          String?
-  canteen            Canteen?   @relation(fields: [canteenId], references: [id])
+  canteen            Canteen?  @relation(fields: [canteenId], references: [id], onDelete: SetNull)
   resetPasswordToken String?
   expire             DateTime?
   otp                String?
@@ -38,7 +38,7 @@ model Canteen {
   menuItems    MenuItem[]
   password     String
   orders       Order[]
-  User         User[]
+  users        User[]
 
   @@index([id])
   @@map("canteens")
@@ -53,10 +53,11 @@ model MenuItem {
   price         Float
   isVegetarian  Boolean            @default(true)
   avilableLimit Int?
+  category      String
   status        AvailabilityStatus @default(AVAILABLE)
-  canteen       Canteen            @relation(fields: [canteenId], references: [id])
+  canteen       Canteen            @relation(fields: [canteenId], references: [id], onDelete: Cascade)
   canteenId     String
-  orders        Order[] // the relation to orders does not require fields/references
+  orders        Order[]
   OrderItem     OrderItem[]
 
   @@index([id])
@@ -66,28 +67,29 @@ model MenuItem {
 
 model OrderItem {
   id         String          @id @default(cuid())
-  menuItem   MenuItem        @relation(fields: [menuItemId], references: [id])
+  menuItem   MenuItem        @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
   menuItemId String
   quantity   Int
   status     OrderItemStatus @default(WAITING_FOR_PICKUP)
   orderId    String
-  order      Order           @relation(fields: [orderId], references: [id])
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([menuItemId])
+  @@index([orderId])
 }
 
 model Order {
   id           String      @id @default(cuid())
-  customer     User        @relation(fields: [userId], references: [id])
+  customer     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       String
   orderStatus  OrderStatus @default(PROCESSING)
-  canteen      Canteen     @relation(fields: [canteenId], references: [id])
+  canteen      Canteen     @relation(fields: [canteenId], references: [id], onDelete: Restrict)
   canteenId    String
   isPaid       Boolean     @default(false)
   paymentId    String?
   paymentToken String
   createdAt    DateTime    @default(now())
-  MenuItem     MenuItem?   @relation(fields: [menuItemId], references: [id])
+  MenuItem     MenuItem?   @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
   menuItemId   String?
   OrderItem    OrderItem[]
 

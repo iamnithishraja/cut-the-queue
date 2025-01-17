@@ -30,6 +30,8 @@ spec:
           value: "sms-consumer"
         - name: CONSUMER_TYPE
           value: "sms"
+        - name: GROUP_ID    
+          value: "sms-group" 
         envFrom:
         - secretRef:
             name: app-secrets
@@ -66,6 +68,8 @@ spec:
           value: "notification-consumer"
         - name: CONSUMER_TYPE
           value: "notification"
+        - name: GROUP_ID
+          value: "notification-group" 
         envFrom:
         - secretRef:
             name: app-secrets
@@ -102,6 +106,8 @@ spec:
           value: "email-consumer"
         - name: CONSUMER_TYPE
           value: "email"
+        - name: GROUP_ID 
+          value: "email-group"  
         envFrom:
         - secretRef:
             name: app-secrets
