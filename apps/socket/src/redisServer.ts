@@ -23,7 +23,7 @@ export class RedisServer {
     this.subscriber.subscribe('chat', (message) => {
       
       const finalMessage = JSON.parse(message);
-      
+
       switch (finalMessage.type) {
         case 'all':
           StateManager.getInstance().broadcastMenuItems(
@@ -36,11 +36,15 @@ export class RedisServer {
           StateManager.getInstance().broadcastOrdersToUser(finalMessage.userId);
           break;
     
-        default:
+        case 'canteen':
           StateManager.getInstance().broadcastOrdersToAdmin(
             finalMessage.canteenId,
             finalMessage.orders
           );
+          break;
+
+        default:
+          console.error("Invalid message type");
           break;
       }
     
