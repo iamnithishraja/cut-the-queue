@@ -1,34 +1,27 @@
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
 import path from "path";
+import { Resend } from "resend";
 import { BaseMessageProcessor } from "./KafkaConsumerBase";
 import { EmailMessage, KafkaMessage } from "./types";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 export default class EmailConsumer extends BaseMessageProcessor<EmailMessage> {
-	private readonly transporter: nodemailer.Transporter;
+	private readonly resend: Resend;
 
 	constructor() {
 		super(EmailMessage, "email-group", "email");
-		const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
-		console.log(GMAIL_USER, GMAIL_APP_PASSWORD);
+		const { RESEND_API_KEY } = process.env;
 
-		this.validateEnvironmentVariables({ GMAIL_USER, GMAIL_APP_PASSWORD });
-		this.transporter = nodemailer.createTransport({
-			service: "gmail",
-			auth: {
-				user: GMAIL_USER,
-				pass: GMAIL_APP_PASSWORD,
-			},
-		});
+		this.validateEnvironmentVariables({ RESEND_API_KEY });
+		this.resend = new Resend(RESEND_API_KEY);
 	}
 
 	async processMessage({ message }: KafkaMessage): Promise<void> {
 		try {
 			const email = this.parseMessage(message);
-			await this.transporter.sendMail({
+			const { error } = await this.resend.emails.send({
 				to: email.to,
-				from: `Cut The Queue <${process.env.GMAIL_USER}>`,
+				from: "Cut The Queue <support@cuttheq.in>",
 				subject: "Verification Code - Cut The Queue",
 				text: `Your verification code is: ${email.content}`,
 				html: `
@@ -42,6 +35,11 @@ export default class EmailConsumer extends BaseMessageProcessor<EmailMessage> {
                     </div>
                 `,
 			});
+
+			if (error) {
+				throw error;
+			}
+
 			console.log(`Successfully sent OTP to ${email.to}`);
 		} catch (error) {
 			this.handleError(error, "Email");
