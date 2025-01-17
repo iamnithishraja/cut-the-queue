@@ -1,8 +1,8 @@
 import { createClient } from "redis";
 import { StateManager } from "./stateManager";
 
-export class redis {
-  private static instance: redis | null = null;
+export class RedisServer {
+  private static instance: RedisServer | null = null;
   publisher: ReturnType<typeof createClient>;
   private subscriber: ReturnType<typeof createClient>;
   constructor() {
@@ -10,22 +10,45 @@ export class redis {
     this.subscriber = createClient({ url: process.env.REDIS_SERVER_URL });
     this.connectClients();
   }
-   static getInstance(): redis {
-    if (!redis.instance) {
-      return new redis();
+   static getInstance(): RedisServer {
+    if (!RedisServer.instance) {
+      return new RedisServer();
     } else {
-      return redis.instance;
+      return RedisServer.instance;
     }
   } 
   async connectClients(){
     await this.publisher.connect();
     await this.subscriber.connect();
-    this.subscriber.subscribe('chat',(message)=>{
-     //do computation here
-     console.log(message);
-   });
+    this.subscriber.subscribe('chat', (message) => {
+      
+      const finalMessage = JSON.parse(message);
+      
+      switch (finalMessage.type) {
+        case 'all':
+          StateManager.getInstance().broadcastMenuItems(
+            finalMessage.canteenId,
+            finalMessage.updatedMenuItems
+          );
+          break;
+    
+        case 'user':
+          StateManager.getInstance().broadcastOrdersToUser(finalMessage.userId);
+          break;
+    
+        default:
+          StateManager.getInstance().broadcastOrdersToAdmin(
+            finalMessage.canteenId,
+            finalMessage.orders
+          );
+          break;
+      }
+    
+      console.log(message);
+    });
   }
   publish(message){
-    this.publisher.publish('chat',JSON.stringify(message))
+    this.publisher.publish('chat',message);
+
   }
 }
