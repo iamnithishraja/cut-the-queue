@@ -1,0 +1,21 @@
+{
+  "name": "reporter",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "npx nodemon",
+    "start": "node ./dist/index.js",
+    "build": "npx tsc -b"
+  },
+  "devDependencies": {
+    "@repo/db": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^20.11.0",
+    "nodemon": "^3.0.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.3",
+    "xlsx": "^0.18.5"
+  }
+}
