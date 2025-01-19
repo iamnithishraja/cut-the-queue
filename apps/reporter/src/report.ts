@@ -1,14 +1,19 @@
 import prisma from "@repo/db/client";
 import { OrderReportItem } from "./types";
 import * as XLSX from 'xlsx';
+import Decimal from 'decimal.js';
 
-async function generateDailyReport() {
-    const past24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+interface DateRange {
+    startDate: Date;
+    endDate: Date;
+}
 
+async function generateReport({ startDate, endDate }: DateRange) {
     const orders = await prisma.order.findMany({
         where: {
             createdAt: {
-                gte: past24Hours,
+                gte: startDate,
+                lte: endDate,
             },
             orderStatus: 'DONE',
             isPaid: true,
@@ -43,13 +48,14 @@ async function generateDailyReport() {
         },
     });
 
-    if (orders.length === 0) {
-        console.log('No paid orders found in the last 24 hours');
+    if (!orders || orders.length === 0) {
+        console.log('No paid orders found for the selected date range');
         return null;
     }
 
-    // Group orders by canteen
-    const ordersByCanteen = orders.reduce((acc, order) => {
+    const processedOrders = [...orders];
+
+    const ordersByCanteen = processedOrders.reduce((acc, order) => {
         const canteenId = order.canteen.id;
         if (!acc[canteenId]) {
             acc[canteenId] = {
@@ -61,54 +67,60 @@ async function generateDailyReport() {
         return acc;
     }, {} as Record<string, { canteenName: string; orders: typeof orders }>);
 
-    // Process orders for each canteen
     const canteenReports = Object.entries(ordersByCanteen).map(([canteenId, { canteenName, orders }]) => {
-        const reportData: OrderReportItem[] = orders.map((order) => {
+        const reportData: OrderReportItem[] = [];
+        
+        for (const order of orders) {
+            // Use exact decimal arithmetic for precise calculations
             const subtotal = order.OrderItem.reduce((sum, item) => {
-                return sum + (item.menuItem.price * item.quantity);
-            }, 0);
+                const itemTotal = new Decimal(item.menuItem.price).times(item.quantity);
+                return sum.plus(itemTotal);
+            }, new Decimal(0));
 
-            const razorpayFee = subtotal * 0.02;
-            const gstOnRazorpayFee = razorpayFee * 0.18;
-            const finalTotal = subtotal - razorpayFee - gstOnRazorpayFee;
+            const razorpayFee = subtotal.times(new Decimal('0.02'));
+            const gstOnRazorpayFee = razorpayFee.times(new Decimal('0.18'));
+            const finalTotal = subtotal.minus(razorpayFee).minus(gstOnRazorpayFee);
 
             const formattedItems = order.OrderItem.map(item => {
                 return `${item.menuItem.name} (${item.quantity} × ₹${item.menuItem.price})`;
             }).join(', ');
 
-            return {
+            const reportItem: OrderReportItem = {
                 orderId: order.id,
-                customerName: `${order.customer.firstName} ${order.customer.lastName}`,
+                customerName: `${order.customer.firstName} ${order.customer.lastName}`.trim(),
                 phoneNumber: order.customer.phoneNumber,
                 items: formattedItems,
-                subtotal: Number(subtotal.toFixed(2)),
-                razorpayFee: Number(razorpayFee.toFixed(2)),
-                gstOnRazorpayFee: Number(gstOnRazorpayFee.toFixed(2)),
-                finalTotal: Number(finalTotal.toFixed(2)),
+                subtotal: subtotal.toNumber(),
+                razorpayFee: razorpayFee.toNumber(),
+                gstOnRazorpayFee: gstOnRazorpayFee.toNumber(),
+                finalTotal: finalTotal.toNumber(),
                 orderDate: new Date(order.createdAt).toLocaleString('en-IN', {
                     dateStyle: 'medium',
                     timeStyle: 'short'
                 }),
                 paymentId: order.paymentId || 'N/A'
             };
-        });
+            
+            reportData.push(reportItem);
+        }
 
+        console.log(`Processing ${canteenName}: ${reportData.length} orders`);
+
+        // Use Decimal for summary calculations
         const summary = {
             canteenName,
             totalOrders: reportData.length,
-            totalRevenue: Number(reportData.reduce((sum, order) => sum + order.subtotal, 0).toFixed(2)),
-            totalRazorpayFee: Number(reportData.reduce((sum, order) => sum + order.razorpayFee, 0).toFixed(2)),
-            totalGSTOnFee: Number(reportData.reduce((sum, order) => sum + order.gstOnRazorpayFee, 0).toFixed(2)),
-            finalTotal: Number(reportData.reduce((sum, order) => sum + order.finalTotal, 0).toFixed(2)),
+            totalRevenue: reportData.reduce((sum, order) => sum.plus(new Decimal(order.subtotal)), new Decimal(0)).toNumber(),
+            totalRazorpayFee: reportData.reduce((sum, order) => sum.plus(new Decimal(order.razorpayFee)), new Decimal(0)).toNumber(),
+            totalGSTOnFee: reportData.reduce((sum, order) => sum.plus(new Decimal(order.gstOnRazorpayFee)), new Decimal(0)).toNumber(),
+            finalTotal: reportData.reduce((sum, order) => sum.plus(new Decimal(order.finalTotal)), new Decimal(0)).toNumber(),
         };
 
         return { canteenId, canteenName, reportData, summary };
     });
 
-    // Create workbook
     const wb = XLSX.utils.book_new();
 
-    // Configure headers for order sheets
     const headers = [
         { header: 'Order ID', key: 'orderId', width: 25 },
         { header: 'Customer Name', key: 'customerName', width: 20 },
@@ -124,21 +136,27 @@ async function generateDailyReport() {
 
     // Create sheets for each canteen
     canteenReports.forEach(({ canteenName, reportData, summary }) => {
-        // Create order details sheet
-        const ws = XLSX.utils.json_to_sheet(reportData, {
-            header: headers.map(h => h.key),
-            skipHeader: true
-        });
-
-        // Add header row
+        const ws = XLSX.utils.json_to_sheet([], { header: headers.map(h => h.key) });
+        
+        // Add headers
         XLSX.utils.sheet_add_aoa(ws, [headers.map(h => h.header)], { origin: 'A1' });
         
+        // Add data starting from row 2
+        if (reportData.length > 0) {
+            XLSX.utils.sheet_add_json(ws, reportData, {
+                origin: 'A2',
+                skipHeader: true,
+            });
+        }
+
         // Set column widths
         ws['!cols'] = headers.map(h => ({ width: h.width }));
 
-        // Add summary at the bottom of the sheet
-        const lastRow = reportData.length + 3; // +3 for header row and a gap
-        const summaryRows: (string | number)[][] = [
+        // Add summary at the bottom
+        const dataEndRow = reportData.length + 1;
+        const summaryStartRow = dataEndRow + 2;
+
+        const summaryRows = [
             ['Summary'],
             ['Total Orders:', summary.totalOrders],
             ['Total Revenue:', summary.totalRevenue],
@@ -147,23 +165,24 @@ async function generateDailyReport() {
             ['Final Settlement Amount:', summary.finalTotal]
         ];
 
-        XLSX.utils.sheet_add_aoa(ws, summaryRows, { origin: `A${lastRow}` });
+        XLSX.utils.sheet_add_aoa(ws, summaryRows, { origin: `A${summaryStartRow}` });
 
+        // Add the worksheet to the workbook
         XLSX.utils.book_append_sheet(wb, ws, canteenName);
     });
 
     // Create consolidated summary sheet
     const grandTotal = {
         orders: canteenReports.reduce((sum, { summary }) => sum + summary.totalOrders, 0),
-        revenue: canteenReports.reduce((sum, { summary }) => sum + summary.totalRevenue, 0),
-        razorpayFee: canteenReports.reduce((sum, { summary }) => sum + summary.totalRazorpayFee, 0),
-        gst: canteenReports.reduce((sum, { summary }) => sum + summary.totalGSTOnFee, 0),
-        final: canteenReports.reduce((sum, { summary }) => sum + summary.finalTotal, 0),
+        revenue: new Decimal(canteenReports.reduce((sum, { summary }) => sum + summary.totalRevenue, 0)).toNumber(),
+        razorpayFee: new Decimal(canteenReports.reduce((sum, { summary }) => sum + summary.totalRazorpayFee, 0)).toNumber(),
+        gst: new Decimal(canteenReports.reduce((sum, { summary }) => sum + summary.totalGSTOnFee, 0)).toNumber(),
+        final: new Decimal(canteenReports.reduce((sum, { summary }) => sum + summary.finalTotal, 0)).toNumber()
     };
 
     const consolidatedSummary: (string | number)[][] = [
         ['Daily Orders Summary Report'],
-        ['Reporting Period:', `Last 24 hours (as of ${new Date().toLocaleString('en-IN')})`],
+        ['Reporting Period:', `${startDate.toLocaleString('en-IN')} to ${endDate.toLocaleString('en-IN')}`],
         [],
         ['Canteen-wise Summary'],
         ['Canteen Name', 'Orders', 'Revenue (₹)', 'Razorpay Fee (₹)', 'GST (₹)', 'Final Amount (₹)'],
@@ -178,10 +197,10 @@ async function generateDailyReport() {
         [],
         ['Overall Totals'],
         ['Total Orders:', grandTotal.orders],
-        ['Total Revenue:', Number(grandTotal.revenue.toFixed(2))],
-        ['Total Razorpay Fee:', Number(grandTotal.razorpayFee.toFixed(2))],
-        ['Total GST:', Number(grandTotal.gst.toFixed(2))],
-        ['Total Final Settlement:', Number(grandTotal.final.toFixed(2))]
+        ['Total Revenue:', grandTotal.revenue],
+        ['Total Razorpay Fee:', grandTotal.razorpayFee],
+        ['Total GST:', grandTotal.gst],
+        ['Total Final Settlement:', grandTotal.final]
     ];
 
     const summaryWS = XLSX.utils.aoa_to_sheet(consolidatedSummary);
@@ -191,9 +210,8 @@ async function generateDailyReport() {
     ];
     XLSX.utils.book_append_sheet(wb, summaryWS, 'Summary');
 
-    // Save the workbook
-    const date = new Date().toISOString().split('T')[0];
-    const filename = `daily_orders_report_${date}.xlsx`;
+    const dateStr = startDate.toISOString().split('T')[0];
+    const filename = `orders_report_${dateStr}.xlsx`;
     XLSX.writeFile(wb, filename);
 
     return {
@@ -202,9 +220,19 @@ async function generateDailyReport() {
     };
 }
 
-export const generateReport = async () => {
+export const generateDateReport = async (dateString: string) => {
     try {
-        const report = await generateDailyReport();
+        const selectedDate = new Date(dateString);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(selectedDate);
+        endDate.setHours(23, 59, 59, 999);
+
+        const report = await generateReport({
+            startDate: selectedDate,
+            endDate: endDate
+        });
+
         if (report) {
             console.log(`Generated report '${report.filename}'`);
             report.canteenReports.forEach(({ canteenName, summary }) => {
