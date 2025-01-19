@@ -97,6 +97,14 @@ const toggleCanteenAvailability= async(req:Request,res:Response)=>{
         isOpen:status,
      }
    })
+   const menuItems=await prisma.MenuItem.update({
+    where:{
+      canteenId:canteenId
+    },
+      data:{
+        status:status
+      }
+   })
    return res.status(200).json({ success:true ,message:"toggled the availability of canteen"});
 }
 export { getAllDishes, getAllCanteen, calculateAmountForOrder,toggleCanteenAvailability };
