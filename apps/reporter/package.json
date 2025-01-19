@@ -15,6 +15,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "decimal.js": "^10.4.3",
     "node-cron": "^3.0.3",
     "xlsx": "^0.18.5"
   }
