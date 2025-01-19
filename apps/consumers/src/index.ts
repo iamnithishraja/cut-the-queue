@@ -1,6 +1,6 @@
 import EmailConsumer from "./emailConsumer";
 import NotificationConsumer from "./notificationConsumer";
-import SMSConsumer from "./smsConsumer";
+import SMSConsumer from "./whatsappConsumer";
 
 class ConsumerManager {
 	private smsConsumer: SMSConsumer;
