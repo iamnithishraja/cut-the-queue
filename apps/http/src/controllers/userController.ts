@@ -300,31 +300,34 @@ const registerPartner = async (
     }
     const canteen = await prisma.canteen.findUnique({
       where: {
-        id: canteenId
-      }
+        id: canteenId,
+      },
     });
 
     if (!canteen) {
       return res.status(400).json({ message: INVALID_CREDENTIALS });
     }
-    const isPasswordValid = await bcrypt.compare(canteenPassword, canteen.password);
+    const isPasswordValid = await bcrypt.compare(
+      canteenPassword,
+      canteen.password
+    );
     if (!isPasswordValid) {
       return res.status(400).json({ message: INVALID_CREDENTIALS });
     }
     const user = await prisma.user.update({
       where: {
-        id: req.user!.id
+        id: req.user!.id,
       },
       data: {
         canteenId: canteen.id,
-        role: "PARTNER"
-      }
+        role: "PARTNER",
+      },
     });
     res.json(user);
   } catch (e) {
     res.status(500).json({ message: SERVER_ERROR });
   }
-}
+};
 
 const logout = async (req: CustomRequest, res: Response): Promise<any> => {
   try {
@@ -335,20 +338,22 @@ const logout = async (req: CustomRequest, res: Response): Promise<any> => {
 };
 const updateFcmToken = async (req: CustomRequest, res: Response) => {
   const { fcmToken } = req.body;
-  const userId = req.user!.id; 
+  const userId = req.user!.id;
   await prisma.user.update({
     where: { id: userId },
-    data: { fcmToken }
+    data: { fcmToken },
   });
   res.json({ success: true });
-}
+};
 
 async function getResetPasswordToken(user) {
-  const resetToken = crypto.randomBytes(20).toString('hex');
-  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const resetToken = crypto.randomBytes(20).toString("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
   const resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
 
-  
   await prisma.user.update({
     where: {
       id: user.id,
@@ -362,52 +367,68 @@ async function getResetPasswordToken(user) {
   return resetToken;
 }
 
-
-async function forgetPassword(req: CustomRequest,res: Response):Promise<any> {
+async function forgetPassword(req: CustomRequest, res: Response): Promise<any> {
   const user = await prisma.User.findOne({ email: req.body.email });
   if (!user) {
-    return res.status(400).json({ message:  "no user exists with this email" });
-    }
-    const resetToken = await getResetPasswordToken(user);
-    const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
-    const message = `your password reset token is \n\n${resetPasswordUrl} \n\nif you have not requsted this email then, please ignore it`;
-    try {
-        await sendEmail({
-            email: user.email,
-            subject: "CutTheQ Password Recovery",
-            message: message
-        }); 
-        return res.json({ success: true, message: `email sent to ${user.email} successfully` });
-  }catch(error:any){
-    user.resetPasswordToken=undefined;
-    return res.json({ success: false, message:error.message});
-    
+    return res.status(400).json({ message: "no user exists with this email" });
+  }
+  const resetToken = await getResetPasswordToken(user);
+  const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
+  const message = `your password reset token is \n\n${resetPasswordUrl} \n\nif you have not requsted this email then, please ignore it`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "CutTheQ Password Recovery",
+      message: message,
+    });
+    return res.json({
+      success: true,
+      message: `email sent to ${user.email} successfully`,
+    });
+  } catch (error: any) {
+    user.resetPasswordToken = undefined;
+    return res.json({ success: false, message: error.message });
   }
 }
-async function resetPassword(req:Request, res:Response):Promise<any> {
-  const resetPasswordToken = crypto.createHash("sha256").update(req.params.token!).digest("hex");
-  const user = await prisma.user.findOne({ resetPasswordToken: resetPasswordToken });
-  if (!user) {
-      return res.json({ success: false, message: " token is invalid" });
-  } else {
-      if (req.body.password !== req.body.confirmPassword) {
-          return res.json({ success: false, message: "the password dosent match" });
-      } else {
-        const hashedPassword = await bcrypt.hash(req.body.password, 10); 
-      await prisma.user.update({
-      where: {
-      id: user.id, 
-    },
-    data: {
-      password: hashedPassword,
-      resetPasswordToken: null, 
-      resetPasswordExpire: null, 
-    },
+async function resetPassword(req: Request, res: Response): Promise<any> {
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(req.params.token!)
+    .digest("hex");
+  const user = await prisma.user.findOne({
+    resetPasswordToken: resetPasswordToken,
   });
-          
+  if (!user) {
+    return res.json({ success: false, message: " token is invalid" });
+  } else {
+    if (req.body.password !== req.body.confirmPassword) {
+      return res.json({ success: false, message: "the password dosent match" });
+    } else {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          password: hashedPassword,
+          resetPasswordToken: null,
+          expire: null,
+        },
+      });
     }
   }
 }
 
-
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, resetPassword, logout, updateFcmToken,forgetPassword  };
+export {
+  register,
+  login,
+  googleLogin,
+  getProfile,
+  requestOtp,
+  submitOtp,
+  registerPartner,
+  resetPassword,
+  logout,
+  updateFcmToken,
+  forgetPassword,
+};
