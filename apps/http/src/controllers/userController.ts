@@ -360,7 +360,7 @@ async function getResetPasswordToken(user) {
     },
     data: {
       resetPasswordToken: hashedToken,
-      resetPasswordExpire: resetPasswordExpire,
+      expire: resetPasswordExpire,
     },
   });
 
