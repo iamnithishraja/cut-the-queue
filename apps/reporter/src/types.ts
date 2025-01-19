@@ -31,3 +31,30 @@ export interface Report {
     filename: string;
     canteenReports: CanteenReport[];
 }
+
+export interface DateRange {
+    startDate: Date;
+    endDate: Date;
+}
+
+export interface MenuItemAnalysis {
+    menuItemName: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+    razorpayFee: number;
+    gstOnFee: number;
+    finalSettlement: number;
+    numberOfOrders: number;
+}
+
+export interface CanteenReportMenu {
+    canteenName: string;
+    menuAnalysis: MenuItemAnalysis[];
+    summary: {
+        totalRevenue: number;
+        totalRazorpayFee: number;
+        totalGST: number;
+        totalSettlement: number;
+        totalQuantity: number;
+    };
+}
