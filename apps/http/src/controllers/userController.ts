@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import "dotenv/config";
 import crypto from "crypto";
-import sendEmail from "../utils/sendEmail";
 import {
   loginSchema,
   registerSchema,
@@ -376,10 +375,11 @@ async function forgetPassword(req: CustomRequest, res: Response): Promise<any> {
   const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
   const message = `your password reset token is \n\n${resetPasswordUrl} \n\nif you have not requsted this email then, please ignore it`;
   try {
-    await sendEmail({
-      email: user.email,
-      subject: "CutTheQ Password Recovery",
-      message: message,
+    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+    await kafkaProducer.publishToKafka("email", {
+      to: user.email,
+      subject: "Email verification for Forget Password",
+      content: message,
     });
     return res.json({
       success: true,
