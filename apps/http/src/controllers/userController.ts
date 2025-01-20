@@ -367,7 +367,13 @@ async function getResetPasswordToken(user) {
 }
 
 async function forgetPassword(req: CustomRequest, res: Response): Promise<any> {
-  const user = await prisma.User.findOne({ email: req.body.email });
+  const user = await prisma.User.findOne({ where:{
+    email: req.body.email
+  },
+    select:{
+     email:true
+    }
+   });
   if (!user) {
     return res.status(400).json({ message: "no user exists with this email" });
   }
