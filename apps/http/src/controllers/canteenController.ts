@@ -75,4 +75,32 @@ const calculateAmountForOrder = async (req: Request, res: Response): Promise<any
 
   }
 }
-export { getAllDishes, getAllCanteen, calculateAmountForOrder };
+const addMenuItem = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { name, price, description, canteenId, itemImage } = req.body;
+
+    if (!name || !price || !canteenId || !itemImage) {
+      return res.status(400).json({ message: INVALID_INPUT });
+    }
+
+    const newMenuItem = await prisma.menuItem.create({
+      data: {
+        name,
+        price,
+        description,
+        canteenId,
+        itemImage,
+      },
+    });
+
+    res.status(201).json({ message: "Menu item added successfully", item: newMenuItem });
+  } catch (e) {
+    res.status(500).json({ message: SERVER_ERROR });
+    console.log(e);
+  }
+};
+
+
+export { getAllDishes, getAllCanteen, calculateAmountForOrder, addMenuItem };
+
+
