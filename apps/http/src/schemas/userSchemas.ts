@@ -13,14 +13,25 @@ export const loginSchema = z.object({
   password: z.string(),
 });
 
+enum RequestType {
+  verification = "verification",
+  reset = "passwordReset",
+}
 
 export const requestOtpSchema = z.object({
   number: z.string(),
+  reqType: z.nativeEnum(RequestType),
 });
 
 export const submitOtpSchema = z.object({
   number: z.string(),
   otp: z.string(),
+});
+
+export const resetPasswordSchema = z.object({
+  number: z.string(),
+  otp: z.string(),
+  newPassword: z.string().min(8),
 });
 
 export const smsMessage = z.object({

@@ -7,6 +7,7 @@ import {
   requestOtp,
   registerPartner,
   submitOtp,
+  resetPassword,
   logout,
   updateFcmToken
   
@@ -20,6 +21,7 @@ userRoute.post("/login", login);
 userRoute.post("/google", googleLogin);
 userRoute.post("/otp", requestOtp);
 userRoute.post("/submitOtp", submitOtp);
+userRoute.post("/passwordReset", resetPassword);
 userRoute.get("/profile", isAuthenticatedUser, getProfile);
 userRoute.post('/updateFcmToken', isAuthenticatedUser, updateFcmToken);
 userRoute.get("/logout", isAuthenticatedUser,logout);

@@ -7,6 +7,7 @@ import {
   registerSchema,
   requestOtpSchema,
   submitOtpSchema,
+  resetPasswordSchema
 } from "../schemas/userSchemas";
 import prisma from "@repo/db/client";
 import {
@@ -47,6 +48,7 @@ const register = async (
         OR: [{ email: email }, { phoneNumber: phoneNo }],
       },
     });
+
     if (existingUser) {
       return res.status(400).json({ message: USER_ALREADY_EXISTS });
     }
@@ -124,6 +126,7 @@ const login = async (req: Request, res: Response): Promise<any> => {
     }
   }
 };
+
 const googleLogin = async (req: Request, res: Response): Promise<any> => {
   try {
     const { token } = req.body;
@@ -168,7 +171,7 @@ const googleLogin = async (req: Request, res: Response): Promise<any> => {
 
 const requestOtp = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { number } = requestOtpSchema.parse(req.body);
+    const { number,reqType } = requestOtpSchema.parse(req.body);
     const user = await prisma.user.findUnique({
       where: {
         phoneNumber: number,
@@ -192,14 +195,19 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
         otp: otp,
       },
     });
-    const message = createVerificationMessage(otp);
-    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-    await kafkaProducer.publishToKafka("email", {
-      to: user.email,
-      subject: "Your OTP for verification",
-      content: message,
-    });
-    res.status(200).json({ message: OTP_SENT });
+    const message = createVerificationMessage({ otp, reqType });
+    if(process.env.ENVIRONMENT === "development"){
+      res.status(200).json({ to: number, subject: "Your Otp for Cut the Q DevMode", content: message });
+    }
+    else{
+      const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+      await kafkaProducer.publishToKafka("email", {
+        to: user.email,
+        subject: "Your Otp for Cut the Q",
+        content: message,
+      });
+      res.status(200).json({ message: OTP_SENT });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ message: "Invalid input", errors: error.errors });
@@ -241,6 +249,7 @@ const submitOtp = async (req: Request, res: Response): Promise<any> => {
       },
       data: {
         isVerified: true,
+        otp: null,
       },
       select: {
         id: true,
@@ -258,6 +267,57 @@ const submitOtp = async (req: Request, res: Response): Promise<any> => {
     res.status(500).json({ message: SERVER_ERROR });
   }
 };
+
+const resetPassword = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { number, otp, newPassword } = resetPasswordSchema.parse(req.body);
+    const user = await prisma.user.findUnique({
+      where: {
+        phoneNumber: number,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+        otp: true,
+      },
+    });
+    if (!user) {
+      return res.status(400).json({ message: USER_NOT_REGISTERED });
+    }
+    if (user.otp !== otp) {
+      return res.status(401).json({ message: INVALID_OTP });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const updatedUser = await prisma.user.update({
+      where: {
+        phoneNumber: number,
+      },
+      data: {
+        password: hashedPassword,
+        otp: null,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        userProfile: true,
+        email: true,
+        phoneNumber: true,
+        isVerified: true,
+        role: true,
+      },
+    });
+    res.status(200).json({message: "Password reset successful", user: updatedUser});
+  } catch (error) {
+    res.status(500).json({ message: SERVER_ERROR });
+  }
+}
 
 const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
   try {
@@ -280,7 +340,7 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
     if (!user) {
       return res.status(400).json({ message: USER_NOT_REGISTERED });
     }
-    res.json(user);
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: SERVER_ERROR });
   }
@@ -341,4 +401,4 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
   res.json({ success: true });
 }
 
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, logout, updateFcmToken };
+export { register, login, googleLogin, getProfile, requestOtp, submitOtp,resetPassword, registerPartner, logout, updateFcmToken };
