@@ -188,7 +188,7 @@ services:
   #Service: socket-server
   socket-server:
     depends_on:
-      - serviceName: redis-pubsub
+      redis-pubsub:
         condition: service_healthy
     build:
       context: ./
