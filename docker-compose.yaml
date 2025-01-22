@@ -179,12 +179,12 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-    test: ["CMD", "redis-cli", "ping"]
-    interval: 10s
-    timeout: 5s
-    retries: 3
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: always  
-    
+
   #Service: socket-server
   socket-server:
     depends_on:
