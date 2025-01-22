@@ -40,6 +40,8 @@ spec:
         env:
         - name: PORT
           value: "3001"
+        - name: REDIS_PUB_SUB_URL
+          value: "redis://redis-pubsub:6379"
         envFrom:
         - secretRef:
             name: app-secrets

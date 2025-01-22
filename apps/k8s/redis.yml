@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-pubsub
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis-pubsub
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-pubsub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-pubsub
+  template:
+    metadata:
+      labels:
+        app: redis-pubsub
+    spec:
+      containers:
+      - name: redis-pubsub
+        image: redis/redis-stack-server:latest
+        ports:
+        - containerPort: 6379
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
