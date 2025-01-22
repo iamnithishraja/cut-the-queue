@@ -8,7 +8,7 @@ import { Request, Response } from "express";
 import { StateManager } from "../stateManager";
 import { orderItemSchema } from "../schemas";
 import { z } from "zod";
-
+import {RedisServer} from '../redisServer';
 export const broadcastMenuItems = async (
 	req: Request,
 	res: Response
@@ -28,8 +28,10 @@ export const broadcastMenuItems = async (
 			res.status(404).json({ message: DISHES_NOT_FOUND });
 			return;
 		}
+        //publish to redis over here
+		RedisServer.getInstance().publish(JSON.stringify({type:'all',canteenId:canteenId,updatedMenuItems:updatedMenuItems}));
+		// StateManager.getInstance().broadcastMenuItems(canteenId, updatedMenuItems);
 
-		StateManager.getInstance().broadcastMenuItems(canteenId, updatedMenuItems);
 
 		res.status(200).json({ message: BROADCAST_QUANTITY });
 	} catch (e) {
@@ -49,7 +51,7 @@ export const updateUserOrders = async (
 			res.status(400).json({ message: "userId is required" });
 			return;
 		}
-		StateManager.getInstance().broadcastOrdersToUser(userId);
+		RedisServer.getInstance().publish(JSON.stringify({type:'user',userId:userId}));
 		res.status(200).json({ message: "Notified User Successfully" });
 	} catch (error) {
 		res.status(500).json({ message: SERVER_ERROR });
@@ -81,8 +83,7 @@ export const updateCanteenOrders = async (
 				}
 			}
 		});
-
-		StateManager.getInstance().broadcastOrdersToAdmin(canteenId, orders);
+        RedisServer.getInstance().publish(JSON.stringify({'type':'canteen',canteenId:canteenId,orders:orders}));
 		res.status(200).json({ message: "Notified User Successfully" });
 	} catch (error) {
 		res.status(500).json({ message: SERVER_ERROR });
