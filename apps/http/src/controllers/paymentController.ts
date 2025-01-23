@@ -153,7 +153,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
             for (const orderItem of order.OrderItem) {
                 const menuItem = orderItem.menuItem;
 
-                if (menuItem.avilableLimit === null || !menuItem.avilableLimit) continue;
+                if (menuItem.avilableLimit === null || menuItem.avilableLimit === undefined) continue;
 
                 if (menuItem.avilableLimit < orderItem.quantity) {
                     throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
