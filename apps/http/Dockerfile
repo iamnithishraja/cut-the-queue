@@ -16,17 +16,28 @@ COPY apps/http/package*.json ./apps/http/
 # Install dependencies
 RUN npm install
 
-# Copy all packages and app source code
+# Copy all packages 
 COPY packages ./packages
-COPY apps/http ./apps/http
 
-# Generate Prisma Client
+#Create builds for all the packages
+WORKDIR /app/packages/constants
+RUN npm run build
+
 WORKDIR /app/packages/db
 RUN npm install prisma --save-dev
 RUN npx prisma generate
+RUN npm run build
+
+WORKDIR /app/packages/utils
+RUN npm run build
+
+WORKDIR /app
+RUN npm install
+
+#Copy app source code
+COPY apps/http ./apps/http
 
 # Build the project
-WORKDIR /app
 RUN npx turbo build
 
 # Stage 2: Runtime

@@ -3,7 +3,7 @@ import { CustomRequest } from "../types/userTypes";
 import { razorpayInstance } from "..";
 import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
 import z from "zod";
-import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
+import { CheckoutInputSchema, OrderSchema} from "../schemas/ordersSchemas";
 import crypto from "crypto";
 import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
 import KafkaProducer from "../publisher/kafka";
@@ -129,16 +129,14 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         const razorpay_order_id = entity.order_id;
 
         const result = await prisma.$transaction(async (prismaClient) => {
-            const order = await prismaClient.order.findFirst({
-                where: { paymentToken: razorpay_order_id },
-                include: {
-                    OrderItem: {
-                        include: {
-                            menuItem: true
-                        }
-                    }
-                }
-            });
+            const order : Zod.infer<typeof OrderSchema> = await prismaClient.$queryRawUnsafe(`
+                SELECT o.*, oi."menuItemId", oi.quantity, m."avilableLimit", m.name, m.id as "itemId"
+                FROM "Order" o
+                JOIN "OrderItem" oi ON o.id = oi."orderId"
+                JOIN "MenuItem" m ON oi."menuItemId" = m.id
+                WHERE o."paymentToken" = $1
+                FOR UPDATE
+            `, razorpay_order_id);
 
             if (!order) {
                 throw new Error("Order not found");
@@ -155,7 +153,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
             for (const orderItem of order.OrderItem) {
                 const menuItem = orderItem.menuItem;
 
-                if (menuItem.avilableLimit === null) continue;
+                if (menuItem.avilableLimit === null || menuItem.avilableLimit === undefined) continue;
 
                 if (menuItem.avilableLimit < orderItem.quantity) {
                     throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
