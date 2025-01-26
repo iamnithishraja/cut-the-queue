@@ -84,10 +84,13 @@ services:
       platforms:
         - linux/amd64
     environment:
-      #Sms broker environment variables
-      TWILIO_ACCOUNT_SID : <your_twilio_accound_sid> 
-      TWILIO_AUTH_TOKEN : <your_twilio_auth_token>  
-      TWILIO_MESSAGING_SERVICE_ID : <your_twilio_messaging_service_id> 
+      # RESEND_API_KEY: <RESEND_API_KEY>
+      # TWILIO_ACCOUNT_SID: <TWILIO_ACCOUNT_SID>
+      # TWILIO_AUTH_TOKEN: <TWILIO_AUTH_TOKEN>
+      # TWILIO_MESSAGING_SERVICE_ID: <TWILIO_MESSAGING_SERVICE_ID>
+      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
+      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
+      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
       KAFKA_BROKER: kafka:9092 
       KAFKA_CLIENT_ID: sms-consumer
       CONSUMER_TYPE: sms
@@ -103,10 +106,13 @@ services:
       platforms:
         - linux/amd64
     environment:
-      #Sms broker environment variables
-      TWILIO_ACCOUNT_SID : <your_twilio_accound_sid> 
-      TWILIO_AUTH_TOKEN : <your_twilio_auth_token>  
-      TWILIO_MESSAGING_SERVICE_ID : <your_twilio_messaging_service_id> 
+      # RESEND_API_KEY: <RESEND_API_KEY>
+      # TWILIO_ACCOUNT_SID: <TWILIO_ACCOUNT_SID>
+      # TWILIO_AUTH_TOKEN: <TWILIO_AUTH_TOKEN>
+      # TWILIO_MESSAGING_SERVICE_ID: <TWILIO_MESSAGING_SERVICE_ID>
+      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
+      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
+      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
       KAFKA_BROKER: kafka:9092 
       KAFKA_CLIENT_ID: email-consumer
       CONSUMER_TYPE: email
@@ -124,9 +130,13 @@ services:
       platforms:
         - linux/amd64
     environment:
-      FIREBASE_PROJECT_ID: <your_firebase_project_id>
-      FIREBASE_PRIVATE_KEY: <your_private_key>
-      FIREBASE_CLIENT_EMAIL: <your_client_email>
+      #RESEND_API_KEY: <RESEND_API_KEY>
+      # TWILIO_ACCOUNT_SID: <TWILIO_ACCOUNT_SID>
+      # TWILIO_AUTH_TOKEN: <TWILIO_AUTH_TOKEN>
+      # TWILIO_MESSAGING_SERVICE_ID: <TWILIO_MESSAGING_SERVICE_ID>
+      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
+      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
+      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: notification-consumer
       CONSUMER_TYPE: notification
@@ -161,13 +171,12 @@ services:
         - linux/amd64
     environment:
       PORT: 3000
-      RAZORPAY_API_KEY: <your_razorpay_api_key>
-      RAZORPAY_API_SECRET: <your_razorpay_api_secret>
-      RAZORPAY_WEBHOOK_SECRET: <your_razorpay_webhook_secret>
-      GOOGLE_CLIENT_ID: <your_google_client_id>
-      JWT_SECRET: <your_jwt_secret>
+      # RAZORPAY_API_KEY: <your_razorpay_api_key>
+      # RAZORPAY_API_SECRET: <your_razorpay_api_secret>
+      # RAZORPAY_WEBHOOK_SECRET: <your_razorpay_webhook_secret>
+      # JWT_SECRET: <your_jwt_secret>
+      # WS_URL: <ws_url>
       KAFKA_CLIENT_ID: http-server 
-      WS_URL: <ws_url>
       KAFKA_BROKER: kafka:9092
     ports:
       - 3000:3000
@@ -197,6 +206,7 @@ services:
         - linux/amd64
     environment:
       PORT: 3001
+      # JWT_SECRET: <your_jwt_secret>
       REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
     ports:
       - 3001:3001

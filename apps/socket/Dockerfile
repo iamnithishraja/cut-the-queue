@@ -18,15 +18,26 @@ RUN npm install
 
 # Copy all packages and app source code
 COPY packages ./packages
-COPY apps/socket ./apps/socket
 
-# Generate Prisma Client
+#Create builds for all the packages
+WORKDIR /app/packages/constants
+RUN npm run build
+
 WORKDIR /app/packages/db
 RUN npm install prisma --save-dev
 RUN npx prisma generate
+RUN npm run build
+
+WORKDIR /app/packages/utils
+RUN npm run build
+
+WORKDIR /app
+RUN npm install
+
+#Copy app source code
+COPY apps/socket ./apps/socket
 
 # Build the project
-WORKDIR /app
 RUN npx turbo build
 
 # Stage 2: Runtime
