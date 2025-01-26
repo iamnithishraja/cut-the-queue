@@ -5,13 +5,12 @@ export type SMSMessage = {
   content: string;
 };
 
-export type EmailMessage = {
+export interface EmailMessage {
   to: string;
-  from: string;
   subject: string;
   content: string;
   html?: string;
-};
+}
 
 export const NotificationMessage = z.object({
 	firebaseToken: z.string(),

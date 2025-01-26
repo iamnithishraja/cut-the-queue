@@ -1,31 +1,32 @@
 {
-  "name": "@repo/db",
-  "version": "1.0.0",
-  "description": "",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "scripts": {
-    "prisma:migrate": "npx prisma migrate dev",
-    "prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
-    "build": "npx tsc -b",
-    "studio": "npx prisma studio",
-    "seed": "tsx ./src/seed.ts"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "exports": {
-    "./client": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./objectClient": {
-      "types": "./dist/objectStore.d.ts",
-      "default": "./dist/objectStore.js"
-    }
-  },
-  "dependencies": {
-    "@prisma/client": "^5.15.1",
-    "tsx": "^4.19.1"
-  }
+	"name": "@repo/db",
+	"version": "1.0.0",
+	"description": "",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"prisma:migrate": "npx prisma migrate dev",
+		"prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
+		"build": "npx tsc -b",
+		"studio": "npx prisma studio",
+		"seed": "tsx ./src/seed.ts"
+	},
+	"devDependencies": {
+		"prisma": "^6.2.1",
+		"typescript": "^5.0.0"
+	},
+	"exports": {
+		"./client": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./objectClient": {
+			"types": "./dist/objectStore.d.ts",
+			"default": "./dist/objectStore.js"
+		}
+	},
+	"dependencies": {
+		"@prisma/client": "^5.15.1",
+		"tsx": "^4.19.1"
+	}
 }

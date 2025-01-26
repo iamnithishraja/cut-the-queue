@@ -1,15 +1,16 @@
 import express from "express";
 import {
-  register,
-  login,
-  googleLogin,
-  getProfile,
-  requestOtp,
-  registerPartner,
-  submitOtp,
-  logout,
-  updateFcmToken
-  
+	forgetPassword,
+	getProfile,
+	googleLogin,
+	login,
+	logout,
+	register,
+	registerPartner,
+	requestOtp,
+	resetPassword,
+	submitOtp,
+	updateFcmToken,
 } from "../controllers/userController";
 import { isAuthenticatedUser } from "../middlewares/auth";
 
@@ -21,8 +22,10 @@ userRoute.post("/google", googleLogin);
 userRoute.post("/otp", requestOtp);
 userRoute.post("/submitOtp", submitOtp);
 userRoute.get("/profile", isAuthenticatedUser, getProfile);
-userRoute.post('/updateFcmToken', isAuthenticatedUser, updateFcmToken);
-userRoute.get("/logout", isAuthenticatedUser,logout);
+userRoute.post("/updateFcmToken", isAuthenticatedUser, updateFcmToken);
+userRoute.get("/logout", isAuthenticatedUser, logout);
+userRoute.put("/password/reset/:token", resetPassword);
+userRoute.put("/password/forgetPassword", forgetPassword);
 
 // partner routes
 userRoute.post("/registerPartner", isAuthenticatedUser, registerPartner);
