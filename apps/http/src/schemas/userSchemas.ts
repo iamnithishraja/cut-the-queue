@@ -36,5 +36,18 @@ export const calculateAmountSchema = z.array(
   })
 );
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email()
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  otp: z.string(),
+  newPassword: z.string().min(8),
+  confirmPassword: z.string().min(8)
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
 
 export type SMSMessage = Zod.infer<typeof smsMessage>;
