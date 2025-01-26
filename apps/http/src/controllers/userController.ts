@@ -1,344 +1,464 @@
-import { NextFunction, Request, Response } from "express";
-import bcrypt from "bcrypt";
-import { OAuth2Client } from "google-auth-library";
-import "dotenv/config";
 import {
-  loginSchema,
-  registerSchema,
-  requestOtpSchema,
-  submitOtpSchema,
-} from "../schemas/userSchemas";
+	INVALID_CREDENTIALS,
+	INVALID_GOOGLE_TOKEN,
+	INVALID_INPUT,
+	INVALID_OTP,
+	OTP_SENT,
+	SERVER_ERROR,
+	USER_ALREADY_EXISTS,
+	USER_NOT_REGISTERED,
+} from "@repo/constants";
 import prisma from "@repo/db/client";
 import {
-  createVerificationMessage,
-  generateOTP,
-  generateToken,
+	createVerificationMessage,
+	generateOTP,
+	generateToken,
 } from "@repo/utils";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import "dotenv/config";
+import { NextFunction, Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
 import z from "zod";
-import {
-  INVALID_CREDENTIALS,
-  INVALID_GOOGLE_TOKEN,
-  INVALID_INPUT,
-  SERVER_ERROR,
-  USER_ALREADY_EXISTS,
-  USER_NOT_REGISTERED,
-  INVALID_OTP,
-  OTP_VERIFICATION_SUCCESSFUL,
-  OTP_SENT,
-} from "@repo/constants";
-import { CustomRequest } from "../types/userTypes";
 import KafkaProducer from "../publisher/kafka";
+import {
+	loginSchema,
+	registerSchema,
+	requestOtpSchema,
+	submitOtpSchema,
+} from "../schemas/userSchemas";
+import { CustomRequest } from "../types/userTypes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+	req: Request,
+	res: Response,
+	next: NextFunction
 ): Promise<any> => {
-  try {
-    const { firstName, lastName, email, phoneNo, password } =
-      registerSchema.parse(req.body);
+	try {
+		const { firstName, lastName, email, phoneNo, password } =
+			registerSchema.parse(req.body);
 
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: email }, { phoneNumber: phoneNo }],
-      },
-    });
-    if (existingUser) {
-      return res.status(400).json({ message: USER_ALREADY_EXISTS });
-    }
+		const existingUser = await prisma.user.findFirst({
+			where: {
+				OR: [{ email: email }, { phoneNumber: phoneNo }],
+			},
+		});
+		if (existingUser) {
+			return res.status(400).json({ message: USER_ALREADY_EXISTS });
+		}
 
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+		const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const newUser = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        phoneNumber: phoneNo,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userProfile: true,
-        email: true,
-        phoneNumber: true,
-        isVerified: true,
-        role: true,
-      },
-    });
+		const newUser = await prisma.user.create({
+			data: {
+				firstName,
+				lastName,
+				email,
+				phoneNumber: phoneNo,
+				password: hashedPassword,
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+			},
+		});
 
-    const token = generateToken(newUser.id);
-    res.status(201).json({ user: newUser, token });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
-    } else {
-      res.status(500).json({ message: SERVER_ERROR });
-    }
-  }
+		const token = generateToken(newUser.id);
+		res.status(201).json({ user: newUser, token });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
+		} else {
+			res.status(500).json({ message: SERVER_ERROR });
+		}
+	}
 };
 
 const login = async (req: Request, res: Response): Promise<any> => {
-  try {
-    const { email, password } = loginSchema.parse(req.body);
+	try {
+		const { email, password } = loginSchema.parse(req.body);
 
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: email }, { phoneNumber: email }],
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userProfile: true,
-        email: true,
-        phoneNumber: true,
-        isVerified: true,
-        role: true,
-        password: true,
-      },
-    });
-    if (!user || user.password == null) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
+		const user = await prisma.user.findFirst({
+			where: {
+				OR: [{ email: email }, { phoneNumber: email }],
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+				password: true,
+			},
+		});
+		if (!user || user.password == null) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
+		const isPasswordValid = await bcrypt.compare(password, user.password);
+		if (!isPasswordValid) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
 
-    const token = generateToken(user.id);
-    user.password = null;
-    res.status(200).json({ user, token });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
-    } else {
-      res.status(500).json({ message: SERVER_ERROR });
-    }
-  }
+		const token = generateToken(user.id);
+		user.password = null;
+		res.status(200).json({ user, token });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
+		} else {
+			res.status(500).json({ message: SERVER_ERROR });
+		}
+	}
 };
 const googleLogin = async (req: Request, res: Response): Promise<any> => {
-  try {
-    const { token } = req.body;
-    const ticket = await googleClient.verifyIdToken({
-      idToken: token,
-      audience: GOOGLE_CLIENT_ID,
-    });
+	try {
+		const { token } = req.body;
+		const ticket = await googleClient.verifyIdToken({
+			idToken: token,
+			audience: GOOGLE_CLIENT_ID,
+		});
 
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      return res.status(400).json({ message: INVALID_GOOGLE_TOKEN });
-    }
+		const payload = ticket.getPayload();
+		if (!payload || !payload.email) {
+			return res.status(400).json({ message: INVALID_GOOGLE_TOKEN });
+		}
 
-    let user = await prisma.user.findFirst({
-      where: { email: payload.email },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userProfile: true,
-        email: true,
-        phoneNumber: true,
-        isVerified: true,
-        role: true,
-      },
-    });
-    if (!user) {
-      return res.status(400).json({ message: USER_NOT_REGISTERED });
-    }
+		let user = await prisma.user.findFirst({
+			where: { email: payload.email },
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+			},
+		});
+		if (!user) {
+			return res.status(400).json({ message: USER_NOT_REGISTERED });
+		}
 
-    await prisma.user.update({
-      data: { googleId: token },
-      where: { email: payload.email },
-    });
+		await prisma.user.update({
+			data: { googleId: token },
+			where: { email: payload.email },
+		});
 
-    const jwtToken = generateToken(user.id);
-    res.json({ token: jwtToken });
-  } catch (error) {
-    res.status(500).json({ message: SERVER_ERROR });
-  }
+		const jwtToken = generateToken(user.id);
+		res.json({ token: jwtToken });
+	} catch (error) {
+		res.status(500).json({ message: SERVER_ERROR });
+	}
 };
 
 const requestOtp = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { number } = requestOtpSchema.parse(req.body);
-    const user = await prisma.user.findUnique({
-      where: {
-        phoneNumber: number,
-      },
-      select: {
-        email: true,
-      },
-    });
+	try {
+		const { number } = requestOtpSchema.parse(req.body);
+		const user = await prisma.user.findUnique({
+			where: {
+				phoneNumber: number,
+			},
+			select: {
+				email: true,
+			},
+		});
 
-    if (!user) {
-      res.status(400).json({ message: USER_NOT_REGISTERED });
-      return;
-    }
+		if (!user) {
+			res.status(400).json({ message: USER_NOT_REGISTERED });
+			return;
+		}
 
-    const otp = generateOTP();
-    await prisma.user.update({
-      where: {
-        phoneNumber: number,
-      },
-      data: {
-        otp: otp,
-      },
-    });
-    const message = createVerificationMessage(otp);
-    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-    await kafkaProducer.publishToKafka("email", {
-      to: user.email,
-      subject: "Your OTP for verification",
-      content: message,
-    });
-    res.status(200).json({ message: OTP_SENT });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ message: "Invalid input", errors: error.errors });
-    } else {
-      console.error("Error in requestOtp:", error);
-      res.status(500).json({ message: SERVER_ERROR });
-    }
-  }
+		const otp = generateOTP();
+		await prisma.user.update({
+			where: {
+				phoneNumber: number,
+			},
+			data: {
+				otp: otp,
+			},
+		});
+		const message = createVerificationMessage(otp);
+		const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+		await kafkaProducer.publishToKafka("email", {
+			to: user.email,
+			subject: "Your OTP for verification",
+			content: message,
+			html: `
+				<div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+					<h2>Cut The Queue - Verification Code</h2>
+					<div style="font-size: 24px; padding: 20px; background: #f5f5f5; margin: 20px 0;">
+						${otp}
+					</div>
+					<p>This code will expire in 10 minutes.</p>
+					<p>If you didn't request this code, please ignore this email.</p>
+				</div>
+			`,
+		});
+		res.status(200).json({ message: OTP_SENT });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			res.status(400).json({ message: "Invalid input", errors: error.errors });
+		} else {
+			console.error("Error in requestOtp:", error);
+			res.status(500).json({ message: SERVER_ERROR });
+		}
+	}
 };
 
 const submitOtp = async (req: Request, res: Response): Promise<any> => {
-  try {
-    const { number, otp } = submitOtpSchema.parse(req.body);
-    const user = await prisma.user.findUnique({
-      where: {
-        phoneNumber: number,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userProfile: true,
-        email: true,
-        phoneNumber: true,
-        isVerified: true,
-        role: true,
-        otp: true,
-      },
-    });
-    if (!user) {
-      return res.status(400).json({ message: USER_NOT_REGISTERED });
-    }
-    if (user.otp !== otp) {
-      return res.status(401).json({ message: INVALID_OTP });
-    }
-    const updatedUser = await prisma.user.update({
-      where: {
-        phoneNumber: number,
-      },
-      data: {
-        isVerified: true,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userProfile: true,
-        email: true,
-        phoneNumber: true,
-        isVerified: true,
-        role: true,
-      },
-    });
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    res.status(500).json({ message: SERVER_ERROR });
-  }
+	try {
+		const { number, otp } = submitOtpSchema.parse(req.body);
+		const user = await prisma.user.findUnique({
+			where: {
+				phoneNumber: number,
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+				otp: true,
+			},
+		});
+		if (!user) {
+			return res.status(400).json({ message: USER_NOT_REGISTERED });
+		}
+		if (user.otp !== otp) {
+			return res.status(401).json({ message: INVALID_OTP });
+		}
+		const updatedUser = await prisma.user.update({
+			where: {
+				phoneNumber: number,
+			},
+			data: {
+				isVerified: true,
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+			},
+		});
+		res.status(200).json(updatedUser);
+	} catch (error) {
+		res.status(500).json({ message: SERVER_ERROR });
+	}
 };
 
 const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: {
-        id: req.user?.id,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        userProfile: true,
-        canteenId: true,
-        email: true,
-        phoneNumber: true,
-        isVerified: true,
-        role: true,
-      },
-    });
-    if (!user) {
-      return res.status(400).json({ message: USER_NOT_REGISTERED });
-    }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: SERVER_ERROR });
-  }
+	try {
+		const user = await prisma.user.findUnique({
+			where: {
+				id: req.user?.id,
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				canteenId: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+			},
+		});
+		if (!user) {
+			return res.status(400).json({ message: USER_NOT_REGISTERED });
+		}
+		res.json(user);
+	} catch (error) {
+		res.status(500).json({ message: SERVER_ERROR });
+	}
 };
 
 const registerPartner = async (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
+	req: CustomRequest,
+	res: Response,
+	next: NextFunction
 ): Promise<any> => {
-  try {
-    const { canteenId, canteenPassword } = req.body;
-    if (!canteenId || !canteenPassword) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
-    const canteen = await prisma.canteen.findUnique({
-      where: {
-        id: canteenId
-      }
-    });
+	try {
+		const { canteenId, canteenPassword } = req.body;
+		if (!canteenId || !canteenPassword) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+		const canteen = await prisma.canteen.findUnique({
+			where: {
+				id: canteenId,
+			},
+		});
 
-    if (!canteen) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
-    const isPasswordValid = await bcrypt.compare(canteenPassword, canteen.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
-    const user = await prisma.user.update({
-      where: {
-        id: req.user!.id
-      },
-      data: {
-        canteenId: canteen.id,
-        role: "PARTNER"
-      }
-    });
-    res.json(user);
-  } catch (e) {
-    res.status(500).json({ message: SERVER_ERROR });
-  }
-}
+		if (!canteen) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+		const isPasswordValid = await bcrypt.compare(
+			canteenPassword,
+			canteen.password
+		);
+		if (!isPasswordValid) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+		const user = await prisma.user.update({
+			where: {
+				id: req.user!.id,
+			},
+			data: {
+				canteenId: canteen.id,
+				role: "PARTNER",
+			},
+		});
+		res.json(user);
+	} catch (e) {
+		res.status(500).json({ message: SERVER_ERROR });
+	}
+};
 
 const logout = async (req: CustomRequest, res: Response): Promise<any> => {
-  try {
-    res.status(200).json({ message: "Logout successful" });
-  } catch (error) {
-    res.status(500).json({ message: SERVER_ERROR });
-  }
+	try {
+		res.status(200).json({ message: "Logout successful" });
+	} catch (error) {
+		res.status(500).json({ message: SERVER_ERROR });
+	}
 };
 const updateFcmToken = async (req: CustomRequest, res: Response) => {
-  const { fcmToken } = req.body;
-  const userId = req.user!.id; 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { fcmToken }
-  });
-  res.json({ success: true });
+	const { fcmToken } = req.body;
+	const userId = req.user!.id;
+	await prisma.user.update({
+		where: { id: userId },
+		data: { fcmToken },
+	});
+	res.json({ success: true });
+};
+
+async function getResetPasswordToken(user) {
+	const resetToken = crypto.randomBytes(20).toString("hex");
+	const hashedToken = crypto
+		.createHash("sha256")
+		.update(resetToken)
+		.digest("hex");
+	const resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+	await prisma.user.update({
+		where: {
+			id: user.id,
+		},
+		data: {
+			resetPasswordToken: hashedToken,
+			expire: resetPasswordExpire,
+		},
+	});
+
+	return resetToken;
 }
 
-export { register, login, googleLogin, getProfile, requestOtp, submitOtp, registerPartner, logout, updateFcmToken };
+async function forgetPassword(req: CustomRequest, res: Response): Promise<any> {
+	const user = await prisma.user.findUnique({
+		where: {
+			email: req.body.email,
+		},
+		select: {
+			id: true,
+			email: true,
+		},
+	});
+	if (!user) {
+		return res.status(400).json({ message: "no user exists with this email" });
+	}
+	const resetToken = await getResetPasswordToken(user);
+	const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
+	const message = `your password reset token is \n\n${resetPasswordUrl} \n\nif you have not requsted this email then, please ignore it`;
+	try {
+		const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+		await kafkaProducer.publishToKafka("email", {
+			to: user.email,
+			subject: "Password Reset Request - Cut The Queue",
+			content: message,
+			html: `
+				<div style="font-family: Arial, sans-serif; padding: 20px;">
+					<h2>Password Reset Request</h2>
+					<p>You requested to reset your password. Click the link below to proceed:</p>
+					<p><a href="${resetPasswordUrl}">${resetPasswordUrl}</a></p>
+					<p>If you did not request this password reset, please ignore this email.</p>
+				</div>
+			`,
+		});
+		return res.json({
+			success: true,
+			message: `email sent to ${user.email} successfully`,
+		});
+	} catch (error: any) {
+		await prisma.user.update({
+			where: { id: user.id },
+			data: { resetPasswordToken: null, expire: null },
+		});
+		return res.json({ success: false, message: error.message });
+	}
+}
+
+async function resetPassword(req: Request, res: Response): Promise<any> {
+	const resetPasswordToken = crypto
+		.createHash("sha256")
+		.update(req.params.token!)
+		.digest("hex");
+	const user = await prisma.user.findFirst({
+		where: { resetPasswordToken: resetPasswordToken },
+	});
+	if (!user) {
+		return res.json({ success: false, message: " token is invalid" });
+	} else {
+		if (req.body.password !== req.body.confirmPassword) {
+			return res.json({ success: false, message: "the password dosent match" });
+		} else {
+			const hashedPassword = await bcrypt.hash(req.body.password, 10);
+			await prisma.user.update({
+				where: {
+					id: user.id,
+				},
+				data: {
+					password: hashedPassword,
+					resetPasswordToken: null,
+					expire: null,
+				},
+			});
+			return res.json({ success: true, message: "Password reset successful" });
+		}
+	}
+}
+
+export {
+	forgetPassword,
+	getProfile,
+	googleLogin,
+	login,
+	logout,
+	register,
+	registerPartner,
+	requestOtp,
+	resetPassword,
+	submitOtp,
+	updateFcmToken,
+};
