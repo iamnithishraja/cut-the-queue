@@ -17,17 +17,14 @@ async function getAllDishes(req: Request, res: Response) {
 	}
 }
 
-async function getAllCanteen(_: Request, res: Response) {
+const getAllCanteen = async (req: Request, res: Response): Promise<any> => {
 	try {
-		const canteens = await prisma.canteen.findMany({
-			where: { isOpen: true },
-		});
-		res.json({ canteens, length: canteens.length });
-	} catch (e) {
-		console.error(e);
+		const canteens = await prisma.canteen.findMany();
+		res.status(200).json(canteens);
+	} catch (error) {
 		res.status(500).json({ message: SERVER_ERROR });
 	}
-}
+};
 
 const calculateAmountForOrder = async (req: Request, res: Response) => {
 	try {
