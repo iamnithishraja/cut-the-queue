@@ -1,7 +1,10 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "preserveSymlinks": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
   "include": ["./src"],
   "exclude": ["node_modules", "dist"]
