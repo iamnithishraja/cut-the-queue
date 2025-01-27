@@ -73,7 +73,7 @@ services:
       timeout: 5s
       retries: 5
 
-  #Service: sms-consumer
+  #Service: whatsapp-consumer
   sms-consumer:
     depends_on:
       kafka:
@@ -84,11 +84,16 @@ services:
       platforms:
         - linux/amd64
     environment:
-      KAFKA_BROKER: kafka:9092 
-      KAFKA_CLIENT_ID: sms-consumer
-      CONSUMER_TYPE: sms
-    env_file:
-      - .env
+      # RESEND_API_KEY: <RESEND_API_KEY>
+      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
+      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
+      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
+      TWILIO_ACCOUNT_SID: <your_twilio_account_sid>
+      TWILIO_AUTH_TOKEN: <your_twilio_auth_token>
+      TWILIO_WHATSAPP_FROM: <your_twilio_whatsapp_number>  # Usually in format: +14155238886
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: whatsapp-consumer
+      CONSUMER_TYPE: whatsapp
     restart: always  
 
   email-consumer:
