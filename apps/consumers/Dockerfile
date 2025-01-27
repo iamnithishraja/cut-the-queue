@@ -3,33 +3,43 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Install OpenSSL and required build dependencies
-RUN apt-get update -y && \
-    apt-get install -y openssl
+# Install OpenSSL and pnpm 
+RUN apt-get update -y && apt-get install -y openssl
+RUN npm install -g pnpm
 
-# Copy root package files
+# Copy package files for all workspaces
 COPY package*.json ./
+COPY pnpm-lock.yaml ./
 COPY turbo.json ./
-
-# Copy workspace package files maintaining directory structure
 COPY packages/db/package*.json ./packages/db/
 COPY packages/*/package*.json ./packages/
 COPY apps/consumers/package*.json ./apps/consumers/
 
-# Install all dependencies (including devDependencies)
-RUN npm install
+# Install dependencies
+RUN pnpm install
 
-# Copy source code
+# Copy all packages and app source code
 COPY packages ./packages
+
+#Create builds for all the packages
+WORKDIR /app/packages/constants
+RUN pnpm run build
+
+WORKDIR /app/packages/db
+RUN pnpm add prisma --save-dev
+RUN npx prisma generate
+RUN pnpm run build
+
+WORKDIR /app/packages/utils
+RUN pnpm run build
+
+WORKDIR /app
+RUN pnpm install
+
+#Copy app source code
 COPY apps/consumers ./apps/consumers
 
-# Generate Prisma Client (with explicit Prisma installation)
-WORKDIR /app/packages/db
-RUN npm install prisma --save-dev
-RUN npx prisma generate
-
-# Return to app root and build
-WORKDIR /app
+# Build the project
 RUN npx turbo build
 
 # Stage 2: Runtime
@@ -37,25 +47,27 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install OpenSSL
-RUN apt-get update -y && \
-    apt-get install -y openssl
+# Install OpenSSL and pnpm
+RUN apt-get update -y && apt-get install -y openssl
+RUN npm install -g pnpm
 
-# Copy package files and install production dependencies
+# Copy package files
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/apps/consumers/package*.json ./apps/consumers/
-RUN npm install
+COPY --from=builder /app/pnpm-lock.yaml ./
+COPY --from=builder /app/apps/consumers/package*.json ./
 
-# Copy built assets
+# Install production dependencies
+RUN pnpm install --prod
+
+# Copy built assets and packages
 COPY --from=builder /app/apps/consumers/dist ./dist
 COPY --from=builder /app/packages ./packages
 
-# Generate Prisma Client in production (with explicit Prisma installation)
+# Generate Prisma Client in production
 WORKDIR /app/packages/db
-RUN npm install prisma --save-dev
+RUN pnpm add prisma --save-dev
 RUN npx prisma generate
 
-# Return to app root
 WORKDIR /app
 
 ENV NODE_ENV=production
