@@ -30,7 +30,7 @@ RUN npx prisma generate
 
 # Return to app root and build
 WORKDIR /app
-RUN npx turbo build
+RUN npx turbo build --filter=consumers...
 
 # Stage 2: Runtime
 FROM node:20-slim

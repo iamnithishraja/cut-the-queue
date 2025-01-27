@@ -38,7 +38,7 @@ RUN npm install
 COPY apps/socket ./apps/socket
 
 # Build the project
-RUN npx turbo build
+RUN npx turbo build --filter=socket...
 
 # Stage 2: Runtime
 FROM node:20-slim

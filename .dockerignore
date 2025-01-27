@@ -1,2 +1,43 @@
+# Dependencies
 node_modules
-*/*/.env
+.pnp
+.pnp.js
+
+coverage
+
+# Turbo
+.turbo
+
+# Build outputs
+dist
+build
+out
+
+# Environment files
+.env*
+!.env.example
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Turborepo specific
+apps/**/node_modules
+packages/**/node_modules
+apps/**/dist
+packages/**/dist
+
+# Cache
+.cache
+**/tsconfig.tsbuildinfo
