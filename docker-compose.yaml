@@ -73,7 +73,7 @@ services:
       timeout: 5s
       retries: 5
 
-  #Service: sms-consumer
+  #Service: whatsapp-consumer
   sms-consumer:
     depends_on:
       kafka:
@@ -84,13 +84,12 @@ services:
       platforms:
         - linux/amd64
     environment:
-      #Sms broker environment variables
-      TWILIO_ACCOUNT_SID : <your_twilio_accound_sid> 
-      TWILIO_AUTH_TOKEN : <your_twilio_auth_token>  
-      TWILIO_MESSAGING_SERVICE_ID : <your_twilio_messaging_service_id> 
-      KAFKA_BROKER: kafka:9092 
-      KAFKA_CLIENT_ID: sms-consumer
-      CONSUMER_TYPE: sms
+      TWILIO_ACCOUNT_SID: <your_twilio_account_sid>
+      TWILIO_AUTH_TOKEN: <your_twilio_auth_token>
+      TWILIO_WHATSAPP_FROM: <your_twilio_whatsapp_number>  # Usually in format: +14155238886
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: whatsapp-consumer
+      CONSUMER_TYPE: whatsapp
     restart: always  
 
 
