@@ -1,7 +1,7 @@
 import prisma from "@repo/db/client";
 import * as XLSX from 'xlsx';
 import Decimal from 'decimal.js';
-import { CanteenReportMenu, DateRange, MenuItemAnalysis } from "./types";
+import { CanteenReportMenu, DateRange, MenuItemAnalysis, CanteenOrder } from "./types";
 
 async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
     const orders = await prisma.order.findMany({
@@ -40,7 +40,7 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
     }
 
     // Group orders by canteen first
-    const canteenOrders = orders.reduce((acc, order) => {
+    const canteenOrders: CanteenOrder = orders.reduce((acc, order) => {
         const canteenId = order.canteen.id;
         if (!acc[canteenId]) {
             acc[canteenId] = {
@@ -53,7 +53,6 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
     }, {} as Record<string, { canteenName: string; orders: typeof orders }>);
 
     const canteenReports: CanteenReportMenu[] = [];
-
     // Process each canteen separately
     for (const [canteenId, { canteenName, orders }] of Object.entries(canteenOrders)) {
         const menuItemStats = new Map<string, MenuItemAnalysis>();

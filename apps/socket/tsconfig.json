@@ -1,10 +1,28 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
   "compilerOptions": {
-    "outDir": "./dist",
-    "preserveSymlinks": true,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "incremental": false,
+    "rootDir": "./src",
+    "isolatedModules": true,
+    "lib": ["es2022", "DOM", "DOM.Iterable"],
     "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "moduleDetection": "force",
+    "moduleResolution": "NodeNext",
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "paths": {
+      "@prisma/client": ["./node_modules/@prisma/client"]
+    },
+    "target": "ES2022",
+    "outDir": "./dist",
+    "preserveSymlinks": true
   },
   "include": ["./src"],
   "exclude": ["node_modules", "dist"]

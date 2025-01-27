@@ -58,3 +58,8 @@ export interface CanteenReportMenu {
         totalQuantity: number;
     };
 }
+
+export interface CanteenOrder {
+    canteenName: string;
+    orders: OrderReportItem[]; 
+  };

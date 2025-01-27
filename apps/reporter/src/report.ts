@@ -55,7 +55,7 @@ async function generateReport({ startDate, endDate }: DateRange) {
 
     const processedOrders = [...orders];
 
-    const ordersByCanteen = processedOrders.reduce((acc, order) => {
+    const ordersByCanteen: Record<string, { canteenName: string; orders: typeof orders }> = processedOrders.reduce((acc, order) => {
         const canteenId = order.canteen.id;
         if (!acc[canteenId]) {
             acc[canteenId] = {

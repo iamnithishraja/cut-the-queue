@@ -1,13 +1,13 @@
 {
   "name": "tests",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./src/loadTest.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "loadTest": "npx nodemon ./src/loadtest.ts"
+    "loadTest": "NODE_ENV=development tsx --watch src/loadTest.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "devDependencies": {
+    "tsx": "^4.19.0",
+		"typescript": "^5.5.4"
+  }
 }
