@@ -84,16 +84,11 @@ services:
       platforms:
         - linux/amd64
     environment:
-      # RESEND_API_KEY: <RESEND_API_KEY>
-      # TWILIO_ACCOUNT_SID: <TWILIO_ACCOUNT_SID>
-      # TWILIO_AUTH_TOKEN: <TWILIO_AUTH_TOKEN>
-      # TWILIO_MESSAGING_SERVICE_ID: <TWILIO_MESSAGING_SERVICE_ID>
-      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
-      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
-      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
       KAFKA_BROKER: kafka:9092 
       KAFKA_CLIENT_ID: sms-consumer
       CONSUMER_TYPE: sms
+    env_file:
+      - .env
     restart: always  
 
   email-consumer:
@@ -106,18 +101,12 @@ services:
       platforms:
         - linux/amd64
     environment:
-      # RESEND_API_KEY: <RESEND_API_KEY>
-      # TWILIO_ACCOUNT_SID: <TWILIO_ACCOUNT_SID>
-      # TWILIO_AUTH_TOKEN: <TWILIO_AUTH_TOKEN>
-      # TWILIO_MESSAGING_SERVICE_ID: <TWILIO_MESSAGING_SERVICE_ID>
-      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
-      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
-      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
       KAFKA_BROKER: kafka:9092 
       KAFKA_CLIENT_ID: email-consumer
       CONSUMER_TYPE: email
+    env_file:
+      - .env
     restart: always  
-
 
   #Service: notification-consumer
   notification-consumer:
@@ -130,16 +119,11 @@ services:
       platforms:
         - linux/amd64
     environment:
-      #RESEND_API_KEY: <RESEND_API_KEY>
-      # TWILIO_ACCOUNT_SID: <TWILIO_ACCOUNT_SID>
-      # TWILIO_AUTH_TOKEN: <TWILIO_AUTH_TOKEN>
-      # TWILIO_MESSAGING_SERVICE_ID: <TWILIO_MESSAGING_SERVICE_ID>
-      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
-      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
-      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: notification-consumer
       CONSUMER_TYPE: notification
+    env_file:
+      - .env
     restart: always
 
   #Service: kafka-cleanup
@@ -171,13 +155,10 @@ services:
         - linux/amd64
     environment:
       PORT: 3000
-      # RAZORPAY_API_KEY: <your_razorpay_api_key>
-      # RAZORPAY_API_SECRET: <your_razorpay_api_secret>
-      # RAZORPAY_WEBHOOK_SECRET: <your_razorpay_webhook_secret>
-      # JWT_SECRET: <your_jwt_secret>
-      # WS_URL: <ws_url>
       KAFKA_CLIENT_ID: http-server 
       KAFKA_BROKER: kafka:9092
+    env_file:
+      - .env
     ports:
       - 3000:3000
     restart: always
@@ -206,8 +187,9 @@ services:
         - linux/amd64
     environment:
       PORT: 3001
-      # JWT_SECRET: <your_jwt_secret>
       REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
+    env_file:
+      - .env
     ports:
       - 3001:3001
     restart: always
