@@ -20,7 +20,7 @@ async function getAllDishes(req: Request, res: Response) {
 const getAllCanteen = async (req: Request, res: Response): Promise<any> => {
 	try {
 		const canteens = await prisma.canteen.findMany();
-		res.status(200).json(canteens);
+		res.json({ canteens, length: canteens.length });
 	} catch (error) {
 		res.status(500).json({ message: SERVER_ERROR });
 	}
