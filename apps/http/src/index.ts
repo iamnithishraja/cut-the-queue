@@ -29,7 +29,7 @@ export const razorpayInstance = new Razorpay({
 
 
 app.get("/", (req, res) => {
-  res.sendFile('index.html', { root: 'public' });
+  res.sendFile('index.html', { root: 'public' } as any);
 });
 
 app.get('/metrics', async (req, res) => {
