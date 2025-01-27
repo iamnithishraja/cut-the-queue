@@ -26,6 +26,8 @@ import {
 	registerSchema,
 	requestOtpSchema,
 	submitOtpSchema,
+	forgotPasswordSchema,
+	resetPasswordSchema,
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 
@@ -354,99 +356,88 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
 	res.json({ success: true });
 };
 
-async function getResetPasswordToken(user) {
-	const resetToken = crypto.randomBytes(20).toString("hex");
-	const hashedToken = crypto
-		.createHash("sha256")
-		.update(resetToken)
-		.digest("hex");
-	const resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+async function forgetPassword(req: Request, res: Response): Promise<any> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: req.body.email },
+      select: { id: true, email: true },
+    });
 
-	await prisma.user.update({
-		where: {
-			id: user.id,
-		},
-		data: {
-			resetPasswordToken: hashedToken,
-			expire: resetPasswordExpire,
-		},
-	});
+    if (!user) {
+      return res.status(400).json({ message: "No user exists with this email" });
+    }
 
-	return resetToken;
-}
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-async function forgetPassword(req: CustomRequest, res: Response): Promise<any> {
-	const user = await prisma.user.findUnique({
-		where: {
-			email: req.body.email,
-		},
-		select: {
-			id: true,
-			email: true,
-		},
-	});
-	if (!user) {
-		return res.status(400).json({ message: "no user exists with this email" });
-	}
-	const resetToken = await getResetPasswordToken(user);
-	const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
-	const message = `your password reset token is \n\n${resetPasswordUrl} \n\nif you have not requsted this email then, please ignore it`;
-	try {
-		const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-		await kafkaProducer.publishToKafka("email", {
-			to: user.email,
-			subject: "Password Reset Request - Cut The Queue",
-			content: message,
-			html: `
-				<div style="font-family: Arial, sans-serif; padding: 20px;">
-					<h2>Password Reset Request</h2>
-					<p>You requested to reset your password. Click the link below to proceed:</p>
-					<p><a href="${resetPasswordUrl}">${resetPasswordUrl}</a></p>
-					<p>If you did not request this password reset, please ignore this email.</p>
-				</div>
-			`,
-		});
-		return res.json({
-			success: true,
-			message: `email sent to ${user.email} successfully`,
-		});
-	} catch (error: any) {
-		await prisma.user.update({
-			where: { id: user.id },
-			data: { resetPasswordToken: null, expire: null },
-		});
-		return res.json({ success: false, message: error.message });
-	}
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { 
+        resetPasswordToken: otp,
+        expire: otpExpiry
+      },
+    });
+
+    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+    await kafkaProducer.publishToKafka("email", {
+      to: user.email,
+      subject: "Password Reset OTP - Cut The Queue",
+      content: `Your OTP for password reset is: ${otp}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+          <h2>Password Reset OTP</h2>
+          <div style="font-size: 24px; padding: 20px; background: #f5f5f5; margin: 20px 0;">
+            ${otp}
+          </div>
+          <p>This OTP will expire in 15 minutes.</p>
+          <p>If you didn't request this password reset, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return res.json({
+      success: true,
+      message: `OTP sent to ${user.email} successfully`,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: SERVER_ERROR });
+  }
 }
 
 async function resetPassword(req: Request, res: Response): Promise<any> {
-	const resetPasswordToken = crypto
-		.createHash("sha256")
-		.update(req.params.token!)
-		.digest("hex");
-	const user = await prisma.user.findFirst({
-		where: { resetPasswordToken: resetPasswordToken },
-	});
-	if (!user) {
-		return res.json({ success: false, message: " token is invalid" });
-	} else {
-		if (req.body.password !== req.body.confirmPassword) {
-			return res.json({ success: false, message: "the password dosent match" });
-		} else {
-			const hashedPassword = await bcrypt.hash(req.body.password, 10);
-			await prisma.user.update({
-				where: {
-					id: user.id,
-				},
-				data: {
-					password: hashedPassword,
-					resetPasswordToken: null,
-					expire: null,
-				},
-			});
-			return res.json({ success: true, message: "Password reset successful" });
-		}
-	}
+  try {
+    const otp = req.params.token; // Use the token parameter as OTP
+    const { password, confirmPassword } = req.body;
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords don't match" });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { 
+        resetPasswordToken: otp,
+        expire: { gt: new Date() }
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        expire: null,
+      },
+    });
+
+    return res.json({ success: true, message: "Password reset successful" });
+  } catch (error) {
+    return res.status(500).json({ message: SERVER_ERROR });
+  }
 }
 
 export {
