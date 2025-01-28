@@ -8,7 +8,7 @@
 		"prisma:migrate": "npx prisma migrate dev",
 		"prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
 		"build": "npx tsc -b",
-		"studio": "npx prisma studio",
+		"studio": "npx prisma studio --port 5001",
 		"seed": "tsx ./src/seed.ts"
 	},
 	"devDependencies": {

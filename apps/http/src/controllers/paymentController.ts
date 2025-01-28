@@ -3,10 +3,11 @@ import { CustomRequest } from "../types/userTypes";
 import { razorpayInstance } from "..";
 import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
 import z from "zod";
-import { CheckoutInputSchema, OrderSchema} from "../schemas/ordersSchemas";
+import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
 import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
 import KafkaProducer from "../publisher/kafka";
+import {PaymentSuccessResponse,PaymentOrderResponse} from "../types/types"
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
@@ -112,6 +113,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
             });
         }
 
+        // Verify webhook signature
         const shasum = crypto.createHmac('sha256', webhookSecret);
         shasum.update(JSON.stringify(req.body));
         const digest = shasum.digest('hex');
@@ -128,51 +130,99 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         const razorpay_payment_id = entity.id;
         const razorpay_order_id = entity.order_id;
 
+        // Start transaction
         const result = await prisma.$transaction(async (prismaClient) => {
-            const order : Zod.infer<typeof OrderSchema> = await prismaClient.$queryRawUnsafe(`
-                SELECT o.*, oi."menuItemId", oi.quantity, m."avilableLimit", m.name, m.id as "itemId"
-                FROM "Order" o
-                JOIN "OrderItem" oi ON o.id = oi."orderId"
-                JOIN "MenuItem" m ON oi."menuItemId" = m.id
-                WHERE o."paymentToken" = $1
-                FOR UPDATE
-            `, razorpay_order_id);
+            // Find order with FOR UPDATE using raw query if PostgreSQL
+            let order;
+            if (process.env.DATABASE_URL?.includes('postgresql')) {
+                const orders = await prismaClient.$queryRaw<Array<any>>`
+                    SELECT o.*, c.fcmToken 
+                    FROM "orders" o
+                    LEFT JOIN "users" c ON o."userId" = c.id
+                    WHERE o."paymentToken" = ${razorpay_order_id}
+                    FOR UPDATE NOWAIT
+                `;
+                
+                if (orders.length > 0) {
+                    order = orders[0];
+                }
+            } else {
+                order = await prismaClient.order.findFirst({
+                    where: { paymentToken: razorpay_order_id },
+                    include: {
+                        OrderItem: {
+                            include: {
+                                menuItem: true
+                            }
+                        },
+                        customer: {
+                            select: {
+                                fcmToken: true
+                            }
+                        }
+                    }
+                });
+            }
 
             if (!order) {
                 throw new Error("Order not found");
             }
 
             if (order.isPaid) {
-                return res.status(200).json({
-                    success: true,
-                    message: "Payment already processed",
-                    orderId: order.id
-                });
-            }
-
-            for (const orderItem of order.OrderItem) {
-                const menuItem = orderItem.menuItem;
-
-                if (menuItem.avilableLimit === null || menuItem.avilableLimit === undefined) continue;
-
-                if (menuItem.avilableLimit < orderItem.quantity) {
-                    throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
-                }
-
-                await prismaClient.menuItem.update({
-                    where: { id: menuItem.id },
+                const response: PaymentSuccessResponse = {
+                    status: 200,
                     data: {
-                        avilableLimit: {
-                            decrement: orderItem.quantity
-                        },
-                        status: menuItem.avilableLimit - orderItem.quantity <= 0
-                            ? 'UNAVAILABLE'
-                            : 'AVAILABLE'
+                        success: true,
+                        message: "Payment already processed",
+                        orderId: order.id
                     }
-                });
+                };
+                return response;
             }
 
-            // Update the order status
+            // Process menu items
+            const orderItems = await prismaClient.orderItem.findMany({
+                where: { orderId: order.id },
+                include: { menuItem: true }
+            });
+
+            for (const orderItem of orderItems) {
+                const menuItem = orderItem.menuItem;
+                
+                if (menuItem.avilableLimit !== null) {
+                    if (menuItem.avilableLimit < orderItem.quantity) {
+                        throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
+                    }
+
+                    // Update inventory with raw query if PostgreSQL
+                    if (process.env.DATABASE_URL?.includes('postgresql')) {
+                        await prismaClient.$executeRaw`
+                            UPDATE "menu_items"
+                            SET "avilableLimit" = "avilableLimit" - ${orderItem.quantity},
+                                status = CASE 
+                                    WHEN "avilableLimit" - ${orderItem.quantity} <= 0 THEN 'UNAVAILABLE'::text
+                                    ELSE 'AVAILABLE'::text
+                                END
+                            WHERE id = ${menuItem.id}
+                            AND "avilableLimit" >= ${orderItem.quantity}
+                        `;
+                    } else {
+                        await prismaClient.menuItem.update({
+                            where: { id: menuItem.id },
+                            data: {
+                                avilableLimit: {
+                                    decrement: orderItem.quantity
+                                },
+                                status: menuItem.avilableLimit - orderItem.quantity <= 0
+                                    ? 'UNAVAILABLE'
+                                    : 'AVAILABLE'
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Update order status
             const updatedOrder = await prismaClient.order.update({
                 where: { id: order.id },
                 data: {
@@ -188,32 +238,54 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                 }
             });
 
-            return updatedOrder;
+            const response: PaymentOrderResponse = {
+                status: 200,
+                data: {
+                    ...updatedOrder,
+                    customer: {
+                        fcmToken: updatedOrder.customer?.fcmToken || null
+                    }
+                }
+            };
+            return response;
+
+        }, {
+            timeout: 10000,
+            isolationLevel: 'Serializable' as const
         });
-        // @ts-ignore
-        fetch(`${process.env.WS_URL}/brodcastMenuItems/${result.canteenId}`);
-        // @ts-ignore
-        fetch(`${process.env.WS_URL}/updateCanteenOrders/${result.canteenId}`);
-        const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-        // @ts-ignore
-        if (result.customer.fcmToken) {
-            await kafkaProducer.publishToKafka("notification", {
-                // @ts-ignore
-                firebaseToken: result.customer.fcmToken,
-                title: `Your Payment is Successful ✅`,
-                body: `Thank You for choosing CutTheQ`
-            });
+
+        try {
+            if ('canteenId' in result.data) {
+                await fetch(`${process.env.WS_URL}/brodcastMenuItems/${result.data.canteenId}`);
+                await fetch(`${process.env.WS_URL}/updateCanteenOrders/${result.data.canteenId}`);
+                
+                if (result.data.customer?.fcmToken) {
+                    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+                    await kafkaProducer.publishToKafka("notification", {
+                        firebaseToken: result.data.customer.fcmToken,
+                        title: `Your Payment is Successful ✅`,
+                        body: `Thank You for choosing CutTheQ`
+                    });
+                }
+            }
+            
+            if ('customer' in result.data && result.data.customer.fcmToken) {
+                const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+                await kafkaProducer.publishToKafka("notification", {
+                    firebaseToken: result.data.customer.fcmToken,
+                    title: `Your Payment is Successful ✅`,
+                    body: `Thank You for choosing CutTheQ`
+                });
+            }
+        } catch (error) {
+            console.error('Post-transaction operations error:', error);
         }
 
-        res.status(200).json({
-            success: true,
-            message: "Webhook processed successfully",
-        });
+        return res.status(result.status).json(result.data);
 
     } catch (error) {
-        console.error('Webhook processing error:', error);
+        console.error('Payment verification error:', error);
 
-        // Handle specific error cases
         if (error instanceof Error && error.message.includes("Insufficient inventory")) {
             return res.status(400).json({
                 success: false,
@@ -222,9 +294,17 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
             });
         }
 
+        if (error instanceof Error && error.message.includes('Transaction timeout')) {
+            return res.status(409).json({
+                success: false,
+                error: 'Transaction timeout',
+                message: 'Please try again'
+            });
+        }
+
         res.status(500).json({
             success: false,
-            error: 'Failed to process webhook',
+            error: 'Failed to process payment verification',
             message: error instanceof Error ? error.message : 'Unknown error'
         });
     }
