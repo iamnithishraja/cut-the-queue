@@ -3,10 +3,11 @@ import { CustomRequest } from "../types/userTypes";
 import { razorpayInstance } from "..";
 import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
 import z from "zod";
-import { CheckoutInputSchema, PaymentVerificationSchema } from "../schemas/ordersSchemas";
+import { CheckoutInputSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
 import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
 import KafkaProducer from "../publisher/kafka";
+import { OrderResult } from "../types/types"
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
@@ -128,6 +129,14 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         const razorpay_payment_id = entity.id;
         const razorpay_order_id = entity.order_id;
 
+        interface OrderResult {
+            id: string;
+            canteenId: string;
+            customer: {
+                fcmToken: string | null;
+            };
+        }
+
         const result = await prisma.$transaction(async (prismaClient) => {
             const order = await prismaClient.order.findFirst({
                 where: { paymentToken: razorpay_order_id },
@@ -152,26 +161,35 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                 });
             }
 
+            // Process each order item with atomic updates
             for (const orderItem of order.OrderItem) {
                 const menuItem = orderItem.menuItem;
-
+                
+                // Skip if item has unlimited stock
                 if (menuItem.avilableLimit === null) continue;
 
-                if (menuItem.avilableLimit < orderItem.quantity) {
+                // Atomic update with inventory check using raw SQL
+                const query = `
+                    UPDATE "menu_items"
+                    SET 
+                        "avilableLimit" = "avilableLimit" - $1,
+                        "status" = CASE 
+                            WHEN ("avilableLimit" - $1) <= 0 THEN 'UNAVAILABLE'::"AvailabilityStatus"
+                            ELSE 'AVAILABLE'::"AvailabilityStatus"
+                        END
+                    WHERE 
+                        id = $2 AND
+                        "avilableLimit" >= $1;
+                `;
+                const params = [orderItem.quantity, menuItem.id];
+                
+                // Execute the raw update query
+                const updateCount = await prismaClient.$executeRawUnsafe(query, ...params);
+                
+                // Check if the update was successful
+                if (updateCount === 0) {
                     throw new Error(`Insufficient inventory for menu item: ${menuItem.name}`);
                 }
-
-                await prismaClient.menuItem.update({
-                    where: { id: menuItem.id },
-                    data: {
-                        avilableLimit: {
-                            decrement: orderItem.quantity
-                        },
-                        status: menuItem.avilableLimit - orderItem.quantity <= 0
-                            ? 'UNAVAILABLE'
-                            : 'AVAILABLE'
-                    }
-                });
             }
 
             // Update the order status
@@ -192,16 +210,17 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
 
             return updatedOrder;
         });
-        // @ts-ignore
-        fetch(`${process.env.WS_URL}/brodcastMenuItems/${result.canteenId}`);
-        // @ts-ignore
-        fetch(`${process.env.WS_URL}/updateCanteenOrders/${result.canteenId}`);
+
+        // Broadcast updates
+        const typedResult = result as OrderResult;
+        fetch(`${process.env.WS_URL}/brodcastMenuItems/${typedResult.canteenId}`);
+        fetch(`${process.env.WS_URL}/updateCanteenOrders/${typedResult.canteenId}`);
+
+        // Send notification
         const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-        // @ts-ignore
-        if (result.customer.fcmToken) {
+        if (typedResult.customer.fcmToken) {
             await kafkaProducer.publishToKafka("notification", {
-                // @ts-ignore
-                firebaseToken: result.customer.fcmToken,
+                firebaseToken: typedResult.customer.fcmToken,
                 title: `Your Payment is Successful ✅`,
                 body: `Thank You for choosing CutTheQ`
             });
