@@ -63,7 +63,7 @@ services:
       echo 'Waiting for Kafka to be ready...'; 
       while ! nc -z kafka 9092; do sleep 1; done;
       echo 'Kafka is ready, creating topics...'; 
-      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists && 
+      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic whatsapp --if-not-exists && 
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists &&
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
       echo 'Kafka topics created.'"
@@ -74,7 +74,7 @@ services:
       retries: 5
 
   #Service: whatsapp-consumer
-  sms-consumer:
+  whatsapp-consumer:
     depends_on:
       kafka:
         condition: service_healthy
@@ -143,7 +143,7 @@ services:
         echo 'Clearing Kafka data...';
         kafka-topics --bootstrap-server kafka:9092 --list | xargs -I {} kafka-topics --bootstrap-server kafka:9092 --delete --topic {};
         echo 'Kafka data cleared. Recreating topics...';
-        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists;
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic whatsapp --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
         echo 'Kafka topics recreated. Sleeping for 24 hours...';
