@@ -358,13 +358,15 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
 
 async function forgetPassword(req: Request, res: Response): Promise<any> {
   try {
+    const { phoneNo } = forgotPasswordSchema.parse(req.body);
+    
     const user = await prisma.user.findUnique({
-      where: { email: req.body.email },
-      select: { id: true, email: true },
+      where: { phoneNumber: phoneNo },
+      select: { id: true, phoneNumber: true },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "No user exists with this email" });
+      return res.status(400).json({ message: "No user exists with this phone number" });
     }
 
     const otp = generateOTP();
@@ -379,27 +381,19 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
     });
 
     const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-    await kafkaProducer.publishToKafka("email", {
-      to: user.email,
-      subject: "Password Reset OTP - Cut The Queue",
-      content: `Your OTP for password reset is: ${otp}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
-          <h2>Password Reset OTP</h2>
-          <div style="font-size: 24px; padding: 20px; background: #f5f5f5; margin: 20px 0;">
-            ${otp}
-          </div>
-          <p>This OTP will expire in 15 minutes.</p>
-          <p>If you didn't request this password reset, please ignore this email.</p>
-        </div>
-      `,
+    await kafkaProducer.publishToKafka("whatsapp", {
+      to: user.phoneNumber,
+      content: `Your OTP for password reset is: ${otp}. This code will expire in 15 minutes. If you didn't request this, please ignore this message.`
     });
 
     return res.json({
       success: true,
-      message: `OTP sent to ${user.email} successfully`,
+      message: `OTP sent to your WhatsApp number successfully`,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
+    }
     return res.status(500).json({ message: SERVER_ERROR });
   }
 }
