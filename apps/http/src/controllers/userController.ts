@@ -360,7 +360,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 	try {
 
 		const { phoneNo } = forgotPasswordSchema.parse(req.body);
-
+ 
 		const user = await prisma.user.findUnique({
 			where: { phoneNumber: phoneNo },
 			select: { id: true, phoneNumber: true, email: true },
@@ -381,8 +381,8 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 			},
 		});
 
-		const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-		await kafkaProducer.publishToKafka("whatsapp", {
+		const kafkaPublisher = KafkaPublisher.getInstance();
+		await kafkaPublisher.publishToKafka("whatsapp", {
 			to: user.phoneNumber,
 			content: `Your OTP for password reset is: ${otp}. This code will expire in 15 minutes. If you didn't request this, please ignore this message.`,
 		});
