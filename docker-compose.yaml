@@ -14,17 +14,6 @@ services:
       retries: 5
     restart: always
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-  pushgateway:
-    image: prom/pushgateway:latest
-    ports:
-      - "9091:9091"
-
   #Service: kafka
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -175,7 +164,7 @@ services:
       retries: 3
     restart: always  
 
-  # Service: socket-server-1
+  # Service: socket-server
   socket-server:
     depends_on:
       redis-pubsub:
@@ -194,4 +183,19 @@ services:
     ports:
       - 3001:3001
     restart: always
+
+  # Service: prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  
+  # Service: pushgateway
+  pushgateway:
+    image: prom/pushgateway:latest
+    ports:
+      - "9091:9091"
+
 

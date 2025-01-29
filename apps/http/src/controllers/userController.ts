@@ -20,7 +20,7 @@ import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import z from "zod";
-import KafkaProducer from "../publisher/kafka";
+import { KafkaPublisher } from "../publisher/kafka";
 import {
 	loginSchema,
 	registerSchema,
@@ -195,8 +195,8 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
 			},
 		});
 		const message = createVerificationMessage(otp);
-		const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-		await kafkaProducer.publishToKafka("email", {
+		const kafkaPublisher = KafkaPublisher.getInstance();
+		await kafkaPublisher.publishToKafka("email", {
 			to: user.email,
 			subject: "Your OTP for verification",
 			content: message,
@@ -378,8 +378,8 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
       },
     });
 
-    const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-    await kafkaProducer.publishToKafka("email", {
+    const kafkaPublisher = KafkaPublisher.getInstance();	
+    await kafkaPublisher.publishToKafka("email", {
       to: user.email,
       subject: "Password Reset OTP - Cut The Queue",
       content: `Your OTP for password reset is: ${otp}`,

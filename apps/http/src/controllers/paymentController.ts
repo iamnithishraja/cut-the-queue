@@ -6,7 +6,7 @@ import z from "zod";
 import { CheckoutInputSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
 import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
-import KafkaProducer from "../publisher/kafka";
+import { KafkaPublisher } from "../publisher/kafka";
 import { OrderResult } from "../types/types"
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
@@ -217,9 +217,9 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         fetch(`${process.env.WS_URL}/updateCanteenOrders/${typedResult.canteenId}`);
 
         // Send notification
-        const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+        const kafkaPublisher = KafkaPublisher.getInstance();
         if (typedResult.customer.fcmToken) {
-            await kafkaProducer.publishToKafka("notification", {
+            await kafkaPublisher.publishToKafka("notification", {
                 firebaseToken: typedResult.customer.fcmToken,
                 title: `Your Payment is Successful ✅`,
                 body: `Thank You for choosing CutTheQ`

@@ -4,7 +4,7 @@ import { CustomRequest } from "../types/userTypes";
 import prisma from "@repo/db/client";
 import z from "zod";
 import { menuItemSchema } from "../schemas/ordersSchemas";
-import KafkaProducer from "../publisher/kafka";
+import { KafkaPublisher } from "../publisher/kafka";
 
 const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
     try {
@@ -118,9 +118,9 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         }
 
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
-        const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+        const kafkaPublisher = KafkaPublisher.getInstance();
         if (order.customer.fcmToken) {
-            await kafkaProducer.publishToKafka("notification", {
+            await kafkaPublisher.publishToKafka("notification", {
                 firebaseToken: order.customer.fcmToken,
                 title: `Your ${orderItem.menuItem.name} is ready.`,
                 body:  `Show the QR Code before collecting the order from ${order.canteen.name}`
