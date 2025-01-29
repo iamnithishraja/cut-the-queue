@@ -22,3 +22,17 @@ export interface CanteenState {
   activeMenu: Set<string>;
   activeOrder: Set<string>;
 }
+
+export enum RedisMessageType {
+  UPDATE_MENU_ITEMS = 'UPDATE_MENU_ITEMS',
+  ORDERS_UPDATE_USER = 'ORDERS_UPDATE_USER',
+  ORDERS_UPDATE_ADMIN = 'ORDERS_UPDATE_ADMIN',
+  
+}
+export interface RedisMessage {
+  type: RedisMessageType;
+  userId?: string;
+  canteenId?: string;
+  menuItems?: any[];
+  orders?: any[];
+}

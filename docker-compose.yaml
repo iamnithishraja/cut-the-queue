@@ -163,7 +163,7 @@ services:
       - 3000:3000
     restart: always
 
-  #Service: Redis-pubsub
+  # Service: Redis-pubsub
   redis-pubsub:
     image: redis/redis-stack-server:7.2.0-v6
     ports:
@@ -175,7 +175,7 @@ services:
       retries: 3
     restart: always  
 
-  #Service: socket-server
+  # Service: socket-server-1
   socket-server:
     depends_on:
       redis-pubsub:
@@ -188,8 +188,10 @@ services:
     environment:
       PORT: 3001
       REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
+      REDIS_CHANNEL: "sockets"
     env_file:
       - .env
     ports:
       - 3001:3001
     restart: always
+
