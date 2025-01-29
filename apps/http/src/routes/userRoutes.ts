@@ -1,16 +1,17 @@
 import express from "express";
 import {
-	forgetPassword,
-	getProfile,
-	googleLogin,
-	login,
-	logout,
-	register,
-	registerPartner,
-	requestOtp,
-	resetPassword,
-	submitOtp,
-	updateFcmToken,
+  forgetPassword,
+  getProfile,
+  googleLogin,
+  login,
+  logout,
+  register,
+  registerPartner,
+  requestOtp,
+  changePassword,
+  submitOtp,
+  updateFcmToken,
+  verifyOtpAndResetPassword,
 } from "../controllers/userController";
 import { isAuthenticatedUser } from "../middlewares/auth";
 
@@ -24,8 +25,11 @@ userRoute.post("/submitOtp", submitOtp);
 userRoute.get("/profile", isAuthenticatedUser, getProfile);
 userRoute.post("/updateFcmToken", isAuthenticatedUser, updateFcmToken);
 userRoute.get("/logout", isAuthenticatedUser, logout);
-userRoute.put("/password/reset/:token", resetPassword);
-userRoute.put("/password/forgetPassword", forgetPassword);
+
+// Password reset flow
+userRoute.post("/password/forgetPassword", forgetPassword);
+userRoute.post("/password/reset/:otp", verifyOtpAndResetPassword);
+userRoute.post("/password/change", isAuthenticatedUser, changePassword);
 
 // partner routes
 userRoute.post("/registerPartner", isAuthenticatedUser, registerPartner);

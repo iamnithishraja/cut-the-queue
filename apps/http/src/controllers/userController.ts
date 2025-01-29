@@ -15,19 +15,19 @@ import {
 	generateToken,
 } from "@repo/utils";
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import z from "zod";
 import { KafkaPublisher } from "../publisher/kafka";
 import {
+	changePasswordSchema,
+	forgotPasswordSchema,
 	loginSchema,
 	registerSchema,
 	requestOtpSchema,
 	submitOtpSchema,
-	forgotPasswordSchema,
-	resetPasswordSchema,
+	verifyOtpAndResetPasswordSchema,
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 
@@ -358,13 +358,16 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
 
 async function forgetPassword(req: Request, res: Response): Promise<any> {
 	try {
+
+		const { phoneNo } = forgotPasswordSchema.parse(req.body);
+ 
 		const user = await prisma.user.findUnique({
-			where: { email: req.body.phoneNo },
-			select: { id: true, email: true },
+			where: { phoneNumber: phoneNo },
+			select: { id: true, phoneNumber: true, email: true },
 		});
 
 		if (!user) {
-			return res.status(400).json({ message: "No user exists with this email" });
+			return res.status(400).json({ message: USER_NOT_REGISTERED });
 		}
 
 		const otp = generateOTP();
@@ -374,40 +377,38 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 			where: { id: user.id },
 			data: {
 				resetPasswordToken: otp,
-				expire: otpExpiry
+				expire: otpExpiry,
 			},
 		});
 
 		const kafkaPublisher = KafkaPublisher.getInstance();
-		await kafkaPublisher.publishToKafka("email", {
-			to: user.email,
-			subject: "Password Reset OTP - Cut The Queue",
-			content: `Your OTP for password reset is: ${otp}`,
-			html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
-          <h2>Password Reset OTP</h2>
-          <div style="font-size: 24px; padding: 20px; background: #f5f5f5; margin: 20px 0;">
-            ${otp}
-          </div>
-          <p>This OTP will expire in 15 minutes.</p>
-          <p>If you didn't request this password reset, please ignore this email.</p>
-        </div>
-      `,
+		await kafkaPublisher.publishToKafka("whatsapp", {
+			to: user.phoneNumber,
+			content: `Your OTP for password reset is: ${otp}. This code will expire in 15 minutes. If you didn't request this, please ignore this message.`,
 		});
 
 		return res.json({
 			success: true,
-			message: `OTP sent to ${user.email} successfully`,
+			message: OTP_SENT,
 		});
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return res
+				.status(400)
+				.json({ message: INVALID_INPUT, errors: error.errors });
+		}
 		return res.status(500).json({ message: SERVER_ERROR });
 	}
 }
 
-async function resetPassword(req: Request, res: Response): Promise<any> {
+async function verifyOtpAndResetPassword(
+	req: Request,
+	res: Response
+): Promise<any> {
 	try {
-		const otp = req.params.token; // Use the token parameter as OTP
-		const { password, confirmPassword } = req.body;
+		const { phoneNo, password, confirmPassword } =
+			verifyOtpAndResetPasswordSchema.parse(req.body);
+		const otp = req.params.otp; // renamed from token to otp to avoid conflict
 
 		if (password !== confirmPassword) {
 			return res.status(400).json({ message: "Passwords don't match" });
@@ -415,13 +416,20 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
 
 		const user = await prisma.user.findFirst({
 			where: {
+				phoneNumber: phoneNo,
 				resetPasswordToken: otp,
-				expire: { gt: new Date() }
+				expire: { gt: new Date() },
+			},
+			select: {
+				id: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
 			},
 		});
 
 		if (!user) {
-			return res.status(400).json({ message: "Invalid or expired OTP" });
+			return res.status(400).json({ message: INVALID_OTP });
 		}
 
 		const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
@@ -432,15 +440,78 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
 				resetPasswordToken: null,
 				expire: null,
 			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				userProfile: true,
+				email: true,
+				phoneNumber: true,
+				isVerified: true,
+				role: true,
+			},
 		});
-		const token = generateToken(user.id);
-		return res.json({ success: true, message: "Password reset successful", token, user: updatedUser });
+
+		const authToken = generateToken(user.id); // renamed from token to authToken
+		return res.json({
+			token: authToken,
+			user: updatedUser,
+		});
 	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return res
+				.status(400)
+				.json({ message: INVALID_INPUT, errors: error.errors });
+		}
+		return res.status(500).json({ message: SERVER_ERROR });
+	}
+}
+
+async function changePassword(req: CustomRequest, res: Response): Promise<any> {
+	try {
+		const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+		const user = await prisma.user.findUnique({
+			where: { id: req.user!.id },
+			select: {
+				id: true,
+				password: true,
+			},
+		});
+
+		if (!user || !user.password) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+
+		const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+		if (!isPasswordValid) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				password: hashedPassword,
+			},
+		});
+
+		return res.json({
+			success: true,
+			message: "Password changed successfully",
+		});
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return res
+				.status(400)
+				.json({ message: INVALID_INPUT, errors: error.errors });
+		}
 		return res.status(500).json({ message: SERVER_ERROR });
 	}
 }
 
 export {
+	changePassword,
 	forgetPassword,
 	getProfile,
 	googleLogin,
@@ -449,7 +520,7 @@ export {
 	register,
 	registerPartner,
 	requestOtp,
-	resetPassword,
 	submitOtp,
 	updateFcmToken,
+	verifyOtpAndResetPassword,
 };

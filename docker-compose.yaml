@@ -52,7 +52,7 @@ services:
       echo 'Waiting for Kafka to be ready...'; 
       while ! nc -z kafka 9092; do sleep 1; done;
       echo 'Kafka is ready, creating topics...'; 
-      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists && 
+      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic whatsapp --if-not-exists && 
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists &&
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
       echo 'Kafka topics created.'"
@@ -62,8 +62,8 @@ services:
       timeout: 5s
       retries: 5
 
-  #Service: sms-consumer
-  sms-consumer:
+  #Service: whatsapp-consumer
+  whatsapp-consumer:
     depends_on:
       kafka:
         condition: service_healthy
@@ -73,11 +73,16 @@ services:
       platforms:
         - linux/amd64
     environment:
-      KAFKA_BROKER: kafka:9092 
-      KAFKA_CLIENT_ID: sms-consumer
-      CONSUMER_TYPE: sms
-    env_file:
-      - .env
+      # RESEND_API_KEY: <RESEND_API_KEY>
+      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
+      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
+      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
+      TWILIO_ACCOUNT_SID: <your_twilio_account_sid>
+      TWILIO_AUTH_TOKEN: <your_twilio_auth_token>
+      TWILIO_WHATSAPP_FROM: <your_twilio_whatsapp_number>  # Usually in format: +14155238886
+      KAFKA_BROKER: kafka:9092
+      KAFKA_CLIENT_ID: whatsapp-consumer
+      CONSUMER_TYPE: whatsapp
     restart: always  
 
   email-consumer:
@@ -127,7 +132,7 @@ services:
         echo 'Clearing Kafka data...';
         kafka-topics --bootstrap-server kafka:9092 --list | xargs -I {} kafka-topics --bootstrap-server kafka:9092 --delete --topic {};
         echo 'Kafka data cleared. Recreating topics...';
-        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists;
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic whatsapp --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
         echo 'Kafka topics recreated. Sleeping for 24 hours...';

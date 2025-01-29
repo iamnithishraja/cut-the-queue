@@ -1,15 +1,15 @@
 import EmailConsumer from "./emailConsumer";
 import NotificationConsumer from "./notificationConsumer";
-import SMSConsumer from "./smsConsumer";
+import WhatsAppConsumer from "./whatsappConsumer";
 
 class ConsumerManager {
-	private smsConsumer: SMSConsumer;
 	private emailConsumer: EmailConsumer;
+	private whatsappConsumer: WhatsAppConsumer;
 	private notificationConsumer: NotificationConsumer;
 
 	constructor() {
 		this.emailConsumer = new EmailConsumer();
-		this.smsConsumer = new SMSConsumer();
+		this.whatsappConsumer = new WhatsAppConsumer();
 		this.notificationConsumer = new NotificationConsumer();
 	}
 
@@ -19,15 +19,15 @@ class ConsumerManager {
 			let activeConsumer;
 
 			switch (consumerType) {
-				case "email":
-					activeConsumer = this.emailConsumer;
+				// case "email":
+				// 	activeConsumer = this.emailConsumer;
+				// 	break;
+				case "whatsapp":
+					activeConsumer = this.whatsappConsumer;
 					break;
-				case "sms":
-					activeConsumer = this.smsConsumer;
-					break;
-				case "notification":
-					activeConsumer = this.notificationConsumer;
-					break;
+				// case "notification":
+					// activeConsumer = this.notificationConsumer;
+					// break;
 				default:
 					throw new Error("Invalid consumer type specified");
 			}
@@ -41,9 +41,9 @@ class ConsumerManager {
 	}
 
 	async disconnect(): Promise<void> {
-		await this.emailConsumer.disconnect();
-		await this.smsConsumer.disconnect();
-		await this.notificationConsumer.disconnect();
+		// await this.emailConsumer.disconnect();
+		await this.whatsappConsumer.disconnect();
+		// await this.notificationConsumer.disconnect();
 	}
 }
 
