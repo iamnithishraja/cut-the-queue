@@ -357,33 +357,33 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
 };
 
 async function forgetPassword(req: Request, res: Response): Promise<any> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email: req.body.email },
-      select: { id: true, email: true },
-    });
+	try {
+		const user = await prisma.user.findUnique({
+			where: { email: req.body.phoneNo },
+			select: { id: true, email: true },
+		});
 
-    if (!user) {
-      return res.status(400).json({ message: "No user exists with this email" });
-    }
+		if (!user) {
+			return res.status(400).json({ message: "No user exists with this email" });
+		}
 
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+		const otp = generateOTP();
+		const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { 
-        resetPasswordToken: otp,
-        expire: otpExpiry
-      },
-    });
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				resetPasswordToken: otp,
+				expire: otpExpiry
+			},
+		});
 
-    const kafkaPublisher = KafkaPublisher.getInstance();	
-    await kafkaPublisher.publishToKafka("email", {
-      to: user.email,
-      subject: "Password Reset OTP - Cut The Queue",
-      content: `Your OTP for password reset is: ${otp}`,
-      html: `
+		const kafkaPublisher = KafkaPublisher.getInstance();
+		await kafkaPublisher.publishToKafka("email", {
+			to: user.email,
+			subject: "Password Reset OTP - Cut The Queue",
+			content: `Your OTP for password reset is: ${otp}`,
+			html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
           <h2>Password Reset OTP</h2>
           <div style="font-size: 24px; padding: 20px; background: #f5f5f5; margin: 20px 0;">
@@ -393,51 +393,51 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
           <p>If you didn't request this password reset, please ignore this email.</p>
         </div>
       `,
-    });
+		});
 
-    return res.json({
-      success: true,
-      message: `OTP sent to ${user.email} successfully`,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: SERVER_ERROR });
-  }
+		return res.json({
+			success: true,
+			message: `OTP sent to ${user.email} successfully`,
+		});
+	} catch (error) {
+		return res.status(500).json({ message: SERVER_ERROR });
+	}
 }
 
 async function resetPassword(req: Request, res: Response): Promise<any> {
-  try {
-    const otp = req.params.token; // Use the token parameter as OTP
-    const { password, confirmPassword } = req.body;
+	try {
+		const otp = req.params.token; // Use the token parameter as OTP
+		const { password, confirmPassword } = req.body;
 
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords don't match" });
-    }
+		if (password !== confirmPassword) {
+			return res.status(400).json({ message: "Passwords don't match" });
+		}
 
-    const user = await prisma.user.findFirst({
-      where: { 
-        resetPasswordToken: otp,
-        expire: { gt: new Date() }
-      },
-    });
+		const user = await prisma.user.findFirst({
+			where: {
+				resetPasswordToken: otp,
+				expire: { gt: new Date() }
+			},
+		});
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
+		if (!user) {
+			return res.status(400).json({ message: "Invalid or expired OTP" });
+		}
 
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetPasswordToken: null,
-        expire: null,
-      },
-    });
-
-    return res.json({ success: true, message: "Password reset successful" });
-  } catch (error) {
-    return res.status(500).json({ message: SERVER_ERROR });
-  }
+		const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+		const updatedUser = await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				password: hashedPassword,
+				resetPasswordToken: null,
+				expire: null,
+			},
+		});
+		const token = generateToken(user.id);
+		return res.json({ success: true, message: "Password reset successful", token, user: updatedUser });
+	} catch (error) {
+		return res.status(500).json({ message: SERVER_ERROR });
+	}
 }
 
 export {
