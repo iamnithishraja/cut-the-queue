@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
 import { KafkaPublisher } from "../publisher/kafka";
 import { OrderResult } from "../types/types"
+import { broadcastMenuItems, updateCanteenOrders } from "../utils/redisHelpers";
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used. 
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
@@ -213,8 +214,8 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
 
         // Broadcast updates
         const typedResult = result as OrderResult;
-        fetch(`${process.env.WS_URL}/brodcastMenuItems/${typedResult.canteenId}`);
-        fetch(`${process.env.WS_URL}/updateCanteenOrders/${typedResult.canteenId}`);
+        await broadcastMenuItems(typedResult.canteenId);
+        await updateCanteenOrders(typedResult.canteenId);
 
         // Send notification
         const kafkaPublisher = KafkaPublisher.getInstance();

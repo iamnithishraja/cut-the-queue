@@ -4,27 +4,16 @@ import {
 	SERVER_ERROR,
 } from "@repo/constants";
 import prisma from "@repo/db/client";
-import { Request, Response } from "express";
 import { RedisManager } from "../publisher/redis";
 
-export const broadcastMenuItems = async (
-	req: Request,
-	res: Response
-): Promise<any> => {
+const broadcastMenuItems = async (canteenId: string): Promise<any> => {
 	try {
-		const canteenId = req.params.canteenId;
-		if (!canteenId) {
-			res.status(400).json({ message: "Canteen ID is required" });
-			return;
-		}
-
 		const updatedMenuItems = await prisma.menuItem.findMany({
 			where: { canteenId },
 		});
 
 		if (!updatedMenuItems || updatedMenuItems.length === 0) {
-			res.status(404).json({ message: DISHES_NOT_FOUND });
-			return;
+			throw new Error(DISHES_NOT_FOUND);
 		}
 		const redisMessage = {
 			type: 'UPDATE_MENU_ITEMS',
@@ -33,47 +22,29 @@ export const broadcastMenuItems = async (
 		};
 		const publisher = await RedisManager.getInstance().getPublisher();
 		await publisher.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify(redisMessage));
-		res.status(200).json({ message: BROADCAST_QUANTITY });
-	} catch (e) {
-		console.error(e);
-		res.status(500).json({ message: SERVER_ERROR });
+        console.log({ message: BROADCAST_QUANTITY });
+	} catch (error) {
+		console.error({ message: SERVER_ERROR, error });
 	}
 };
 
 
-export const updateUserOrders = async (
-	req: Request,
-	res: Response
-): Promise<any> => {
+const updateUserOrders = async (userId: string): Promise<any> => {
 	try {
-		const userId = req.params.userId;
-		if (!userId) {
-			res.status(400).json({ message: "userId is required" });
-			return;
-		}
 		const redisMessage = {
 			type: 'ORDERS_UPDATE_USER',
 			userId: userId,
 		};
 		const publisher = await RedisManager.getInstance().getPublisher();
 		await publisher.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify(redisMessage));
-		res.status(200).json({ message: "Notified User Successfully" });
+		console.log({ message: "Notified User Successfully" });
 	} catch (error) {
-		res.status(500).json({ message: SERVER_ERROR });
+		console.error({ message: SERVER_ERROR, error });
 	}
 };
 
-export const updateCanteenOrders = async (
-	req: Request,
-	res: Response
-): Promise<any> => {
+const updateCanteenOrders = async (canteenId: string): Promise<any> => {
 	try {
-		const canteenId = req.params.canteenId;
-		if (!canteenId) {
-			res.status(400).json({ message: "OrderId is required" });
-			return;
-		}
-
 		const orders = await prisma.order.findMany({
 			where: {
 				canteenId: canteenId,
@@ -95,8 +66,10 @@ export const updateCanteenOrders = async (
 		};
 		const publisher = await RedisManager.getInstance().getPublisher();
 		await publisher.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify(redisMessage));
-		res.status(200).json({ message: "Notified User Successfully" });
+		console.log({ message: "Notified User Successfully" });
 	} catch (error) {
-		res.status(500).json({ message: SERVER_ERROR });
+		console.error({ message: SERVER_ERROR, error });
 	}
 };
+
+export { broadcastMenuItems, updateUserOrders, updateCanteenOrders };

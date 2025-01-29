@@ -4,7 +4,6 @@ import { checkout, getAllOrders, paymentVerification } from "../controllers/paym
 import { UserRole } from "@repo/db/client";
 import { updateItem,chageToPickup, getAllOrdersByCanteenId,finishOrder } from "../controllers/adminController";
 import { CustomRequest } from "../types/userTypes";
-import { broadcastMenuItems, updateUserOrders, updateCanteenOrders } from "../controllers/orderController";
 const orderRouter = express.Router();
 orderRouter.route("/checkout").post(isAuthenticatedUser, checkout);
 orderRouter.get("/getAllOrders", isAuthenticatedUser, getAllOrders);
@@ -15,8 +14,4 @@ orderRouter.get("/getAllOrdersAdmin", isAuthenticatedUser, (req, res, next) => c
 orderRouter.get("/changeToPickup/:orderId",isAuthenticatedUser, (req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]),chageToPickup)
 orderRouter.post("/updateItem", isAuthenticatedUser, (req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]), updateItem);
 orderRouter.get("/finishOrder/:orderId",isAuthenticatedUser, (req:CustomRequest, res:Response, next:NextFunction) => checkRole(req, res, next, [UserRole.PARTNER]), finishOrder);
-// redis publishing routes
-orderRouter.get("/brodcastMenuItems/:canteenId", broadcastMenuItems);
-orderRouter.get("/updateUserOrders/:userId", updateUserOrders);
-orderRouter.get("/updateCanteenOrders/:canteenId", updateCanteenOrders);
 export default orderRouter;
