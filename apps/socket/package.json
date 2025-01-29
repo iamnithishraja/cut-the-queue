@@ -13,18 +13,14 @@
     "@repo/db": "*",
     "@repo/typescript-config": "*",
     "@repo/utils": "*",
-    "@types/jsonwebtoken": "^9.0.7"
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/redis": "^4.0.10"
   },
   "dependencies": {
-    "@types/cors": "^2.8.17",
     "@types/dotenv": "^6.1.1",
-    "@types/express": "^5.0.0",
     "@types/ws": "^8.5.12",
-    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
-    "redis": "^4.7.0",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
   }

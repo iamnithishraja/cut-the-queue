@@ -5,7 +5,7 @@ import {
 } from "@repo/constants";
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
-import { RedisManager } from "../redisManager";
+import { RedisManager } from "../publisher/redis";
 
 export const broadcastMenuItems = async (
 	req: Request,
