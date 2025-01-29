@@ -37,12 +37,20 @@ export const calculateAmountSchema = z.array(
 );
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email()
+  phoneNo: z.string().min(10)
 });
 
-export const resetPasswordSchema = z.object({
-  email: z.string().email(),
-  otp: z.string(),
+export const verifyOtpAndResetPasswordSchema = z.object({
+  phoneNo: z.string().min(10),
+  password: z.string().min(8),
+  confirmPassword: z.string().min(8)
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
+
+export const changePasswordSchema = z.object({
+  oldPassword: z.string().min(8),
   newPassword: z.string().min(8),
   confirmPassword: z.string().min(8)
 }).refine((data) => data.newPassword === data.confirmPassword, {
