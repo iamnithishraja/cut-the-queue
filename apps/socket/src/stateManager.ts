@@ -1,7 +1,7 @@
-import { CanteenState, Screen } from './types/index';
+import { CanteenState, Screen, RedisMessage } from './types/index';
 import WebSocket from "ws";
 import { UserRole } from "@repo/db/client";
-
+import { RedisManager } from './redisManager';
 export class StateManager {
   private static instance: StateManager | null = null;
   private users: Map<string, WebSocket>;
@@ -12,6 +12,7 @@ export class StateManager {
     this.users = new Map();
     this.partners = new Map();
     this.canteenStates = new Map();
+    this.initializeRedis();
   }
 
   public static getInstance(): StateManager {
@@ -65,6 +66,24 @@ export class StateManager {
     } else {
       state.activeOrder.delete(userId);
     }
+  }
+  
+  public async initializeRedis() {
+    const subscriber = await RedisManager.getInstance().getSubscriber();
+    subscriber.subscribe(process.env.REDIS_CHANNEL || "sockets",(message)=>{
+      const parsedMessage = JSON.parse(message) as RedisMessage;
+      switch (parsedMessage.type) {
+        case 'UPDATE_MENU_ITEMS':
+          this.broadcastMenuItems(parsedMessage.canteenId as string, parsedMessage.menuItems as any[]);
+          break;
+        case 'ORDERS_UPDATE_ADMIN':
+          this.broadcastOrdersToAdmin(parsedMessage.canteenId as string, parsedMessage.orders as any[]);
+          break;
+        case 'ORDERS_UPDATE_USER':
+          this.broadcastOrdersToUser(parsedMessage.userId as string);
+          break;
+      }
+    });
   }
 
   public broadcastMenuItems(canteenId: string, menuItems: any[]) {

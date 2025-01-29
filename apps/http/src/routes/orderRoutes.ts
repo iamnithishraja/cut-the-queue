@@ -4,7 +4,6 @@ import { checkout, getAllOrders, paymentVerification } from "../controllers/paym
 import { UserRole } from "@repo/db/client";
 import { updateItem,chageToPickup, getAllOrdersByCanteenId,finishOrder } from "../controllers/adminController";
 import { CustomRequest } from "../types/userTypes";
-
 const orderRouter = express.Router();
 orderRouter.route("/checkout").post(isAuthenticatedUser, checkout);
 orderRouter.get("/getAllOrders", isAuthenticatedUser, getAllOrders);

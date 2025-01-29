@@ -41,3 +41,4 @@ packages/**/dist
 # Cache
 .cache
 **/tsconfig.tsbuildinfo
+docker-compose-test.yaml

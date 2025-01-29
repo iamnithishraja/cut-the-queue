@@ -4,7 +4,8 @@ import { CustomRequest } from "../types/userTypes";
 import prisma from "@repo/db/client";
 import z from "zod";
 import { menuItemSchema } from "../schemas/ordersSchemas";
-import KafkaProducer from "../publisher/kafka";
+import { KafkaPublisher } from "../publisher/kafka";
+import { broadcastMenuItems, updateUserOrders } from "../utils/redisHelpers";
 
 const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
     try {
@@ -49,8 +50,7 @@ async function updateItem(req: CustomRequest, res: Response) {
                 canteenId: parsedMenuItem.canteenId
             }
         })
-        // TODO: brodacst menu items.
-        fetch(`${process.env.WS_URL}/brodcastMenuItems/${parsedMenuItem.canteenId}`);
+        await broadcastMenuItems(parsedMenuItem.canteenId);
         res.json({
             canteenId: parsedMenuItem.id,
             items
@@ -118,15 +118,15 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         }
 
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
-        const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
+        const kafkaPublisher = KafkaPublisher.getInstance();
         if (order.customer.fcmToken) {
-            await kafkaProducer.publishToKafka("notification", {
+            await kafkaPublisher.publishToKafka("notification", {
                 firebaseToken: order.customer.fcmToken,
                 title: `Your ${orderItem.menuItem.name} is ready.`,
                 body:  `Show the QR Code before collecting the order from ${order.canteen.name}`
             });
         }
-        fetch(`${process.env.WS_URL}/updateUserOrders/${order?.userId}`);
+        await updateUserOrders(order.userId);
         return getAllOrdersByCanteenId(req, res);
     } catch (error) {
         res.status(500).json({ message: SERVER_ERROR });
@@ -193,7 +193,7 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
         });
 
         // TODO: reflect the updated orders in user's app.
-        fetch(`${process.env.WS_URL}/updateUserOrders/${result.order.userId}`);
+        await updateUserOrders(result.order.userId);
         res.json(result.itemsToUpdate);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : SERVER_ERROR;

@@ -3,6 +3,7 @@ import prisma from "@repo/db/client";
 import { Request, Response } from "express";
 import z from "zod";
 import { calculateAmountSchema } from "../schemas/userSchemas";
+import { broadcastMenuItems } from "../utils/redisHelpers";
 
 async function getAllDishes(req: Request, res: Response) {
 	const canteenId = req.params.canteenId;
@@ -91,12 +92,8 @@ const toggleCanteenAvailability = async (req: Request, res: Response) => {
 			data: { isOpen: newStatus },
 		});
 
-		try {
-			await fetch(`${process.env.WS_URL}/brodcastMenuItems/${canteenId}`);
-		} catch (error) {
-			console.error("Failed to broadcast status update:", error);
-		}
-
+		await broadcastMenuItems(canteenId as string);
+		
 		res.status(200).json({
 			success: true,
 			message: `Canteen is now ${newStatus ? "open" : "closed"}`,

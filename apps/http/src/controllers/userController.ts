@@ -19,7 +19,7 @@ import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import z from "zod";
-import KafkaProducer from "../publisher/kafka";
+import { KafkaPublisher } from "../publisher/kafka";
 import {
 	changePasswordSchema,
 	forgotPasswordSchema,
@@ -195,8 +195,8 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
 			},
 		});
 		const message = createVerificationMessage(otp);
-		const kafkaProducer = new KafkaProducer(process.env.KAFKA_CLIENT_ID || "");
-		await kafkaProducer.publishToKafka("email", {
+		const kafkaPublisher = KafkaPublisher.getInstance();
+		await kafkaPublisher.publishToKafka("email", {
 			to: user.email,
 			subject: "Your OTP for verification",
 			content: message,
@@ -358,6 +358,7 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
 
 async function forgetPassword(req: Request, res: Response): Promise<any> {
 	try {
+
 		const { phoneNo } = forgotPasswordSchema.parse(req.body);
 
 		const user = await prisma.user.findUnique({

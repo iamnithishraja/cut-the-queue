@@ -38,3 +38,5 @@ yarn-error.log*
 *.pem
 
 tsconfig.tsbuildinfo
+
+docker-compose-test.yaml

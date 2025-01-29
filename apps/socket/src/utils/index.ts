@@ -10,7 +10,6 @@ export function verifyToken(token: string): string {
 	}
     
 	const decodedData = jwt.verify(token, process.env.JWT_SECRET || "your-secret") as JwtPayload;
-
 	if (!decodedData.userId) {
 		throw new Error(USER_NOT_REGISTERED);
 	}
@@ -22,7 +21,6 @@ export async function getVerifiedUser(userId: string) {
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 	});
-
 	if (!user) {
 		throw new Error(USER_NOT_REGISTERED);
 	}
