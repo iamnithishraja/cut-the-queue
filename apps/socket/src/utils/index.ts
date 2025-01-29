@@ -21,7 +21,6 @@ export async function getVerifiedUser(userId: string) {
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 	});
-	const allusrs = await prisma.user.findMany();
 	if (!user) {
 		throw new Error(USER_NOT_REGISTERED);
 	}
