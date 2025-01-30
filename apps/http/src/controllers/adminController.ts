@@ -7,6 +7,8 @@ import { menuItemSchema } from "../schemas/ordersSchemas";
 import { KafkaPublisher } from "../publisher/kafka";
 import { broadcastMenuItems, updateUserOrders } from "../utils/redisHelpers";
 
+const orderNotifyIntervals = new Map<string, NodeJS.Timeout>();
+
 const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
     try {
         const canteenId = req.user!.canteenId;
@@ -118,6 +120,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
         }
 
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
+        //notify immediately
         const kafkaPublisher = KafkaPublisher.getInstance();
         if (order.customer.fcmToken) {
             await kafkaPublisher.publishToKafka("notification", {
@@ -126,6 +129,35 @@ async function chageToPickup(req: CustomRequest, res: Response) {
                 body:  `Show the QR Code before collecting the order from ${order.canteen.name}`
             });
         }
+        //notify in every 2 minutes
+        const intervalId = setInterval(async () => {
+            try {
+                const updatedOrderItem = await prisma.orderItem.findUnique({
+                    where: { id },
+                    include: {
+                        menuItem: { select: { name: true } }
+                    }
+                });
+
+                if (!updatedOrderItem || updatedOrderItem.status !== "WAITING_FOR_PICKUP") {
+                    clearInterval(intervalId);
+                    orderNotifyIntervals.delete(id); 
+                    return;
+                }
+
+                // Resend the notification
+                if (order.customer.fcmToken) {
+                    await kafkaPublisher.publishToKafka("notification", {
+                        firebaseToken: order.customer.fcmToken,
+                        title: `Your ${updatedOrderItem.menuItem.name} is ready.`,
+                        body: `Show the QR Code before collecting the order from ${order.canteen.name}`
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to check order status or send notification:", error);
+            }
+        }, 2 * 60 * 1000); 
+        
         await updateUserOrders(order.userId);
         return getAllOrdersByCanteenId(req, res);
     } catch (error) {
@@ -191,6 +223,9 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
 
             return { itemsToUpdate, order };
         });
+
+        clearInterval(orderNotifyIntervals.get(id!));
+        orderNotifyIntervals.delete(id!);
 
         // TODO: reflect the updated orders in user's app.
         await updateUserOrders(result.order.userId);
