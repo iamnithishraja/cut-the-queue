@@ -28,8 +28,8 @@ userRoute.post("/updateFcmToken", isAuthenticatedUser, updateFcmToken);
 userRoute.get("/logout", isAuthenticatedUser, logout);
 
 // Password reset flow
-userRoute.post("/password/forgetPassword", forgetPassword);
-userRoute.post("/password/reset/:token", resetPassword);
+userRoute.put("/password/forgetPassword", forgetPassword);
+userRoute.put("/password/reset/:token", resetPassword);
 userRoute.post("/password/verifyOTP",verifyOtp);
 userRoute.post("/password/change", isAuthenticatedUser, changePassword);
 
