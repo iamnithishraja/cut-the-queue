@@ -30,6 +30,8 @@ import {
 	verifyOtpAndResetPasswordSchema,
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
+import crypto from "crypto"
+import { generateRandomStringWithRandomLength, hashString } from "../utils";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
@@ -360,7 +362,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 	try {
 
 		const { phoneNo } = forgotPasswordSchema.parse(req.body);
- 
+
 		const user = await prisma.user.findUnique({
 			where: { phoneNumber: phoneNo },
 			select: { id: true, phoneNumber: true, email: true },
@@ -376,7 +378,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 		await prisma.user.update({
 			where: { id: user.id },
 			data: {
-				resetPasswordToken: otp,
+				otp: otp,
 				expire: otpExpiry,
 			},
 		});
@@ -401,23 +403,23 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 	}
 }
 
-async function verifyOtpAndResetPassword(
+async function resetPassword(
 	req: Request,
 	res: Response
 ): Promise<any> {
 	try {
 		const { phoneNo, password, confirmPassword } =
 			verifyOtpAndResetPasswordSchema.parse(req.body);
-		const otp = req.params.otp; // renamed from token to otp to avoid conflict
-
-		if (password !== confirmPassword) {
+		const token = req.params.token;
+		if (password !== confirmPassword || !token) {
 			return res.status(400).json({ message: "Passwords don't match" });
 		}
+		const hashedToken = await hashString(token)
 
 		const user = await prisma.user.findFirst({
 			where: {
 				phoneNumber: phoneNo,
-				resetPasswordToken: otp,
+				resetPasswordToken: hashedToken,
 				expire: { gt: new Date() },
 			},
 			select: {
@@ -467,6 +469,39 @@ async function verifyOtpAndResetPassword(
 	}
 }
 
+const verifyOtp = async (req: Request, res: Response): Promise<any> => {
+
+	try {
+		const { phoneNo, otp } = req.body;
+		if (!phoneNo || !otp) {
+			res.status(400).json({ success: false });
+			return
+		}
+		const user = await prisma.user.findUnique({
+			where: {
+				phoneNumber: phoneNo,
+				otp: otp
+			}
+		})
+		if (!user) {
+			return res.status(401).json({ message: INVALID_OTP });
+		}
+		const token = generateRandomStringWithRandomLength()
+		const hashedToken = await hashString(token);
+		await prisma.user.update({
+			where: {
+				phoneNumber: phoneNo
+			},
+			data: {
+				resetPasswordToken: hashedToken
+			}
+		})
+		res.json({ token })
+	} catch (error) {
+		return res.status(500).json({ message: SERVER_ERROR });
+	}
+
+}
 async function changePassword(req: CustomRequest, res: Response): Promise<any> {
 	try {
 		const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
@@ -522,5 +557,6 @@ export {
 	requestOtp,
 	submitOtp,
 	updateFcmToken,
-	verifyOtpAndResetPassword,
+	resetPassword,
+	verifyOtp
 };

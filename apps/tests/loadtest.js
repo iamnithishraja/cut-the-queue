@@ -20,6 +20,6 @@ export const options = {
 };
 
 export default function () {
-  http.get('http://34.131.19.111');
+  http.get('https://kanbantool.com/kanban-board');
   sleep(0.1);
 }

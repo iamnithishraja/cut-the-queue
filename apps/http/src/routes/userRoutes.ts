@@ -11,7 +11,8 @@ import {
   changePassword,
   submitOtp,
   updateFcmToken,
-  verifyOtpAndResetPassword,
+  resetPassword,
+  verifyOtp,
 } from "../controllers/userController";
 import { isAuthenticatedUser } from "../middlewares/auth";
 
@@ -28,7 +29,8 @@ userRoute.get("/logout", isAuthenticatedUser, logout);
 
 // Password reset flow
 userRoute.post("/password/forgetPassword", forgetPassword);
-userRoute.post("/password/reset/:otp", verifyOtpAndResetPassword);
+userRoute.post("/password/reset/:token", resetPassword);
+userRoute.post("/password/verifyOTP",verifyOtp);
 userRoute.post("/password/change", isAuthenticatedUser, changePassword);
 
 // partner routes
