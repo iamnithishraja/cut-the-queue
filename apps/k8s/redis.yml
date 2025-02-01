@@ -1,52 +1,67 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis-pubsub
-spec:
-  type: ClusterIP
-  ports:
-  - port: 6379
-    targetPort: 6379
-  selector:
-    app: redis-pubsub
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-pubsub
+  name: redis
+  labels:
+    app: redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis-pubsub
+      app: redis
   template:
     metadata:
       labels:
-        app: redis-pubsub
+        app: redis
     spec:
       containers:
-      - name: redis-pubsub
+      - name: redis
         image: redis/redis-stack-server:latest
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "500m"
         ports:
         - containerPort: 6379
-        livenessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        readinessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 5
-          periodSeconds: 10
+          name: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 250m
+            memory: 1Gi
+        env:
+          - name: REDIS_PUB_SUB_URL
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: REDIS_PUB_SUB_URL
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: REDIS_PASSWORD
+          - name: REDIS_CHANNEL
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: REDIS_CHANNEL
+          - name: REDIS_ARGS
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: REDIS_ARGS
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: redis
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis

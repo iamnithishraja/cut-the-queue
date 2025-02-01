@@ -32,6 +32,10 @@ app.get("/", (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
+app.get("/privacy",(req, res) => {
+  res.sendFile('privacy.html', { root: 'public' });
+})
+
 app.get('/metrics', async (req, res) => {
   try {
     res.set('Content-Type', register.contentType);

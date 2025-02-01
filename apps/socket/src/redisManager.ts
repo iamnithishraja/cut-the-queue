@@ -11,7 +11,7 @@ export class RedisManager {
       throw new Error('REDIS_PUB_SUB_URL environment variable is not defined.');
     }
 
-    this.subscriber = createClient({ url: redisUrl });
+    this.subscriber = createClient({ url: redisUrl, password: process.env.REDIS_PASSWORD });
   }
 
   public static getInstance(): RedisManager {
