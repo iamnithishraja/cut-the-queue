@@ -1,5 +1,3 @@
-Here's a README template for the `http` folder that explains how to set up and run the code for HTTP requests, as well as the build steps and required dependencies.
-
 ---
 
 # HTTP Folder - HTTP Request Code
