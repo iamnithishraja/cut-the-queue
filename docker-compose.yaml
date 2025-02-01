@@ -188,7 +188,8 @@ services:
         - linux/amd64
     environment:
       PORT: 3001
-      REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
+      REDIS_HOST: redis-pubsub
+      REDIS_PORT: 6379
       REDIS_CHANNEL: "sockets"
     env_file:
       - .env

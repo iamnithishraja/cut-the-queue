@@ -1,8 +1,9 @@
-import { MessageSchema, InitMessageSchema, SubscribeMessageSchema, UnsubscribeMessageSchema } from "./schemas";
+import { MessageSchema, InitMessageSchema, SubscribeMessageSchema, UnsubscribeMessageSchema, PartnerOrderUpdates } from "./schemas";
 import { StateManager } from "./stateManager";
 import { z } from 'zod';
 import { CustomWebSocket, MessageType } from "./types";
 import { verifyAndGetUser } from "./utils";
+import { RedisManager } from "./redisManager";
 
 export class WSManager {
   private static instance: WSManager | null = null;
@@ -48,6 +49,9 @@ export class WSManager {
       case MessageType.UNSUBSCRIBE:
         await this.handleUnsubscribe(socket, message);
         break;
+      case MessageType.PARTNER_ORDER_STATUS_UPDATE:
+        await this.handlePartnerOrderStatusUpdate(socket, message);
+        break;
       case MessageType.PING:
         socket.send(JSON.stringify({ type: 'PONG' }))
         break;
@@ -79,6 +83,13 @@ export class WSManager {
 
     this.stateManager.addSubscription(message.canteenId, message.screen, socket.userId);
     socket.send(JSON.stringify({ type: 'SUBSCRIBE_SUCCESS' }));
+    if(socket.userRole === 'PARTNER'){
+      const redis = RedisManager.getInstance().getRedisClient();
+      const redis_data = await redis.hgetall(message.canteenId);
+      if(Object.keys(redis_data).length){
+        socket.send(JSON.stringify({ type: 'PARTNER_ORDER_STATUS_UPDATE', data: redis_data}))
+      }
+    }
   }
 
   private async handleUnsubscribe(socket: CustomWebSocket, message: z.infer<typeof UnsubscribeMessageSchema>) {
@@ -90,4 +101,18 @@ export class WSManager {
     this.stateManager.removeSubscription(message.canteenId, message.screen, socket.userId);
     socket.send(JSON.stringify({ type: 'UNSUBSCRIBE_SUCCESS' }));
   }
+
+  private async handlePartnerOrderStatusUpdate(socket: CustomWebSocket, message: z.infer<typeof PartnerOrderUpdates>) {
+    try{
+      const redis = RedisManager.getInstance().getRedisClient();
+      if(!message.canteenId){
+        socket.send(JSON.stringify({ type: 'ERROR', message: 'CanteenId not provided'}));
+      }
+      await redis.hmset(message.canteenId, message);
+      await redis.publish(process.env.REDIS_CHANNEL || "sockets",JSON.stringify({type: 'REDIS_FETCH_TRIGGER', canteenId: message.canteenId}));
+    }catch(error){
+      console.error({type:"handlePartnerOrderStatusUpdate", error});
+    }
+  }
+   
 }

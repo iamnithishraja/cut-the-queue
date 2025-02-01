@@ -1,7 +1,10 @@
-import { CanteenState, Screen, RedisMessage } from './types/index';
+import { CanteenState, Screen, RedisMessage, CustomWebSocket } from './types/index';
 import WebSocket from "ws";
 import { UserRole } from "@repo/db/client";
 import { RedisManager } from './redisManager';
+import { PartnerOrderUpdates } from './schemas';
+import { z } from "zod";
+
 export class StateManager {
   private static instance: StateManager | null = null;
   private users: Map<string, WebSocket>;
@@ -69,21 +72,29 @@ export class StateManager {
   }
   
   public async initializeRedis() {
-    const subscriber = await RedisManager.getInstance().getSubscriber();
-    subscriber.subscribe(process.env.REDIS_CHANNEL || "sockets",(message)=>{
-      const parsedMessage = JSON.parse(message) as RedisMessage;
-      switch (parsedMessage.type) {
-        case 'UPDATE_MENU_ITEMS':
-          this.broadcastMenuItems(parsedMessage.canteenId as string, parsedMessage.menuItems as any[]);
-          break;
-        case 'ORDERS_UPDATE_ADMIN':
-          this.broadcastOrdersToAdmin(parsedMessage.canteenId as string, parsedMessage.orders as any[]);
-          break;
-        case 'ORDERS_UPDATE_USER':
-          this.broadcastOrdersToUser(parsedMessage.userId as string);
-          break;
-      }
-    });
+    try{
+      const subscriber = RedisManager.getInstance().getSubscriber();
+      subscriber.subscribe(process.env.REDIS_CHANNEL || "sockets");
+      subscriber.on("message", (_,message) => {
+        const parsedMessage = JSON.parse(message) as RedisMessage;
+        switch (parsedMessage.type) {
+          case 'UPDATE_MENU_ITEMS':
+            this.broadcastMenuItems(parsedMessage.canteenId as string, parsedMessage.menuItems as any[]);
+            break;
+          case 'ORDERS_UPDATE_ADMIN':
+            this.broadcastOrdersToAdmin(parsedMessage.canteenId as string, parsedMessage.orders as any[]);
+            break;
+          case 'ORDERS_UPDATE_USER':
+            this.broadcastOrdersToUser(parsedMessage.userId as string);
+            break;
+          case 'REDIS_FETCH_TRIGGER':
+            this.broadcastOrderUpdatesToPartners(parsedMessage.canteenId as string, parsedMessage);
+        }
+      });
+    }
+    catch(error){
+      console.error({type: "initialize redis error", error});
+    }
   }
 
   public broadcastMenuItems(canteenId: string, menuItems: any[]) {
@@ -118,5 +129,15 @@ export class StateManager {
       const message = JSON.stringify({ type: 'ORDERS_UPDATE_USER' });
       userSocket.send(message);
     }
+  }
+
+  public broadcastOrderUpdatesToPartners(canteenId: string, message: any){
+    const state = this.canteenStates.get(canteenId);
+    if (!state) return;
+
+    state.activeMenu.forEach(userId => {
+      const partnerSocket = this.partners.get(userId);
+      if (partnerSocket) partnerSocket.send(JSON.stringify({ type: 'PARTNER_ORDER_STATUS_UPDATE', data: message}));
+    });
   }
 }

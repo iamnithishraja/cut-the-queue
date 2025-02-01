@@ -20,7 +20,7 @@ const broadcastMenuItems = async (canteenId: string): Promise<any> => {
 			canteenId: canteenId,
 			menuItems: updatedMenuItems,
 		};
-		const publisher = await RedisManager.getInstance().getPublisher();
+		const publisher = RedisManager.getInstance().getPublisher();
 		await publisher.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify(redisMessage));
         console.log({ message: BROADCAST_QUANTITY });
 	} catch (error) {
@@ -35,7 +35,7 @@ const updateUserOrders = async (userId: string): Promise<any> => {
 			type: 'ORDERS_UPDATE_USER',
 			userId: userId,
 		};
-		const publisher = await RedisManager.getInstance().getPublisher();
+		const publisher = RedisManager.getInstance().getPublisher();
 		await publisher.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify(redisMessage));
 		console.log({ message: "Notified User Successfully" });
 	} catch (error) {
@@ -64,7 +64,7 @@ const updateCanteenOrders = async (canteenId: string): Promise<any> => {
 			canteenId: canteenId,
 			orders: orders
 		};
-		const publisher = await RedisManager.getInstance().getPublisher();
+		const publisher = RedisManager.getInstance().getPublisher();
 		await publisher.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify(redisMessage));
 		console.log({ message: "Notified User Successfully" });
 	} catch (error) {

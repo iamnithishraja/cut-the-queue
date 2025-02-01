@@ -13,13 +13,14 @@
     "@repo/db": "*",
     "@repo/typescript-config": "*",
     "@repo/utils": "*",
+    "@types/dotenv": "^6.1.1",
+    "@types/ioredis": "^4.28.10",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/redis": "^4.0.10"
+    "@types/ws": "^8.5.12"
   },
   "dependencies": {
-    "@types/dotenv": "^6.1.1",
-    "@types/ws": "^8.5.12",
     "dotenv": "^16.4.7",
+    "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
