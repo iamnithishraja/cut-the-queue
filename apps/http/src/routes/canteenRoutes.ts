@@ -4,7 +4,7 @@ import {
 	calculateAmountForOrder,
 	getAllCanteen,
 	getAllDishes,
-	toggleCanteenAvailability,
+	toggleCanteenAvailability, 
 } from "../controllers/canteenController";
 import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
 
@@ -27,5 +27,6 @@ canteenRoutes.get(
 	(req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]),
 	toggleCanteenAvailability
 );
+
 
 export default canteenRoutes;
