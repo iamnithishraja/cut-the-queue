@@ -543,7 +543,36 @@ async function changePassword(req: CustomRequest, res: Response): Promise<any> {
 		}
 		return res.status(500).json({ message: SERVER_ERROR });
 	}
+  
 }
+
+const deleteAccount = async (req: CustomRequest, res: Response): Promise<any> => {
+	try {
+	  const userId = req.user?.id;
+	  if (!userId) {
+		return res.status(400).json({ message: "User not authenticated" });
+	  }
+  
+	  const user = await prisma.user.findUnique({
+		where: { id: userId },
+		select: { id: true },
+	  });
+  
+	  if (!user) {
+		return res.status(400).json({ message: "User not registered" });
+	  }
+  
+	  await prisma.user.delete({
+		where: { id: userId },
+	  });
+  
+	  res.status(200).json({ message: "Account deleted successfully" });
+	} catch (error) {
+	  console.error("Error deleting account:", error);
+	  res.status(500).json({ message: "Server error" });
+	}
+  };  
+
 
 export {
 	changePassword,
@@ -558,5 +587,6 @@ export {
 	submitOtp,
 	updateFcmToken,
 	resetPassword,
-	verifyOtp
+	verifyOtp,
+	deleteAccount
 };
