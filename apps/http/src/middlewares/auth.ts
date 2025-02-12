@@ -93,3 +93,35 @@ export async function checkRole(
   }
   next();
 }
+
+export async function canRequestOtp(req: CustomRequest, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res.status(401).json({ message: USER_NOT_REGISTERED });
+      return;
+    }
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      res.status(401).json({ message: USER_NOT_REGISTERED });
+      return;
+    }
+    const decoded_data = jwt.verify(token, process.env.JWT_SECRET || "") as JwtPayload;
+    if (decoded_data.userId) {
+      res.status(401).json({ message: USER_NOT_REGISTERED });
+      return;
+    }
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded_data.userId,
+      },
+    });
+    if (!user) {
+      res.status(401).json({ message: USER_NOT_REGISTERED });
+      return;
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ message: SERVER_ERROR });
+  }
+}

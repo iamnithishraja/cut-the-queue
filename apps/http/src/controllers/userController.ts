@@ -534,9 +534,39 @@ async function changePassword(req: CustomRequest, res: Response): Promise<any> {
 	}
 }
 
+const updatePhoneNumber = async (req: CustomRequest, res: Response): Promise<any> => {
+	try {
+		const { phoneNumber } = req.body;
+		if (!phoneNumber) {
+			return res.status(400).json({ message: INVALID_INPUT });
+		}
+		const userId = req.user!.id;
+		const existingUser = await prisma.user.findUnique({
+			where: { phoneNumber },
+		});
+		if (existingUser) {
+			return res.status(400).json({ message: USER_ALREADY_EXISTS });
+		}
+		const otp = generateOTP();
+		await prisma.user.update({
+			where: { id: userId },
+			data: { phoneNumber, otp: otp },
+		});
+		const kafkaPublisher = KafkaPublisher.getInstance();
+		await kafkaPublisher.publishToKafka("whatsapp", {
+			to: "+91" + phoneNumber,
+			content: `*${otp}*`,
+		});
+		res.status(200).json({ message: OTP_SENT });
+	} catch (error) {
+		return res.status(500).json({ message: SERVER_ERROR });
+	}
+};
+
 export {
 	changePassword,
 	forgetPassword,
+	updatePhoneNumber,
 	getProfile,
 	googleLogin,
 	login,
