@@ -80,8 +80,8 @@ model OrderItem {
 
 model Order {
   id           String      @id @default(cuid())
-  customer     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
+  customer     User?       @relation(fields: [userId], references: [id], onDelete: SetNull) // Made optional with SetNull
+  userId       String?     // Made optional
   orderStatus  OrderStatus @default(PROCESSING)
   canteen      Canteen     @relation(fields: [canteenId], references: [id], onDelete: Restrict)
   canteenId    String

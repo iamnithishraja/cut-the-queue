@@ -19,15 +19,15 @@ class ConsumerManager {
 			let activeConsumer;
 
 			switch (consumerType) {
-				// case "email":
-				// 	activeConsumer = this.emailConsumer;
-				// 	break;
+				case "email":
+					activeConsumer = this.emailConsumer;
+					break;
 				case "whatsapp":
 					activeConsumer = this.whatsappConsumer;
 					break;
-				// case "notification":
-					// activeConsumer = this.notificationConsumer;
-					// break;
+				case "notification":
+					activeConsumer = this.notificationConsumer;
+					break;
 				default:
 					throw new Error("Invalid consumer type specified");
 			}

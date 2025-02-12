@@ -51,4 +51,4 @@ spec:
         - name: KAFKA_LOG_CLEANUP_POLICY
           value: "delete"
         - name: KAFKA_CREATE_TOPICS
-          value: "sms:1:1,notification:1:1,email:1:1"  # format: topic_name:partitions:replicas
+          value: "whatsapp:1:1,notification:1:1,email:1:1"  # format: topic_name:partitions:replicas

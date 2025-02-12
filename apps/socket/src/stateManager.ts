@@ -112,16 +112,12 @@ export class StateManager {
   }
 
   public broadcastOrdersToAdmin(canteenId: string, orders: any[]) {
-    const state = this.canteenStates.get(canteenId);
-    if (!state) return;
-
     const message = JSON.stringify({ type: 'ORDERS_UPDATE_ADMIN', data: orders });
 
-    state.activeOrder.forEach(userId => {
-      const partnerSocket = this.partners.get(userId);
-      if (partnerSocket) partnerSocket.send(message);
+    this.partners.forEach((partnerSocket) => {
+      partnerSocket.send(message);
     });
-  }
+}
 
   public broadcastOrdersToUser(userId: string) {
     const userSocket = this.users.get(userId);

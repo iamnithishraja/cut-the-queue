@@ -198,20 +198,9 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
 		});
 		const message = createVerificationMessage(otp);
 		const kafkaPublisher = KafkaPublisher.getInstance();
-		await kafkaPublisher.publishToKafka("email", {
-			to: user.email,
-			subject: "Your OTP for verification",
-			content: message,
-			html: `
-				<div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
-					<h2>Cut The Queue - Verification Code</h2>
-					<div style="font-size: 24px; padding: 20px; background: #f5f5f5; margin: 20px 0;">
-						${otp}
-					</div>
-					<p>This code will expire in 10 minutes.</p>
-					<p>If you didn't request this code, please ignore this email.</p>
-				</div>
-			`,
+		await kafkaPublisher.publishToKafka("whatsapp", {
+			to: "+91" + number,
+			content: `*${otp}*`,
 		});
 		res.status(200).json({ message: OTP_SENT });
 	} catch (error) {
@@ -385,8 +374,8 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 
 		const kafkaPublisher = KafkaPublisher.getInstance();
 		await kafkaPublisher.publishToKafka("whatsapp", {
-			to: user.phoneNumber,
-			content: `Your OTP for password reset is: ${otp}. This code will expire in 15 minutes. If you didn't request this, please ignore this message.`,
+			to: "+91" + user.phoneNumber,
+			content: `*${otp}*`,
 		});
 
 		return res.json({
