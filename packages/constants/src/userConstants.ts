@@ -13,3 +13,4 @@ export const DISHES_NOT_FOUND = "No dishes found";
 export const BROADCAST_QUANTITY = "Updated quantity successfully broadcasted";
 export const ORDER_HANDOVER = "Order handover successful";
 export const USER_NOT_AUTHORISED = "You Are Not Allowed To Aceess This Route";
+export const REDIS_CONNECTION_ERROR = "Unable to connect to redis";

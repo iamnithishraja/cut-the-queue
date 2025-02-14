@@ -114,7 +114,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
                 }
             }
         });
-        if (!order) {
+        if (!order || !order.customer || !order.userId) {
             res.status(400).json({ message: INVALID_INPUT });
             return;
         }
@@ -146,7 +146,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
                 }
 
                 // Resend the notification
-                if (order.customer.fcmToken) {
+                if (order.customer && order.customer.fcmToken) {
                     await kafkaPublisher.publishToKafka("notification", {
                         firebaseToken: order.customer.fcmToken,
                         title: `Your ${updatedOrderItem.menuItem.name} is ready.`,
@@ -229,6 +229,7 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
         orderNotifyIntervals.delete(id!);
 
         // TODO: reflect the updated orders in user's app.
+        // @ts-ignore
         await updateUserOrders(result.order.userId);
         res.json(result.itemsToUpdate);
     } catch (error) {
