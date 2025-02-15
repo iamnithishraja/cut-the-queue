@@ -107,7 +107,7 @@ export async function canRequestOtp(req: CustomRequest, res: Response, next: Nex
       return;
     }
     const decoded_data = jwt.verify(token, process.env.JWT_SECRET || "") as JwtPayload;
-    if (decoded_data.userId) {
+    if (!decoded_data.userId) {
       res.status(401).json({ message: USER_NOT_REGISTERED });
       return;
     }
@@ -120,6 +120,7 @@ export async function canRequestOtp(req: CustomRequest, res: Response, next: Nex
       res.status(401).json({ message: USER_NOT_REGISTERED });
       return;
     }
+    req.user = user;
     next();
   } catch (error) {
     res.status(500).json({ message: SERVER_ERROR });
