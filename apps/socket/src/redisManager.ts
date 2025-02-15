@@ -3,18 +3,45 @@ import { Redis } from 'ioredis';
 export class RedisManager {
   private static instance: RedisManager | null = null;
   private subscriber: Redis;
-  private redisClient: Redis;
+  private publisher: Redis; 
 
   private constructor() {
-    this.subscriber = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
+    const redisConfig = {
+      host: process.env.REDIS_HOST || 'redis',
       port: Number(process.env.REDIS_PORT) || 6379,
-      password: process.env.REDIS_PASSWORD || 'default'
+      password: process.env.REDIS_PASSWORD,
+      retryStrategy: (times: number) => {
+        return Math.min(times * 50, 2000);
+      },
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      reconnectOnError: (err) => {
+        const targetError = 'READONLY';
+        if (err.message.includes(targetError)) {
+          return true;
+        }
+        return false;
+      }
+    };
+  
+    this.subscriber = new Redis(redisConfig);
+    this.publisher = new Redis(redisConfig);
+  
+    // Enhanced error handlers with more details
+    this.subscriber.on('error', (err) => {
+      console.error('Redis Subscriber Error:', err);
     });
-    this.redisClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: Number(process.env.REDIS_PORT) || 6379,
-      password: process.env.REDIS_PASSWORD || 'default'
+  
+    this.publisher.on('error', (err) => {
+      console.error('Redis Publisher Error:', err);
+    });
+
+    this.subscriber.on('connect', () => {
+      console.log('Redis Subscriber connected');
+    });
+
+    this.publisher.on('connect', () => {
+      console.log('Redis Publisher connected');
     });
   }
 
@@ -25,17 +52,16 @@ export class RedisManager {
     return RedisManager.instance;
   }
 
-  public clone(): never {
-    throw new Error('RedisManager is a singleton and cannot be cloned');
+  public getSubscriber(): Redis {
+    return this.subscriber;
   }
 
-  public getSubscriber(): Redis {
-    return this.subscriber; 
+  public getPublisher(): Redis {
+    return this.publisher;
   }
-  public getRedisClient(): Redis {
-    return this.redisClient;
-  }
+
   public async disconnect(): Promise<void> {
-    this.subscriber.disconnect();
+    await this.subscriber.disconnect();
+    await this.publisher.disconnect();
   }
 }

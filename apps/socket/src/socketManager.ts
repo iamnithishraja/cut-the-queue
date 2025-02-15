@@ -84,7 +84,7 @@ export class WSManager {
     this.stateManager.addSubscription(message.canteenId, message.screen, socket.userId);
     socket.send(JSON.stringify({ type: 'SUBSCRIBE_SUCCESS' }));
     if(socket.userRole === 'PARTNER'){
-      const redis = RedisManager.getInstance().getRedisClient();
+      const redis = RedisManager.getInstance().getPublisher();
       const redis_data = await redis.hgetall(message.canteenId);
       if(Object.keys(redis_data).length){
         socket.send(JSON.stringify({ type: 'PARTNER_ORDER_STATUS_UPDATE', data: redis_data}))
@@ -104,7 +104,7 @@ export class WSManager {
 
   private async handlePartnerOrderStatusUpdate(socket: CustomWebSocket, message: z.infer<typeof PartnerOrderUpdates>) {
     try{
-      const redis = RedisManager.getInstance().getRedisClient();
+      const redis = RedisManager.getInstance().getPublisher();
       if(!message.canteenId){
         socket.send(JSON.stringify({ type: 'ERROR', message: 'CanteenId not provided'}));
       }

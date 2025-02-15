@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,21 +28,21 @@ spec:
             cpu: 250m
             memory: 1Gi
         env:
-          - name: REDIS_PUB_SUB_URL
+          - name: REDIS_HOST
             valueFrom:
               secretKeyRef:
                 name: app-secrets
-                key: REDIS_PUB_SUB_URL
+                key: REDIS_HOST
+          - name: REDIS_PORT
+            valueFrom:
+              secretKeyRef:
+                name: app-secrets
+                key: REDIS_PORT
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: app-secrets
                 key: REDIS_PASSWORD
-          - name: REDIS_CHANNEL
-            valueFrom:
-              secretKeyRef:
-                name: app-secrets
-                key: REDIS_CHANNEL
           - name: REDIS_ARGS
             valueFrom:
               secretKeyRef:

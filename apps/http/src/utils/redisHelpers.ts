@@ -11,19 +11,20 @@ import { RedisManager } from "../publisher/redis";
 const safeRedisPublish = async (message: any): Promise<boolean> => {
     try {
         const publisher = RedisManager.getInstance().getPublisher();
-        const channel = process.env.REDIS_CHANNEL || "sockets";
+        const channel = process.env.REDIS_CHANNEL || "broadcaster";
         
-        // Check Redis connection before publishing
+        // Enhanced connection check
         const isConnected = publisher.status === "ready";
         if (!isConnected) {
-            console.error({ message: REDIS_CONNECTION_ERROR });
-            return false;
+            console.error('Redis not connected:', { status: publisher.status, isOpen: publisher.status === "ready" });
+            throw new Error(REDIS_CONNECTION_ERROR);
         }
 
         await publisher.publish(channel, JSON.stringify(message));
+        console.log(`Published message to channel ${channel}`);
         return true;
     } catch (error) {
-        console.error({ message: REDIS_CONNECTION_ERROR, error });
+        console.error('Redis publish error:', error);
         return false;
     }
 };
