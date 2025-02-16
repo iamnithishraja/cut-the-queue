@@ -13,7 +13,8 @@ import {
   updateFcmToken,
   resetPassword,
   verifyOtp,
-  updatePhoneNumber
+  updatePhoneNumber,
+  deleteAccount
 } from "../controllers/userController";
 import { canRequestOtp, isAuthenticatedUser } from "../middlewares/auth";
 
@@ -37,5 +38,8 @@ userRoute.post("/password/change", isAuthenticatedUser, changePassword);
 
 // partner routes
 userRoute.post("/registerPartner", isAuthenticatedUser, registerPartner);
+
+// delete account route
+userRoute.delete("/delete-account", isAuthenticatedUser, deleteAccount);
 
 export default userRoute;
