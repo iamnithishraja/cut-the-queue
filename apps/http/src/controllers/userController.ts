@@ -627,6 +627,10 @@ const deleteAccount = async (req: CustomRequest, res: Response): Promise<any> =>
             return res.status(400).json({ message: USER_NOT_REGISTERED });
         }
 
+		if(!user.password){
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+		
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(400).json({ message: INVALID_CREDENTIALS });
