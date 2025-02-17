@@ -28,6 +28,7 @@ import {
 	requestOtpSchema,
 	submitOtpSchema,
 	verifyOtpAndResetPasswordSchema,
+	deleteAccountSchema,
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 import crypto from "crypto"
@@ -608,6 +609,43 @@ const updatePhoneNumber = async (req: CustomRequest, res: Response): Promise<any
             message: SERVER_ERROR,
             details: error instanceof Error ? error.message : "Unknown error occurred"
         });
+
+    }
+
+}
+
+const deleteAccount = async (req: CustomRequest, res: Response): Promise<any> => {
+    try {
+        const { password } = deleteAccountSchema.parse(req.body);
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user!.id },
+            select: { id: true, password: true },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: USER_NOT_REGISTERED });
+        }
+
+		if(!user.password){
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
+		
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: INVALID_CREDENTIALS });
+        }
+
+        await prisma.user.delete({
+            where: { id: req.user!.id },
+        });
+
+        return res.status(200).json({ message: "Account deleted successfully" });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
+        }
+        return res.status(500).json({ message: SERVER_ERROR });
     }
 };
 
@@ -625,5 +663,6 @@ export {
 	submitOtp,
 	updateFcmToken,
 	resetPassword,
-	verifyOtp
+	verifyOtp,
+	deleteAccount
 };
