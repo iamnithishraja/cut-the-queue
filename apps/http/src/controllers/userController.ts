@@ -28,6 +28,7 @@ import {
 	requestOtpSchema,
 	submitOtpSchema,
 	verifyOtpAndResetPasswordSchema,
+	deleteAccountSchema,
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 import crypto from "crypto"
@@ -615,11 +616,7 @@ const updatePhoneNumber = async (req: CustomRequest, res: Response): Promise<any
 
 const deleteAccount = async (req: CustomRequest, res: Response): Promise<any> => {
     try {
-        const { password } = req.body;
-
-        if (!password) {
-            return res.status(400).json({ message: "Password is required" });
-        }
+        const { password } = deleteAccountSchema.parse(req.body);
 
         const user = await prisma.user.findUnique({
             where: { id: req.user!.id },
