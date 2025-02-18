@@ -1,14 +1,26 @@
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
-    environment:    
-      ZOOKEEPER_CLIENT_PORT: 2181    
-      ZOOKEEPER_TICK_TIME: 2000    
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 10
     ports:
       - 2181:2181
     healthcheck:
-      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      test:
+        [
+          "CMD",
+          "echo",
+          "ruok",
+          "|",
+          "nc",
+          "localhost",
+          "2181",
+          "|",
+          "grep",
+          "imok",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,18 +39,25 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_LOG_RETENTION_MS: 86400000  # 24 hours in milliseconds
+      KAFKA_LOG_RETENTION_MS: 86400000 # 24 hours in milliseconds
       KAFKA_LOG_CLEANUP_POLICY: delete
     ports:
       - 9092:9092
       - 29092:29092
     healthcheck:
-      test: ["CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092"]
+      test:
+        [
+          "CMD",
+          "kafka-topics",
+          "--list",
+          "--bootstrap-server",
+          "localhost:9092",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: always
-        
+
   #Service: kafka-init
   kafka-init:
     image: confluentinc/cp-kafka:latest
@@ -52,18 +71,27 @@ services:
       echo 'Waiting for Kafka to be ready...'; 
       while ! nc -z kafka 9092; do sleep 1; done;
       echo 'Kafka is ready, creating topics...'; 
-      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic whatsapp --if-not-exists && 
+      kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists && 
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists &&
       kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
       echo 'Kafka topics created.'"
     healthcheck:
-      test: ["CMD", "kafka-topics", "--describe", "--topic", "sms", "--bootstrap-server", "localhost:9092"]
+      test:
+        [
+          "CMD",
+          "kafka-topics",
+          "--describe",
+          "--topic",
+          "sms",
+          "--bootstrap-server",
+          "localhost:9092",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  #Service: whatsapp-consumer
-  whatsapp-consumer:
+  #Service: sms-consumer
+  sms-consumer:
     depends_on:
       kafka:
         condition: service_healthy
@@ -73,17 +101,11 @@ services:
       platforms:
         - linux/amd64
     environment:
-      # RESEND_API_KEY: <RESEND_API_KEY>
-      # FIREBASE_CLIENT_EMAIL: <FIREBASE_CLIENT_EMAIL>
-      # FIREBASE_PRIVATE_KEY: <FIREBASE_PRIVATE_KEY>
-      # FIREBASE_PROJECT_ID: <FIREBASE_PROJECT_ID>
-      TWILIO_ACCOUNT_SID: <your_twilio_account_sid>
-      TWILIO_AUTH_TOKEN: <your_twilio_auth_token>
-      TWILIO_WHATSAPP_FROM: <your_twilio_whatsapp_number>  # Usually in format: +14155238886
+      TWO_FACTOR_API_KEY: ${TWO_FACTOR_API_KEY}
       KAFKA_BROKER: kafka:9092
-      KAFKA_CLIENT_ID: whatsapp-consumer
-      CONSUMER_TYPE: whatsapp
-    restart: always  
+      KAFKA_CLIENT_ID: sms-consumer
+      CONSUMER_TYPE: sms
+    restart: always
 
   email-consumer:
     depends_on:
@@ -95,12 +117,12 @@ services:
       platforms:
         - linux/amd64
     environment:
-      KAFKA_BROKER: kafka:9092 
+      KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: email-consumer
       CONSUMER_TYPE: email
     env_file:
       - .env
-    restart: always  
+    restart: always
 
   #Service: notification-consumer
   notification-consumer:
@@ -132,7 +154,7 @@ services:
         echo 'Clearing Kafka data...';
         kafka-topics --bootstrap-server kafka:9092 --list | xargs -I {} kafka-topics --bootstrap-server kafka:9092 --delete --topic {};
         echo 'Kafka data cleared. Recreating topics...';
-        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic whatsapp --if-not-exists;
+        kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic sms --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic email --if-not-exists;
         kafka-topics --create --bootstrap-server kafka:9092 --replication-factor 1 --partitions 1 --topic notification --if-not-exists;
         echo 'Kafka topics recreated. Sleeping for 24 hours...';
@@ -154,7 +176,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-    restart: always  
+    restart: always
   #Service: http-server
   http-server:
     depends_on:
@@ -169,7 +191,7 @@ services:
         - linux/amd64
     environment:
       PORT: 3000
-      KAFKA_CLIENT_ID: http-server 
+      KAFKA_CLIENT_ID: http-server
       KAFKA_BROKER: kafka:9092
       REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
       REDIS_CHANNEL: "sockets"
@@ -178,7 +200,6 @@ services:
     ports:
       - 3000:3000
     restart: always
-
 
   # Service: socket-server
   socket-server:
@@ -208,11 +229,9 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-  
+
   # Service: pushgateway
   pushgateway:
     image: prom/pushgateway:latest
     ports:
       - "9091:9091"
-
-

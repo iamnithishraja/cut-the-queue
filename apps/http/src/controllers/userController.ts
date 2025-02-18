@@ -22,16 +22,15 @@ import z from "zod";
 import { KafkaPublisher } from "../publisher/kafka";
 import {
 	changePasswordSchema,
+	deleteAccountSchema,
 	forgotPasswordSchema,
 	loginSchema,
 	registerSchema,
 	requestOtpSchema,
 	submitOtpSchema,
 	verifyOtpAndResetPasswordSchema,
-	deleteAccountSchema,
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
-import crypto from "crypto"
 import { generateRandomStringWithRandomLength, hashString } from "../utils";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
@@ -199,9 +198,9 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
 		});
 		const message = createVerificationMessage(otp);
 		const kafkaPublisher = KafkaPublisher.getInstance();
-		await kafkaPublisher.publishToKafka("whatsapp", {
+		await kafkaPublisher.publishToKafka("sms", {
 			to: "+91" + number,
-			content: `*${otp}*`,
+			content: `${otp}`,
 		});
 		res.status(200).json({ message: OTP_SENT });
 	} catch (error) {
@@ -350,7 +349,6 @@ const updateFcmToken = async (req: CustomRequest, res: Response) => {
 
 async function forgetPassword(req: Request, res: Response): Promise<any> {
 	try {
-
 		const { phoneNo } = forgotPasswordSchema.parse(req.body);
 
 		const user = await prisma.user.findUnique({
@@ -374,7 +372,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 		});
 
 		const kafkaPublisher = KafkaPublisher.getInstance();
-		await kafkaPublisher.publishToKafka("whatsapp", {
+		await kafkaPublisher.publishToKafka("sms", {
 			to: "+91" + user.phoneNumber,
 			content: `*${otp}*`,
 		});
@@ -393,10 +391,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 	}
 }
 
-async function resetPassword(
-	req: Request,
-	res: Response
-): Promise<any> {
+async function resetPassword(req: Request, res: Response): Promise<any> {
 	try {
 		const { phoneNo, password, confirmPassword } =
 			verifyOtpAndResetPasswordSchema.parse(req.body);
@@ -404,7 +399,7 @@ async function resetPassword(
 		if (password !== confirmPassword || !token) {
 			return res.status(400).json({ message: "Passwords don't match" });
 		}
-		const hashedToken = await hashString(token)
+		const hashedToken = await hashString(token);
 
 		const user = await prisma.user.findFirst({
 			where: {
@@ -460,38 +455,36 @@ async function resetPassword(
 }
 
 const verifyOtp = async (req: Request, res: Response): Promise<any> => {
-
 	try {
 		const { phoneNo, otp } = req.body;
 		if (!phoneNo || !otp) {
 			res.status(400).json({ success: false });
-			return
+			return;
 		}
 		const user = await prisma.user.findUnique({
 			where: {
 				phoneNumber: phoneNo,
-				otp: otp
-			}
-		})
+				otp: otp,
+			},
+		});
 		if (!user) {
 			return res.status(401).json({ message: INVALID_OTP });
 		}
-		const token = generateRandomStringWithRandomLength()
+		const token = generateRandomStringWithRandomLength();
 		const hashedToken = await hashString(token);
 		await prisma.user.update({
 			where: {
-				phoneNumber: phoneNo
+				phoneNumber: phoneNo,
 			},
 			data: {
-				resetPasswordToken: hashedToken
-			}
-		})
-		res.json({ token })
+				resetPasswordToken: hashedToken,
+			},
+		});
+		res.json({ token });
 	} catch (error) {
 		return res.status(500).json({ message: SERVER_ERROR });
 	}
-
-}
+};
 async function changePassword(req: CustomRequest, res: Response): Promise<any> {
 	try {
 		const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
@@ -535,124 +528,131 @@ async function changePassword(req: CustomRequest, res: Response): Promise<any> {
 	}
 }
 
-const updatePhoneNumber = async (req: CustomRequest, res: Response): Promise<any> => {
-    try {
-        const { phoneNumber } = req.body;
-        
-        // Validate phone number format
-        const phoneNumberRegex = /^[0-9]{10}$/;
-        if (!phoneNumber || !phoneNumberRegex.test(phoneNumber)) {
-            return res.status(400).json({ 
-                message: INVALID_INPUT,
-                details: "Phone number must be 10 digits"
-            });
-        }
+const updatePhoneNumber = async (
+	req: CustomRequest,
+	res: Response
+): Promise<any> => {
+	try {
+		const { phoneNumber } = req.body;
 
-        // Ensure user exists and get their current data
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized" });
-        }
+		// Validate phone number format
+		const phoneNumberRegex = /^[0-9]{10}$/;
+		if (!phoneNumber || !phoneNumberRegex.test(phoneNumber)) {
+			return res.status(400).json({
+				message: INVALID_INPUT,
+				details: "Phone number must be 10 digits",
+			});
+		}
 
-        const currentUser = await prisma.user.findUnique({
-            where: { id: userId }
-        });
-        if (!currentUser) {
-            return res.status(404).json({ message: USER_NOT_REGISTERED });
-        }
+		// Ensure user exists and get their current data
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
 
-        // Check if phone number is already in use
-        const existingUser = await prisma.user.findUnique({
-            where: { phoneNumber },
-        });
-        if (existingUser && existingUser.id !== userId) {
-            return res.status(400).json({ message: USER_ALREADY_EXISTS });
-        }
+		const currentUser = await prisma.user.findUnique({
+			where: { id: userId },
+		});
+		if (!currentUser) {
+			return res.status(404).json({ message: USER_NOT_REGISTERED });
+		}
 
-        const otp = generateOTP();
-        
-        // Update user with new phone number and OTP
-        await prisma.user.update({
-            where: { id: userId },
-            data: { 
-                phoneNumber,
-                otp,
-                isVerified: false // Reset verification status for new number
-            },
-        });
+		// Check if phone number is already in use
+		const existingUser = await prisma.user.findUnique({
+			where: { phoneNumber },
+		});
+		if (existingUser && existingUser.id !== userId) {
+			return res.status(400).json({ message: USER_ALREADY_EXISTS });
+		}
 
-        // Send OTP via Kafka
-        try {
-            const kafkaPublisher = KafkaPublisher.getInstance();
-            await kafkaPublisher.publishToKafka("whatsapp", {
-                to: "+91" + phoneNumber,
-                content: `*${otp}*`,
-            });
-        } catch (kafkaError) {
-            console.error("Kafka publishing error:", kafkaError);
-            // Rollback the phone number update
-            await prisma.user.update({
-                where: { id: userId },
-                data: { 
-                    phoneNumber: currentUser.phoneNumber,
-                    otp: null,
-                    isVerified: currentUser.isVerified
-                },
-            });
-            throw new Error("Failed to send OTP");
-        }
+		const otp = generateOTP();
 
-        return res.status(200).json({ message: OTP_SENT });
-    } catch (error) {
-        console.error("Update phone number error:", error);
-        return res.status(500).json({ 
-            message: SERVER_ERROR,
-            details: error instanceof Error ? error.message : "Unknown error occurred"
-        });
+		// Update user with new phone number and OTP
+		await prisma.user.update({
+			where: { id: userId },
+			data: {
+				phoneNumber,
+				otp,
+				isVerified: false, // Reset verification status for new number
+			},
+		});
 
-    }
+		// Send OTP via Kafka
+		try {
+			const kafkaPublisher = KafkaPublisher.getInstance();
+			await kafkaPublisher.publishToKafka("sms", {
+				to: "+91" + phoneNumber,
+				content: `*${otp}*`,
+			});
+		} catch (kafkaError) {
+			console.error("Kafka publishing error:", kafkaError);
+			// Rollback the phone number update
+			await prisma.user.update({
+				where: { id: userId },
+				data: {
+					phoneNumber: currentUser.phoneNumber,
+					otp: null,
+					isVerified: currentUser.isVerified,
+				},
+			});
+			throw new Error("Failed to send OTP");
+		}
 
-}
+		return res.status(200).json({ message: OTP_SENT });
+	} catch (error) {
+		console.error("Update phone number error:", error);
+		return res.status(500).json({
+			message: SERVER_ERROR,
+			details:
+				error instanceof Error ? error.message : "Unknown error occurred",
+		});
+	}
+};
 
-const deleteAccount = async (req: CustomRequest, res: Response): Promise<any> => {
-    try {
-        const { password } = deleteAccountSchema.parse(req.body);
+const deleteAccount = async (
+	req: CustomRequest,
+	res: Response
+): Promise<any> => {
+	try {
+		const { password } = deleteAccountSchema.parse(req.body);
 
-        const user = await prisma.user.findUnique({
-            where: { id: req.user!.id },
-            select: { id: true, password: true },
-        });
+		const user = await prisma.user.findUnique({
+			where: { id: req.user!.id },
+			select: { id: true, password: true },
+		});
 
-        if (!user) {
-            return res.status(400).json({ message: USER_NOT_REGISTERED });
-        }
+		if (!user) {
+			return res.status(400).json({ message: USER_NOT_REGISTERED });
+		}
 
-		if(!user.password){
+		if (!user.password) {
 			return res.status(400).json({ message: INVALID_CREDENTIALS });
 		}
-		
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(400).json({ message: INVALID_CREDENTIALS });
-        }
 
-        await prisma.user.delete({
-            where: { id: req.user!.id },
-        });
+		const isPasswordValid = await bcrypt.compare(password, user.password);
+		if (!isPasswordValid) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
 
-        return res.status(200).json({ message: "Account deleted successfully" });
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
-        }
-        return res.status(500).json({ message: SERVER_ERROR });
-    }
+		await prisma.user.delete({
+			where: { id: req.user!.id },
+		});
+
+		return res.status(200).json({ message: "Account deleted successfully" });
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			return res
+				.status(400)
+				.json({ message: INVALID_INPUT, errors: error.errors });
+		}
+		return res.status(500).json({ message: SERVER_ERROR });
+	}
 };
 
 export {
 	changePassword,
+	deleteAccount,
 	forgetPassword,
-	updatePhoneNumber,
 	getProfile,
 	googleLogin,
 	login,
@@ -660,9 +660,9 @@ export {
 	register,
 	registerPartner,
 	requestOtp,
+	resetPassword,
 	submitOtp,
 	updateFcmToken,
-	resetPassword,
+	updatePhoneNumber,
 	verifyOtp,
-	deleteAccount
 };
