@@ -1,15 +1,15 @@
 import EmailConsumer from "./emailConsumer";
 import NotificationConsumer from "./notificationConsumer";
-import WhatsAppConsumer from "./whatsappConsumer";
+import SMSConsumer from "./smsConsumer";
 
 class ConsumerManager {
 	private emailConsumer: EmailConsumer;
-	private whatsappConsumer: WhatsAppConsumer;
+	private smsConsumer: SMSConsumer;
 	private notificationConsumer: NotificationConsumer;
 
 	constructor() {
 		this.emailConsumer = new EmailConsumer();
-		this.whatsappConsumer = new WhatsAppConsumer();
+		this.smsConsumer = new SMSConsumer();
 		this.notificationConsumer = new NotificationConsumer();
 	}
 
@@ -22,8 +22,8 @@ class ConsumerManager {
 				case "email":
 					activeConsumer = this.emailConsumer;
 					break;
-				case "whatsapp":
-					activeConsumer = this.whatsappConsumer;
+				case "sms":
+					activeConsumer = this.smsConsumer;
 					break;
 				case "notification":
 					activeConsumer = this.notificationConsumer;
@@ -41,9 +41,7 @@ class ConsumerManager {
 	}
 
 	async disconnect(): Promise<void> {
-		// await this.emailConsumer.disconnect();
-		await this.whatsappConsumer.disconnect();
-		// await this.notificationConsumer.disconnect();
+		await this.smsConsumer.disconnect();
 	}
 }
 
