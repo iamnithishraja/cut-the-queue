@@ -12,13 +12,11 @@ const canteenRoutes = express.Router();
 
 canteenRoutes.get(
 	"/getAllDishes/:canteenId",
-	isAuthenticatedUser,
 	getAllDishes
 );
-canteenRoutes.get("/getAllCanteen", isAuthenticatedUser, getAllCanteen);
+canteenRoutes.get("/getAllCanteen", getAllCanteen);
 canteenRoutes.post(
 	"/calculateAmount",
-	isAuthenticatedUser,
 	calculateAmountForOrder
 );
 canteenRoutes.get(
