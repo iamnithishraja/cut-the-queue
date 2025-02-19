@@ -374,7 +374,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 		const kafkaPublisher = KafkaPublisher.getInstance();
 		await kafkaPublisher.publishToKafka("sms", {
 			to: "+91" + user.phoneNumber,
-			content: `*${otp}*`,
+			content: `${otp}`,
 		});
 
 		return res.json({
@@ -582,7 +582,7 @@ const updatePhoneNumber = async (
 			const kafkaPublisher = KafkaPublisher.getInstance();
 			await kafkaPublisher.publishToKafka("sms", {
 				to: "+91" + phoneNumber,
-				content: `*${otp}*`,
+				content: `${otp}`,
 			});
 		} catch (kafkaError) {
 			console.error("Kafka publishing error:", kafkaError);

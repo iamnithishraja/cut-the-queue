@@ -40,6 +40,6 @@ userRoute.post("/password/change", isAuthenticatedUser, changePassword);
 userRoute.post("/registerPartner", isAuthenticatedUser, registerPartner);
 
 // delete account route
-userRoute.delete("/delete-account", isAuthenticatedUser, deleteAccount);
+userRoute.post("/delete-account", isAuthenticatedUser, deleteAccount);
 
 export default userRoute;

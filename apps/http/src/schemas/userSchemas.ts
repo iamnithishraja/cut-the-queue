@@ -8,7 +8,7 @@ export const registerSchema = z.object({
   password: z.string().min(8),
 });
 
-export const deleteAccountSchema = z.object({password: z.string().min(8),});
+export const deleteAccountSchema = z.object({ password: z.string().min(8), });
 
 export const loginSchema = z.object({
   email: z.string().email(),

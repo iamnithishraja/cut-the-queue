@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: whatsapp-consumer
+  name: sms-consumer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: whatsapp-consumer
+      app: sms-consumer
   template:
     metadata:
       labels:
-        app: whatsapp-consumer
+        app: sms-consumer
     spec:
       enableServiceLinks: false
       containers:
-      - name: whatsapp-consumer
+      - name: sms-consumer
         image: iamnithish/cuttheq_consumer:latest
         resources:
           requests:
@@ -27,11 +27,11 @@ spec:
         - name: KAFKA_BROKER
           value: "kafka:9092"
         - name: KAFKA_CLIENT_ID
-          value: "whatsapp-consumer"
+          value: "sms-consumer"
         - name: CONSUMER_TYPE
-          value: "whatsapp"
+          value: "sms"
         - name: GROUP_ID    
-          value: "whatsapp-group" 
+          value: "sms-group" 
         envFrom:
         - secretRef:
             name: app-secrets
