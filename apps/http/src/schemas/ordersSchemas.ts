@@ -1,7 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Enums
-export const OrderItemStatusEnum = z.enum(["COOKING", "WAITING_FOR_PICKUP", "SENT"]);
+export const OrderItemStatusEnum = z.enum([
+	"COOKING",
+	"WAITING_FOR_PICKUP",
+	"SENT",
+]);
 export const OrderStatusEnum = z.enum(["PROCESSING", "DONE"]);
 export const AvailabilityStatusEnum = z.enum(["AVAILABLE", "UNAVAILABLE"]);
 export const MenuItemTypeEnum = z.enum(["Instant", "TimeConsuming"]);
@@ -49,7 +53,7 @@ export const menuItemSchema = z.object({
 	price: z.number().positive(),
 	avilableLimit: z.number().int().nullable().optional(),
 	canteenId: z.string(),
-	status: AvailabilityStatusEnum.default('AVAILABLE'),
+	status: AvailabilityStatusEnum.default("AVAILABLE"),
 });
 
 export const CreateMenuItemSchema = z.object({
@@ -63,6 +67,11 @@ export const CreateMenuItemSchema = z.object({
 	status: AvailabilityStatusEnum.default("AVAILABLE"),
 	mimeType: z.string().optional(),
 });
+
+export const EditMenuItemSchema = CreateMenuItemSchema.partial().refine(
+	(data) => Object.keys(data).length > 0,
+	"At least one field must be provided for update"
+);
 
 // OrderItem Schema
 export const OrderItemSchema = z.object({
@@ -90,10 +99,12 @@ export const OrderSchema = z.object({
 
 // Input Validation Schema for Checkout
 export const CheckoutInputSchema = z.object({
-  items: z.array(z.object({
+	items: z.array(
+		z.object({
 			menuItemId: z.string(),
 			quantity: z.number().int().positive(),
-  })),
+		})
+	),
 	canteenId: z.string(),
 });
 

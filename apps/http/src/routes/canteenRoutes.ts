@@ -3,6 +3,7 @@ import express from "express";
 import {
 	addMenuItem,
 	calculateAmountForOrder,
+	editMenuItem,
 	getAllCanteen,
 	getAllDishes,
 	toggleCanteenAvailability,
@@ -11,15 +12,9 @@ import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
 
 const canteenRoutes = express.Router();
 
-canteenRoutes.get(
-	"/getAllDishes/:canteenId",
-	getAllDishes
-);
+canteenRoutes.get("/getAllDishes/:canteenId", getAllDishes);
 canteenRoutes.get("/getAllCanteen", getAllCanteen);
-canteenRoutes.post(
-	"/calculateAmount",
-	calculateAmountForOrder
-);
+canteenRoutes.post("/calculateAmount", calculateAmountForOrder);
 canteenRoutes.get(
 	"/toggleCanteenAvailability/:canteenId",
 	isAuthenticatedUser,
@@ -28,10 +23,17 @@ canteenRoutes.get(
 );
 
 canteenRoutes.post(
-	"/menu-item",
+	"/menuItems",
 	isAuthenticatedUser,
 	(req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]),
 	addMenuItem
+);
+
+canteenRoutes.put(
+	"/menuItems/:menuItemId",
+	isAuthenticatedUser,
+	(req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]),
+	editMenuItem
 );
 
 export default canteenRoutes;
