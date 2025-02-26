@@ -214,15 +214,24 @@ const editMenuItem = async (req: CustomRequest, res: Response) => {
 			}
 		}
 
+		// Create clean update data object without mimeType
+		const updateData = {
+			name: data.name,
+			type: data.type,
+			description: data.description,
+			price: data.price,
+			isVegetarian: data.isVegetarian,
+			avilableLimit: data.avilableLimit,
+			category: data.category,
+			status: data.status,
+			...(imageUrl && { itemImage: imageUrl }),
+		};
+
 		// Update menu item with clean data
 		const menuItem = await prisma.menuItem
 			.update({
 				where: { id: menuItemId },
-				data: {
-					...data,
-					...(imageUrl && { itemImage: imageUrl }),
-					mimeType: undefined, // Remove mimeType as it's not a DB field
-				},
+				data: updateData,
 			})
 			.catch((error) => {
 				console.error("Database update error:", error);
