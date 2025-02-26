@@ -229,8 +229,8 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
         orderNotifyIntervals.delete(id!);
 
         // TODO: reflect the updated orders in user's app.
-        // @ts-ignore
         await updateUserOrders(result.order.userId);
+        await updateCanteenOrders(result.order.canteenId);
         res.json(result.itemsToUpdate);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : SERVER_ERROR;
