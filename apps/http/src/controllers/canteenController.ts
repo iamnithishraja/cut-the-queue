@@ -2,7 +2,13 @@ import { INVALID_INPUT, SERVER_ERROR } from "@repo/constants";
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
 import z from "zod";
+import {
+	CreateMenuItemSchema,
+	EditMenuItemSchema,
+} from "../schemas/ordersSchemas";
 import { calculateAmountSchema } from "../schemas/userSchemas";
+import { CustomRequest } from "../types/userTypes";
+import { getUploadUrl } from "../utils/r2";
 import { broadcastMenuItems } from "../utils/redisHelpers";
 
 async function getAllDishes(req: Request, res: Response) {
@@ -93,7 +99,7 @@ const toggleCanteenAvailability = async (req: Request, res: Response) => {
 		});
 
 		await broadcastMenuItems(canteenId as string);
-		
+
 		res.status(200).json({
 			success: true,
 			message: `Canteen is now ${newStatus ? "open" : "closed"}`,
@@ -108,8 +114,174 @@ const toggleCanteenAvailability = async (req: Request, res: Response) => {
 	}
 };
 
+const addMenuItem = async (req: CustomRequest, res: Response) => {
+	try {
+		const data = CreateMenuItemSchema.parse(req.body);
+		const canteenId = req.user?.canteenId;
+
+		if (!canteenId) {
+			res.status(403).json({
+				message: "No canteen associated with this user",
+			});
+			return;
+		}
+
+		// Get upload URL if mimeType is provided
+		let uploadData: { url: string; key: string } | null = null;
+		if (data.mimeType) {
+			try {
+				uploadData = await getUploadUrl(data.mimeType, canteenId);
+			} catch (error) {
+				res.status(400).json({ message: (error as Error).message });
+				return;
+			}
+		}
+
+		// Create menu item
+		const menuItem = await prisma.menuItem.create({
+			data: {
+				name: data.name,
+				type: data.type,
+				description: data.description,
+				price: data.price,
+				isVegetarian: data.isVegetarian,
+				avilableLimit: data.avilableLimit,
+				category: data.category,
+				status: data.status,
+				canteenId,
+				itemImage: uploadData?.key
+					? `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uploadData.key}`
+					: null,
+			},
+		});
+
+		await broadcastMenuItems(canteenId);
+
+		res.status(201).json({
+			success: true,
+			menuItem,
+			upload: uploadData,
+		});
+	} catch (error) {
+		console.error("Add menu item error:", error);
+
+		if (error instanceof z.ZodError) {
+			res.status(400).json({
+				message: INVALID_INPUT,
+			});
+			return;
+		}
+
+		res.status(500).json({ message: SERVER_ERROR });
+	}
+};
+
+const editMenuItem = async (req: CustomRequest, res: Response) => {
+	try {
+		const { menuItemId } = req.params;
+		const data = EditMenuItemSchema.parse(req.body);
+		const canteenId = req.user?.canteenId;
+
+		if (!canteenId) {
+			res.status(403).json({ message: "No canteen associated with this user" });
+			return;
+		}
+
+		// Check if menu item exists and belongs to this canteen
+		const existingMenuItem = await prisma.menuItem.findFirst({
+			where: { id: menuItemId, canteenId },
+		});
+
+		if (!existingMenuItem) {
+			res
+				.status(404)
+				.json({ message: "Menu item not found or not authorized" });
+			return;
+		}
+
+		// Handle image upload if new image is being set
+		let imageUrl: string | undefined;
+		if (data.mimeType) {
+			try {
+				const uploadData = await getUploadUrl(data.mimeType, canteenId);
+				imageUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${uploadData.key}`;
+			} catch (error) {
+				res.status(400).json({
+					message: "Failed to process image upload",
+					error: (error as Error).message,
+				});
+				return;
+			}
+		}
+
+		// Create clean update data object without mimeType
+		const updateData = {
+			name: data.name,
+			type: data.type,
+			description: data.description,
+			price: data.price,
+			isVegetarian: data.isVegetarian,
+			avilableLimit: data.avilableLimit,
+			category: data.category,
+			status: data.status,
+			...(imageUrl && { itemImage: imageUrl }),
+		};
+
+		// Update menu item with clean data
+		const menuItem = await prisma.menuItem
+			.update({
+				where: { id: menuItemId },
+				data: updateData,
+			})
+			.catch((error) => {
+				console.error("Database update error:", error);
+				throw new Error("Failed to update menu item in database");
+			});
+
+		await broadcastMenuItems(canteenId).catch((error) => {
+			console.error("Broadcast error:", error);
+		});
+
+		res.status(200).json({
+			success: true,
+			menuItem,
+			...(imageUrl && { imageUrl }),
+		});
+	} catch (error) {
+		console.error("Edit menu item error:", error);
+
+		if (error instanceof z.ZodError) {
+			res.status(400).json({
+				success: false,
+				message: INVALID_INPUT,
+				errors: error.errors.map((e) => ({
+					field: e.path.join("."),
+					message: e.message,
+				})),
+			});
+			return;
+		}
+
+		if (error instanceof Error) {
+			res.status(500).json({
+				success: false,
+				message: SERVER_ERROR,
+				error: error.message,
+			});
+			return;
+		}
+
+		res.status(500).json({
+			success: false,
+			message: SERVER_ERROR,
+		});
+	}
+};
+
 export {
+	addMenuItem,
 	calculateAmountForOrder,
+	editMenuItem,
 	getAllCanteen,
 	getAllDishes,
 	toggleCanteenAvailability,
