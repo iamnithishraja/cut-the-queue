@@ -126,7 +126,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
             await kafkaPublisher.publishToKafka("notification", {
                 firebaseToken: order.customer.fcmToken,
                 title: `Your ${orderItem.menuItem.name} is ready.`,
-                body:  `Show the QR Code before collecting the order from ${order.canteen.name}`
+                body: `Show the QR Code before collecting the order from ${order.canteen.name}`
             });
         }
         //notify in every 2 minutes
@@ -141,7 +141,7 @@ async function chageToPickup(req: CustomRequest, res: Response) {
 
                 if (!updatedOrderItem || updatedOrderItem.status !== "WAITING_FOR_PICKUP") {
                     clearInterval(intervalId);
-                    orderNotifyIntervals.delete(id); 
+                    orderNotifyIntervals.delete(id);
                     return;
                 }
 
@@ -156,8 +156,8 @@ async function chageToPickup(req: CustomRequest, res: Response) {
             } catch (error) {
                 console.error("Failed to check order status or send notification:", error);
             }
-        }, 2 * 60 * 1000); 
-        
+        }, 2 * 60 * 1000);
+
         await updateUserOrders(order.userId);
         await updateCanteenOrders(order.canteenId);
         return getAllOrdersByCanteenId(req, res);
@@ -169,8 +169,9 @@ async function chageToPickup(req: CustomRequest, res: Response) {
 
 async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
     const id = req.params.orderId;
+    const counter = req.user?.counter;
 
-    if (!id) {
+    if (!id || !counter) {
         res.status(400).json({ message: INVALID_INPUT });
     }
 
@@ -179,7 +180,10 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
             const itemsToUpdate = await tx.orderItem.findMany({
                 where: {
                     orderId: id,
-                    status: "WAITING_FOR_PICKUP"
+                    status: "WAITING_FOR_PICKUP",
+                    menuItem: {
+                        counter: (counter as number)
+                    }
                 },
                 include: {
                     menuItem: true
@@ -229,6 +233,7 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
         orderNotifyIntervals.delete(id!);
 
         // TODO: reflect the updated orders in user's app.
+        // @ts-ignore
         await updateUserOrders(result.order.userId);
         await updateCanteenOrders(result.order.canteenId);
         res.json(result.itemsToUpdate);
@@ -243,4 +248,26 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
     }
 }
 
-export { updateItem, chageToPickup, getAllOrdersByCanteenId, finishOrder }
+async function updateCounter(req: CustomRequest, res: Response) {
+    try {
+        let counter = req.params.counter;
+        if (!counter || isNaN(parseInt(counter))) {
+            res.status(400).json({ message: INVALID_INPUT });
+            return;
+        }
+        const updatedUser = await prisma.user.update({
+            where: {
+                id: req.user!.id,
+            },
+            data: {
+                counter: parseInt(counter),
+            },
+        });
+        req.user = updatedUser;
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: SERVER_ERROR });
+    }
+}
+
+export { updateItem, chageToPickup, getAllOrdersByCanteenId, finishOrder, updateCounter }

@@ -277,11 +277,23 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
 				email: true,
 				phoneNumber: true,
 				isVerified: true,
+				counter	: true,
 				role: true,
 			},
 		});
 		if (!user) {
 			return res.status(400).json({ message: USER_NOT_REGISTERED });
+		}
+		if (user.role === "PARTNER" && !user.counter) {
+			const updatedUser = await prisma.user.update({
+				where: {
+					id: user.id,
+				},
+				data: {
+					counter: 1,
+				},
+			});
+			user.counter = updatedUser.counter;
 		}
 		res.json(user);
 	} catch (error) {

@@ -80,6 +80,17 @@ export async function checkRole(
     res.status(401).json({ message: USER_NOT_REGISTERED });
     return;
   }
+  if (req.user.role == "PARTNER" && !req.user?.counter) {
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        counter: 1,
+      },
+    });
+    req.user = updatedUser;
+  }
   let isAuthorised = false;
   for (let i = 0; i < roles.length; i++) {
     const role = roles[i]

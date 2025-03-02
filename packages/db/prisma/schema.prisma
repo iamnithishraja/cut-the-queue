@@ -12,6 +12,7 @@ model User {
   firstName          String
   lastName           String
   userProfile        String?
+  counter            Int?
   email              String    @unique
   phoneNumber        String    @unique
   isVerified         Boolean   @default(false)
@@ -51,6 +52,7 @@ model MenuItem {
   description   String?
   itemImage     String?
   price         Float
+  counter       Int                @default(1)
   isVegetarian  Boolean            @default(true)
   avilableLimit Int?
   category      String
@@ -81,7 +83,7 @@ model OrderItem {
 model Order {
   id           String      @id @default(cuid())
   customer     User?       @relation(fields: [userId], references: [id], onDelete: SetNull) // Made optional with SetNull
-  userId       String?     // Made optional
+  userId       String? // Made optional
   orderStatus  OrderStatus @default(PROCESSING)
   canteen      Canteen     @relation(fields: [canteenId], references: [id], onDelete: Restrict)
   canteenId    String
