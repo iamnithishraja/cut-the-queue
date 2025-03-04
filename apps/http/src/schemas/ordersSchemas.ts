@@ -48,6 +48,7 @@ export const menuItemSchema = z.object({
 	name: z.string(),
 	type: MenuItemTypeEnum,
 	description: z.string().nullable().optional(),
+	counter: z.number().int(),
 	isVegetarian: z.boolean().default(true),
 	itemImage: z.string().nullable().optional(),
 	price: z.number().positive(),
