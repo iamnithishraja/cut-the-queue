@@ -6,6 +6,7 @@ import {
 	editMenuItem,
 	getAllCanteen,
 	getAllDishes,
+	getCanteenAvilabality,
 	toggleCanteenAvailability,
 } from "../controllers/canteenController";
 import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
@@ -21,6 +22,7 @@ canteenRoutes.get(
 	(req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]),
 	toggleCanteenAvailability
 );
+canteenRoutes.get("/getCanteenAvilabality/:canteenId", getCanteenAvilabality);
 
 canteenRoutes.post(
 	"/menuItems",

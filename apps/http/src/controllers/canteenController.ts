@@ -278,9 +278,27 @@ const editMenuItem = async (req: CustomRequest, res: Response) => {
 	}
 };
 
+const getCanteenAvilabality = async (req: Request, res: Response) => {
+	try {
+		const canteenId = req.params.canteenId;
+		const canteen = await prisma.canteen.findUnique({
+			where: { id: canteenId },
+		});
+		if (!canteen) {
+			res.status(404).json({ message: "Canteen not found" });
+			return;
+		}
+		res.status(200).json({ isOpen: canteen.isOpen });
+	} catch (error) {
+		console.error("Get canteen availability error:", error);
+		res.status(500).json({ message: SERVER_ERROR });
+	}
+};
+
 export {
 	addMenuItem,
 	calculateAmountForOrder,
+	getCanteenAvilabality,
 	editMenuItem,
 	getAllCanteen,
 	getAllDishes,
