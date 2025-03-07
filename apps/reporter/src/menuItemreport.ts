@@ -3,6 +3,10 @@ import * as XLSX from 'xlsx';
 import Decimal from 'decimal.js';
 import { CanteenReportMenu, DateRange, MenuItemAnalysis } from "./types";
 
+const TEST_EMAILS = [
+    'developer@cuttheq.in'
+];
+
 async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
     const orders = await prisma.order.findMany({
         where: {
@@ -12,6 +16,11 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
             },
             orderStatus: 'DONE',
             isPaid: true,
+            customer: {
+                email: {
+                    notIn: TEST_EMAILS
+                }
+            }
         },
         include: {
             canteen: {
@@ -33,6 +42,27 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
             },
         },
     });
+
+    // Add logging for excluded orders
+    const excludedOrders = await prisma.order.count({
+        where: {
+            createdAt: {
+                gte: startDate,
+                lte: endDate,
+            },
+            orderStatus: 'DONE',
+            isPaid: true,
+            customer: {
+                email: {
+                    in: TEST_EMAILS
+                }
+            }
+        }
+    });
+
+    if (excludedOrders > 0) {
+        console.log(`Excluded ${excludedOrders} test orders from the menu analysis report`);
+    }
 
     if (!orders || orders.length === 0) {
         console.log('No paid orders found for the selected date range');
@@ -171,9 +201,10 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
         topPerformersWs['!cols'] = headers.map(h => ({ width: h.width }));
         XLSX.utils.book_append_sheet(wb, topPerformersWs, 'Top 20 Items');
 
-        // Save workbook for this canteen
-        const dateStr = startDate.toISOString().split('T')[0];
-        const filename = `${canteenName.toLowerCase().replace(/\s+/g, '_')}_menu_analysis_${dateStr}.xlsx`;
+        // Modify the filename generation part
+        const dateStr = new Date(startDate.getTime());
+        dateStr.setDate(dateStr.getDate() + 1);
+        const filename = `${canteenName.toLowerCase().replace(/\s+/g, '_')}_menu_analysis_${dateStr.toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, filename);
 
         canteenReports.push({
@@ -189,10 +220,11 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
 
 export const generateMenuReport = async (dateString: string) => {
     try {
+        // Create date in local timezone without UTC conversion
         const selectedDate = new Date(dateString);
         selectedDate.setHours(0, 0, 0, 0);
 
-        const endDate = new Date(selectedDate);
+        const endDate = new Date(dateString);
         endDate.setHours(23, 59, 59, 999);
 
         const reports = await generateMenuAnalysisReport({

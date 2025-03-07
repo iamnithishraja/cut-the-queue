@@ -3,6 +3,10 @@ import { OrderReportItem } from "./types";
 import * as XLSX from 'xlsx';
 import Decimal from 'decimal.js';
 
+const TEST_EMAILS = [
+    'developer@cuttheq.in'
+];
+
 interface DateRange {
     startDate: Date;
     endDate: Date;
@@ -17,6 +21,11 @@ async function generateReport({ startDate, endDate }: DateRange) {
             },
             orderStatus: 'DONE',
             isPaid: true,
+            customer: {
+                email: {
+                    notIn: TEST_EMAILS
+                }
+            }
         },
         include: {
             customer: {
@@ -47,6 +56,26 @@ async function generateReport({ startDate, endDate }: DateRange) {
             createdAt: 'desc',
         },
     });
+
+    const excludedOrders = await prisma.order.count({
+        where: {
+            createdAt: {
+                gte: startDate,
+                lte: endDate,
+            },
+            orderStatus: 'DONE',
+            isPaid: true,
+            customer: {
+                email: {
+                    in: TEST_EMAILS
+                }
+            }
+        }
+    });
+
+    if (excludedOrders > 0) {
+        console.log(`Excluded ${excludedOrders} test orders from the report`);
+    }
 
     if (!orders || orders.length === 0) {
         console.log('No paid orders found for the selected date range');
@@ -87,7 +116,9 @@ async function generateReport({ startDate, endDate }: DateRange) {
 
             const reportItem: OrderReportItem = {
                 orderId: order.id,
+                // @ts-ignore
                 customerName: `${order.customer.firstName} ${order.customer.lastName}`.trim(),
+                // @ts-ignore
                 phoneNumber: order.customer.phoneNumber,
                 items: formattedItems,
                 subtotal: subtotal.toNumber(),
@@ -210,8 +241,9 @@ async function generateReport({ startDate, endDate }: DateRange) {
     ];
     XLSX.utils.book_append_sheet(wb, summaryWS, 'Summary');
 
-    const dateStr = startDate.toISOString().split('T')[0];
-    const filename = `orders_report_${dateStr}.xlsx`;
+    const dateStr = new Date(startDate.getTime());
+    dateStr.setDate(dateStr.getDate() + 1);
+    const filename = `orders_report_${dateStr.toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
 
     return {
@@ -222,10 +254,11 @@ async function generateReport({ startDate, endDate }: DateRange) {
 
 export const generateDateReport = async (dateString: string) => {
     try {
+        // Create date in local timezone without UTC conversion
         const selectedDate = new Date(dateString);
         selectedDate.setHours(0, 0, 0, 0);
 
-        const endDate = new Date(selectedDate);
+        const endDate = new Date(dateString);
         endDate.setHours(23, 59, 59, 999);
 
         const report = await generateReport({

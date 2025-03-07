@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
       - name: http-server
-        image: iamnithish/cuttheq_http:v1
+        image: iamnithish/cuttheq_http:latest
         imagePullPolicy: Always
         ports:
         - name: http
