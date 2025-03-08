@@ -28,7 +28,8 @@ export enum RedisMessageType {
   UPDATE_MENU_ITEMS = 'UPDATE_MENU_ITEMS',
   ORDERS_UPDATE_USER = 'ORDERS_UPDATE_USER',
   ORDERS_UPDATE_ADMIN = 'ORDERS_UPDATE_ADMIN',
-  REDIS_FETCH_TRIGGER = 'REDIS_FETCH_TRIGGER'
+  REDIS_FETCH_TRIGGER = 'REDIS_FETCH_TRIGGER',
+  UPDATE_CANTEEN_STATUS = 'UPDATE_CANTEEN_STATUS'
   
 }
 export interface RedisMessage {
@@ -37,4 +38,5 @@ export interface RedisMessage {
   canteenId?: string;
   menuItems?: any[];
   orders?: any[];
+  isOpen?: boolean;
 }

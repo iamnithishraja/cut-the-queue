@@ -87,6 +87,9 @@ export class StateManager {
           case 'ORDERS_UPDATE_USER':
             this.broadcastOrdersToUser(parsedMessage.userId as string);
             break;
+          case 'UPDATE_CANTEEN_STATUS':
+            this.broadcastCanteenStatus(parsedMessage.canteenId as string, parsedMessage.isOpen as boolean);
+            break;
           case 'REDIS_FETCH_TRIGGER':
             this.broadcastOrderUpdatesToPartners(parsedMessage.canteenId as string, parsedMessage);
         }
@@ -97,6 +100,21 @@ export class StateManager {
     }
   }
 
+  public broadcastCanteenStatus(canteenId: string, isOpen: boolean) {
+     
+    const state = this.canteenStates.get(canteenId);
+    if (!state) return;
+
+    const message = JSON.stringify({ type: 'UPDATE_CANTEEN_STATUS', data: { isOpen } });
+
+    state.activeMenu.forEach(userId => {
+      const userSocket = this.users.get(userId);
+      const partnerSocket = this.partners.get(userId);
+      if (userSocket) userSocket.send(message);
+      if (partnerSocket) partnerSocket.send(message);
+    });
+
+  }
   public broadcastMenuItems(canteenId: string, menuItems: any[]) {
     const state = this.canteenStates.get(canteenId);
     if (!state) return;
