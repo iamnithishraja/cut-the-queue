@@ -111,12 +111,12 @@ const updateCanteenOrders = async (canteenId: string): Promise<boolean> => {
         return false;
     }
 };
-const broadcastCanteenStatus = async (canteenId: string, status: boolean): Promise<boolean> => {
+const broadcastCanteenStatus = async (canteenId: string, isOpen: boolean): Promise<boolean> => {
     try {
         const success = await safeRedisPublish({
             type: 'UPDATE_CANTEEN_STATUS',
             canteenId,
-            status,
+            isOpen,
         });
         if(success) {
             console.log({ message: "Notified users and partners sucessfully" });
