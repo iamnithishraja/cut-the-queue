@@ -111,10 +111,27 @@ const updateCanteenOrders = async (canteenId: string): Promise<boolean> => {
         return false;
     }
 };
+const broadcastCanteenStatus = async (canteenId: string, status: boolean): Promise<boolean> => {
+    try {
+        const success = await safeRedisPublish({
+            type: 'UPDATE_CANTEEN_STATUS',
+            canteenId,
+            status,
+        });
+        if(success) {
+            console.log({ message: "Notified users and partners sucessfully" });
+        }
+        return success;
+    } catch (error) {
+        console.error({ message: SERVER_ERROR, error });   
+        return false; 
+    }
+}
 
 // Re-export with more specific return types
-export {
-    broadcastMenuItems,
-    updateUserOrders,
-    updateCanteenOrders
+export { 
+    broadcastMenuItems, 
+    updateUserOrders, 
+    updateCanteenOrders,
+    broadcastCanteenStatus
 };
