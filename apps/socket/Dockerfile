@@ -1,72 +1,26 @@
-# Stage 1: Builder
-FROM node:20-slim AS builder
-
+FROM oven/bun:latest
 WORKDIR /app
 
-# Install OpenSSL
 RUN apt-get update -y && apt-get install -y openssl
 
-# Copy package files for all workspaces
+# Copy package files first for better caching
 COPY package*.json ./
-COPY turbo.json ./
-COPY packages/db/package*.json ./packages/db/
+COPY bun.lock ./
 COPY packages/*/package*.json ./packages/
 COPY apps/socket/package*.json ./apps/socket/
 
+COPY packages/ ./packages/
+
 # Install dependencies
-RUN npm install
+RUN bun install
 
-# Copy all packages and app source code
-COPY packages ./packages
+# Copy rest of the source code
+COPY apps/socket/ ./apps/socket/
 
-#Create builds for all the packages
-WORKDIR /app/packages/constants
-RUN npm run build
+# Generate Prisma Client
+RUN cd packages/db && bunx prisma generate
 
-WORKDIR /app/packages/db
-RUN npm install prisma --save-dev
-RUN npx prisma generate
-RUN npm run build
-
-WORKDIR /app/packages/utils
-RUN npm run build
-
-WORKDIR /app
-RUN npm install
-
-#Copy app source code
-COPY apps/socket ./apps/socket
-
-# Build the project
-RUN npx turbo build --filter=socket...
-
-# Stage 2: Runtime
-FROM node:20-slim
-
-WORKDIR /app
-
-# Install OpenSSL
-RUN apt-get update -y && apt-get install -y openssl
-
-# Copy package files
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/apps/socket/package*.json ./
-
-# Install production dependencies
-RUN npm install
-
-# Copy built assets and packages
-COPY --from=builder /app/apps/socket/dist ./dist
-COPY --from=builder /app/packages ./packages
-
-# Generate Prisma Client in production
-WORKDIR /app/packages/db
-RUN npm install prisma --save-dev
-RUN npx prisma generate
-
-WORKDIR /app
-
+WORKDIR /app/apps/socket
 ENV NODE_ENV=production
 EXPOSE 80
-
-CMD ["node", "dist/index.js"]
+CMD ["bun", "src/index.ts"]

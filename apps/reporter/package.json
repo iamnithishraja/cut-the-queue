@@ -1,22 +1,23 @@
 {
-  "name": "reporter",
-  "version": "1.0.0",
-  "main": "./src/index.ts",
-  "scripts": {
-    "dev": "npx nodemon",
-    "start": "node ./dist/index.js",
-    "build": "npx tsc -b"
-  },
-  "devDependencies": {
-    "@repo/db": "*",
-    "@repo/typescript-config": "*",
-    "@types/node": "^20.11.0",
-    "nodemon": "^3.0.2",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "decimal.js": "^10.4.3",
-    "node-cron": "^3.0.3",
-    "xlsx": "^0.18.5"
-  }
+	"name": "reporter",
+	"version": "1.0.0",
+	"main": "./src/index.ts",
+	"type": "module",
+	"scripts": {
+		"dev": "bun --watch ./src/index.ts",
+		"start": "bun ./dist/index.js",
+		"build": "bun build ./src/index.ts --outdir=dist --external=@repo/*",
+		"typecheck": "bun typecheck"
+	},
+	"devDependencies": {
+		"@repo/db": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@types/node": "^20.11.0",
+		"esbuild": "^0.19.5"
+	},
+	"dependencies": {
+		"decimal.js": "^10.4.3",
+		"node-cron": "^3.0.3",
+		"xlsx": "^0.18.5"
+	}
 }

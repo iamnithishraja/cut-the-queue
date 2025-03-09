@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 import path from "path";
 import { BaseMessageProcessor } from "./KafkaConsumerBase";
 import { KafkaMessage, NotificationMessage } from "./types";

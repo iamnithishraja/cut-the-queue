@@ -105,6 +105,9 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: sms-consumer
       CONSUMER_TYPE: sms
+      BUN_ENV: production # Added for Bun
+    env_file:
+      - .env
     restart: always
 
   email-consumer:
@@ -120,6 +123,7 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: email-consumer
       CONSUMER_TYPE: email
+      BUN_ENV: production # Added for Bun
     env_file:
       - .env
     restart: always
@@ -138,6 +142,7 @@ services:
       KAFKA_BROKER: kafka:9092
       KAFKA_CLIENT_ID: notification-consumer
       CONSUMER_TYPE: notification
+      BUN_ENV: production # Added for Bun
     env_file:
       - .env
     restart: always
@@ -190,15 +195,21 @@ services:
       platforms:
         - linux/amd64
     environment:
-      PORT: 3000
+      PORT: 3002
       KAFKA_CLIENT_ID: http-server
       KAFKA_BROKER: kafka:9092
       REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
       REDIS_CHANNEL: "sockets"
+      CLOUDFLARE_R2_ACCESS_KEY_ID: 8631e4cf2863839fe675692854c5a8ae
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: b3ffa8b85326886b5297108c78b25c7aa9ae8b97ba609781832daf098d70caec
+      CLOUDFLARE_R2_BUCKET_NAME: cut-the-q
+      CLOUDFLARE_R2_ENDPOINT: https://d6dd68003d94fc1d5591a75b45ed25d8.r2.cloudflarestorage.com
+      CLOUDFLARE_R2_PUBLIC_URL: https://pub-4c4ca315ecae4f0bb055b6a7886c8eef.r2.dev
+      BUN_ENV: production # Added for Bun
     env_file:
       - .env
     ports:
-      - 3000:3000
+      - 3002:3002
     restart: always
 
   # Service: socket-server
@@ -216,6 +227,7 @@ services:
       REDIS_HOST: redis-pubsub
       REDIS_PORT: 6379
       REDIS_CHANNEL: "sockets"
+      BUN_ENV: production # Added for Bun
     env_file:
       - .env
     ports:

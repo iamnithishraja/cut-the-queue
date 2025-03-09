@@ -1,29 +1,27 @@
 {
-  "name": "@repo/utils",
-  "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc -b"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "jsonwebtoken": "^9.0.2"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/dotenv": "^6.1.1",
-    "@types/jsonwebtoken": "^9.0.7"
-  }
+	"name": "@repo/utils",
+	"version": "1.0.0",
+	"main": "./src/index.ts",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"typecheck": "bun typecheck",
+		"dev": "bun --watch src/index.ts",
+		"build": "bun build ./src/index.ts --outdir ./dist"
+	},
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"dependencies": {
+		"dotenv": "^16.4.7",
+		"jsonwebtoken": "^9.0.2"
+	},
+	"devDependencies": {
+		"@repo/typescript-config": "*",
+		"typescript": "^5.0.0"
+	}
 }
