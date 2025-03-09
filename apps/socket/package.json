@@ -1,28 +1,31 @@
 {
-  "name": "socket",
-  "version": "1.0.0",
-  "main": "./src/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx nodemon ./src/index.ts",
-    "start": "node ./dist/index.js",
-    "build": "npx tsc -b"
-  },
-  "devDependencies": {
-    "@repo/constants": "*",
-    "@repo/db": "*",
-    "@repo/typescript-config": "*",
-    "@repo/utils": "*",
-    "@types/dotenv": "^6.1.1",
-    "@types/ioredis": "^4.28.10",
-    "@types/jsonwebtoken": "^9.0.7",
-    "@types/ws": "^8.5.12"
-  },
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "ioredis": "^5.4.2",
-    "jsonwebtoken": "^9.0.2",
-    "ws": "^8.18.0",
-    "zod": "^3.23.8"
-  }
+	"name": "socket",
+	"version": "1.0.0",
+	"main": "./src/index.ts",
+	"type": "module",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "bun --watch ./src/index.ts",
+		"start": "bun ./src/index.ts",
+		"build": "bun build ./src/index.ts --outdir=dist --target=bun",
+		"typecheck": "bun typecheck",
+		"lint": "echo \"No linting configured\""
+	},
+	"devDependencies": {
+		"@repo/constants": "workspace:*",
+		"@repo/db": "workspace:*",
+		"@repo/typescript-config": "workspace:*",
+		"@repo/utils": "workspace:*",
+		"@types/dotenv": "^6.1.1",
+		"@types/ioredis": "^4.28.10",
+		"@types/jsonwebtoken": "^9.0.7",
+		"@types/ws": "^8.5.12"
+	},
+	"dependencies": {
+		"dotenv": "^16.4.7",
+		"ioredis": "^5.4.2",
+		"jsonwebtoken": "^9.0.2",
+		"ws": "^8.18.0",
+		"zod": "^3.23.8"
+	}
 }
