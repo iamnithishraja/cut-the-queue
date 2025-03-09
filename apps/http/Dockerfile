@@ -1,4 +1,4 @@
-FROM oven/bun:latest
+FROM oven/bun:1.2.2
 WORKDIR /app
 
 RUN apt-get update -y && apt-get install -y openssl
@@ -17,8 +17,10 @@ RUN bun install
 # Copy rest of the source code
 COPY apps/http/ ./apps/http/
 
-# Generate Prisma Client
-RUN cd packages/db && bunx prisma generate
+# Generate Prisma Client with explicit cleanup to avoid caching issues
+RUN cd packages/db && \
+	rm -rf node_modules/.prisma && \
+	bunx prisma generate
 
 WORKDIR /app/apps/http
 ENV NODE_ENV=production
