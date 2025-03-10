@@ -662,6 +662,28 @@ const deleteAccount = async (
 	}
 };
 
+const getTransaction = async ( req: CustomRequest, res: Response): Promise<any> => {
+   try {
+     const { id, page } = req.params;
+	 const transactions = await prisma.order.findMany({
+		 where: {
+			 userId: id,
+		 },
+		 take: 5,
+		 skip: 5 * (page - 1),
+		 orderBy: {
+			 createdAt: "desc",
+		 },
+	 });
+	 res.status(200).json(transactions);
+
+   } catch (error) {
+	 console.error(error);
+	 res.status(500).json({ message: SERVER_ERROR });
+   }
+
+}
+
 export {
 	changePassword,
 	deleteAccount,
@@ -678,4 +700,5 @@ export {
 	updateFcmToken,
 	updatePhoneNumber,
 	verifyOtp,
+	getTransaction,
 };
