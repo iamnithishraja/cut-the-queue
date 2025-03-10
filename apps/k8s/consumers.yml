@@ -74,40 +74,40 @@ spec:
         - secretRef:
             name: app-secrets
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: email-consumer
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: email-consumer
-  template:
-    metadata:
-      labels:
-        app: email-consumer
-    spec:
-      enableServiceLinks: false
-      containers:
-      - name: email-consumer
-        image: iamnithish/cuttheq_consumer:latest
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "300m"
-        env:
-        - name: KAFKA_BROKER
-          value: "kafka:9092"
-        - name: KAFKA_CLIENT_ID
-          value: "email-consumer"
-        - name: CONSUMER_TYPE
-          value: "email"
-        - name: GROUP_ID 
-          value: "email-group"  
-        envFrom:
-        - secretRef:
-            name: app-secrets
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: email-consumer
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: email-consumer
+#   template:
+#     metadata:
+#       labels:
+#         app: email-consumer
+#     spec:
+#       enableServiceLinks: false
+#       containers:
+#       - name: email-consumer
+#         image: iamnithish/cuttheq_consumer:latest
+#         resources:
+#           requests:
+#             memory: "128Mi"
+#             cpu: "100m"
+#           limits:
+#             memory: "256Mi"
+#             cpu: "300m"
+#         env:
+#         - name: KAFKA_BROKER
+#           value: "kafka:9092"
+#         - name: KAFKA_CLIENT_ID
+#           value: "email-consumer"
+#         - name: CONSUMER_TYPE
+#           value: "email"
+#         - name: GROUP_ID 
+#           value: "email-group"  
+#         envFrom:
+#         - secretRef:
+#             name: app-secrets

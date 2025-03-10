@@ -12,7 +12,7 @@ const safeRedisPublish = async (message: any): Promise<boolean> => {
     try {
         const publisher = RedisManager.getInstance().getPublisher();
         const channel = process.env.REDIS_CHANNEL || "broadcaster";
-        
+
         // Enhanced connection check
         const isConnected = publisher.status === "ready";
         if (!isConnected) {
@@ -85,6 +85,13 @@ const updateCanteenOrders = async (canteenId: string): Promise<boolean> => {
                     include: {
                         menuItem: true
                     }
+                },
+                customer: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        phoneNumber: true,
+                    }
                 }
             }
         });
@@ -106,8 +113,8 @@ const updateCanteenOrders = async (canteenId: string): Promise<boolean> => {
 };
 
 // Re-export with more specific return types
-export { 
-    broadcastMenuItems, 
-    updateUserOrders, 
-    updateCanteenOrders 
+export {
+    broadcastMenuItems,
+    updateUserOrders,
+    updateCanteenOrders
 };

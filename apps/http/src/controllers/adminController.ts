@@ -27,6 +27,13 @@ const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
                     include: {
                         menuItem: true
                     }
+                },
+                customer: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        phoneNumber: true,
+                    }
                 }
             }
         });
