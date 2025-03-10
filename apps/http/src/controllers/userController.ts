@@ -32,6 +32,7 @@ import {
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 import { generateRandomStringWithRandomLength, hashString } from "../utils";
+import { parse } from "path";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
@@ -665,6 +666,10 @@ const deleteAccount = async (
 const getTransaction = async ( req: CustomRequest, res: Response): Promise<any> => {
    try {
      const { id, page } = req.params;
+	 const pageNum = parseInt(page);
+	 if (isNaN(pageNum) || pageNum < 1) {
+		 return res.status(400).json({ message: "Invalid page number" });
+	 }
 	 const transactions = await prisma.order.findMany({
 		 where: {
 			 userId: id,
