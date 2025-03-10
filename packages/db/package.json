@@ -2,31 +2,29 @@
 	"name": "@repo/db",
 	"version": "1.0.0",
 	"description": "",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
 	"scripts": {
-		"prisma:migrate": "npx prisma migrate dev",
-		"prisma:generate": "npx prisma generate && echo 'Setup ready .....'",
-		"build": "npx tsc -b",
-		"studio": "npx prisma studio --port 5001",
-		"seed": "tsx ./src/seed.ts"
+		"prisma:migrate": "bunx prisma migrate dev",
+		"prisma:generate": "bunx prisma generate && echo 'Setup ready .....'",
+		"typecheck": "bun typecheck",
+		"dev": "bun --watch src/index.ts",
+		"studio": "bunx prisma studio --port 5001",
+		"seed": "bun ./src/seed.ts",
+		"lint": "echo \"No linting configured\"",
+		"build": "bun build ./src/index.ts --outdir ./dist"
 	},
 	"devDependencies": {
+		"@repo/typescript-config": "*",
 		"prisma": "^6.3.1",
 		"typescript": "^5.0.0"
 	},
 	"exports": {
-		"./client": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./objectClient": {
-			"types": "./dist/objectStore.d.ts",
-			"default": "./dist/objectStore.js"
-		}
+		".": "./src/index.ts",
+		"./client": "./src/index.ts",
+		"./objectClient": "./src/objectStore.ts"
 	},
 	"dependencies": {
-		"@prisma/client": "^6.3.1",
-		"tsx": "^4.19.1"
+		"@prisma/client": "^6.3.1"
 	}
 }
