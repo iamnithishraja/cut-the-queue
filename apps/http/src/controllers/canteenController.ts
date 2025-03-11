@@ -9,7 +9,7 @@ import {
 import { calculateAmountSchema } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 import { getUploadUrl } from "../utils/r2";
-import { broadcastMenuItems } from "../utils/redisHelpers";
+import { broadcastMenuItems, broadcastCanteenStatus } from "../utils/redisHelpers";
 
 async function getAllDishes(req: Request, res: Response) {
 	const canteenId = req.params.canteenId;
@@ -99,6 +99,7 @@ const toggleCanteenAvailability = async (req: Request, res: Response) => {
 		});
 
 		await broadcastMenuItems(canteenId as string);
+		await broadcastCanteenStatus(canteenId as string, newStatus);
 
 		res.status(200).json({
 			success: true,
