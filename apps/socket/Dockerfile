@@ -17,8 +17,10 @@ RUN bun install
 # Copy rest of the source code
 COPY apps/socket/ ./apps/socket/
 
-# Generate Prisma Client
-RUN cd packages/db && bunx prisma generate
+# Generate Prisma Client with explicit cleanup to avoid caching issues
+RUN cd packages/db && \
+    rm -rf node_modules/.prisma && \
+    bunx prisma generate
 
 WORKDIR /app/apps/socket
 ENV NODE_ENV=production

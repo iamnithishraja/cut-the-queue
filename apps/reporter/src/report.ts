@@ -211,7 +211,12 @@ async function generateReport({ startDate, endDate }: DateRange) {
         final: new Decimal(canteenReports.reduce((sum, { summary }) => sum + summary.finalTotal, 0)).toNumber()
     };
 
+    const dateStr = new Date(startDate.getTime());
+    dateStr.setDate(dateStr.getDate() + 1);
+
     const consolidatedSummary: (string | number)[][] = [
+        [`Report for ${dateStr.toISOString().split('T')[0]}`], // Single item array for full row
+        [],  
         ['Daily Orders Summary Report'],
         ['Reporting Period:', `${startDate.toLocaleString('en-IN')} to ${endDate.toLocaleString('en-IN')}`],
         [],
@@ -241,8 +246,6 @@ async function generateReport({ startDate, endDate }: DateRange) {
     ];
     XLSX.utils.book_append_sheet(wb, summaryWS, 'Summary');
 
-    const dateStr = new Date(startDate.getTime());
-    dateStr.setDate(dateStr.getDate() + 1);
     const filename = `orders_report_${dateStr.toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, filename);
 
