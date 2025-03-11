@@ -101,20 +101,21 @@ export class StateManager {
   }
 
   public broadcastCanteenStatus(canteenId: string, isOpen: boolean) {
-     
-    const state = this.canteenStates.get(canteenId);
-    if (!state) return;
+    const partnerSockets= this.partners.values();
+    const userSockets = this.users.values();
+    const message = JSON.stringify({ type: 'UPDATE_CANTEEN_STATUS', data: { canteenId, isOpen } });
+    for (const socket of partnerSockets) {
+      if (socket.readyState === WebSocket.OPEN){
+      socket.send(message);
+      }
+    }
+    for (const socket of userSockets) {
+      if (socket.readyState === WebSocket.OPEN){
+        socket.send(message);
+        }
+    }
 
-    const message = JSON.stringify({ type: 'UPDATE_CANTEEN_STATUS', data: { isOpen } });
-
-    state.activeMenu.forEach(userId => {
-      const userSocket = this.users.get(userId);
-      const partnerSocket = this.partners.get(userId);
-      if (userSocket) userSocket.send(message);
-      if (partnerSocket) partnerSocket.send(message);
-    });
-
-  }
+}
   public broadcastMenuItems(canteenId: string, menuItems: any[]) {
     const state = this.canteenStates.get(canteenId);
     if (!state) return;
