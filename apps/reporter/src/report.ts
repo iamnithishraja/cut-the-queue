@@ -214,14 +214,10 @@ async function generateReport({ startDate, endDate }: DateRange) {
     const dateStr = new Date(startDate.getTime());
     dateStr.setDate(dateStr.getDate() + 1);
 
-    const consolidatedSummary: (string | number)[][] = [
-        [`Report for ${dateStr.toISOString().split('T')[0]}`], // Single item array for full row
-        [],  
-        ['Daily Orders Summary Report'],
-        ['Reporting Period:', `${startDate.toLocaleString('en-IN')} to ${endDate.toLocaleString('en-IN')}`],
+    const consolidatedSummary = [
+        ['Report Date:', new Date(startDate.getTime()).toLocaleDateString('en-IN')],
         [],
-        ['Canteen-wise Summary'],
-        ['Canteen Name', 'Orders', 'Revenue (₹)', 'Razorpay Fee (₹)', 'GST (₹)', 'Final Amount (₹)'],
+        ['Canteen', 'Orders', 'Revenue', 'Razorpay Fee', 'GST on Fee', 'Final Settlement'],
         ...canteenReports.map(({ summary }) => [
             summary.canteenName,
             summary.totalOrders,

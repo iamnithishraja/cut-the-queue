@@ -174,6 +174,8 @@ async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {
         // Add summary at the bottom
         const summaryStartRow = menuAnalysis.length + 3;
         const summaryRows = [
+            ['Report Date:', new Date(startDate.getTime()).toLocaleDateString('en-IN')],
+            [],
             ['Summary Statistics'],
             ['Total Items Sold:', summary.totalQuantity],
             ['Total Revenue:', summary.totalRevenue],
