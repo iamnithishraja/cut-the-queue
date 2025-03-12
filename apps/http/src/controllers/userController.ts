@@ -103,6 +103,7 @@ const login = async (req: Request, res: Response): Promise<any> => {
 				userProfile: true,
 				email: true,
 				phoneNumber: true,
+				canteenId: true,
 				isVerified: true,
 				role: true,
 				password: true,
@@ -277,7 +278,7 @@ const getProfile = async (req: CustomRequest, res: Response): Promise<any> => {
 				email: true,
 				phoneNumber: true,
 				isVerified: true,
-				counter	: true,
+				counter: true,
 				role: true,
 			},
 		});

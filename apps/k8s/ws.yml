@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: socket-server
-        image: iamnithish/cuttheq_ws:latest
+        image: iamnithish/cuttheq_ws:v1
         resources:
           requests:
             memory: "128Mi"

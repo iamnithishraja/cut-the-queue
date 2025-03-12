@@ -277,4 +277,22 @@ async function updateCounter(req: CustomRequest, res: Response) {
     }
 }
 
-export { updateItem, chageToPickup, getAllOrdersByCanteenId, finishOrder, updateCounter }
+async function getOrderDetailsByDay(req: CustomRequest, res: Response) {
+    try {
+        const date = req.params.date;
+        const type = req.params.type;
+        if (!date || !type) {
+            res.status(400).json({ message: INVALID_INPUT });
+            return;
+        }
+        const canteenId = req.user!.canteenId;
+        if (!canteenId) {
+            res.status(405).json({ message: USER_NOT_AUTHORISED });
+            return;
+        }
+    } catch (error) {
+        res.status(500).json({ message: SERVER_ERROR });
+    }
+}
+
+export { updateItem, chageToPickup, getAllOrdersByCanteenId, finishOrder, updateCounter, getOrderDetailsByDay }
