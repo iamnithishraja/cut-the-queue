@@ -4,7 +4,7 @@ import Decimal from 'decimal.js';
 import { CanteenReportMenu, DateRange, MenuItemAnalysis } from "./types";
 
 const TEST_EMAILS = [
-    'developer@cuttheq.in'
+    // 'developer@cuttheq.in'
 ];
 
 async function generateMenuAnalysisReport({ startDate, endDate }: DateRange) {

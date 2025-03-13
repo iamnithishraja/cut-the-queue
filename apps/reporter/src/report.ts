@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import Decimal from 'decimal.js';
 
 const TEST_EMAILS = [
-    'developer@cuttheq.in'
+    // 'developer@cuttheq.in'
 ];
 
 interface DateRange {
