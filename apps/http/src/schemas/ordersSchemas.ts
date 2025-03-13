@@ -115,3 +115,9 @@ export const PaymentVerificationSchema = z.object({
 	razorpay_order_id: z.string(),
 	razorpay_signature: z.string(),
 });
+
+export const OrderAnalysisSchema = z.object({
+	canteenId: z.string(),
+	startDate: z.date(),
+	endDate: z.date(),
+});
