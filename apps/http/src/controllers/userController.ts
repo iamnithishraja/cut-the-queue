@@ -674,7 +674,7 @@ const getAllOrders = async (
 		return res.status(400).json({ message: "Invalid page number" });
 	}
     const pageNum = parseInt(page , 10);
-    const id = req.user?.canteenId;
+    const id = req.user?.id;
     if (!id) {
       return res.status(400).json({ message: "Invalid user id" });
     }
