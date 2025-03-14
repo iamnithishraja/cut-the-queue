@@ -15,7 +15,7 @@ import {
   verifyOtp,
   updatePhoneNumber,
   deleteAccount,
-  getTransaction,
+  getAllOrders,
 } from "../controllers/userController";
 import { canRequestOtp, isAuthenticatedUser } from "../middlewares/auth";
 
@@ -30,7 +30,7 @@ userRoute.get("/profile", isAuthenticatedUser, getProfile);
 userRoute.post("/updateFcmToken", isAuthenticatedUser, updateFcmToken);
 userRoute.put("/updatePhoneNumber",canRequestOtp, updatePhoneNumber);
 userRoute.get("/logout", isAuthenticatedUser, logout);
-userRoute.get('/getTransaction/:id/:page',isAuthenticatedUser,getTransaction);
+userRoute.get('/getTransaction/:page',isAuthenticatedUser,getAllOrders);
 
 // Password reset flow
 userRoute.put("/password/forgetPassword", forgetPassword);
