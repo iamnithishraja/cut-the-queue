@@ -464,6 +464,7 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
         }
     
         userOrder.summary.totalAmount += item.quantity * item.menuItem.price;
+        totalAmount += item.quantity * item.menuItem.price;
       });
     });
     
