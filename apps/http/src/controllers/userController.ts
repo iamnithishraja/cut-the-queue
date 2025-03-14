@@ -695,7 +695,12 @@ const getAllOrders = async (
     });
 	const isMore= transactions.length>5;
 	const paginatedOrders=transactions.slice(0,5);
-	res.status(200).json({transactions:paginatedOrders,hasNext:isMore});
+	const hasPrev=pageNum>1;
+	res.status(200).json({
+		transactions:paginatedOrders,
+		hasNext:isMore,
+		hasPrev:hasPrev
+	});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: SERVER_ERROR });
