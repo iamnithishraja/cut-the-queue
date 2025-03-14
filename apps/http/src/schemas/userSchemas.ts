@@ -59,5 +59,7 @@ export const changePasswordSchema = z.object({
   message: "Passwords don't match",
   path: ["confirmPassword"]
 });
-
+export const getAllOrdersSchema = z.object({
+  page:z.string()
+});
 export type SMSMessage = Zod.infer<typeof smsMessage>;
