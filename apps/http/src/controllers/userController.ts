@@ -34,6 +34,7 @@ import {
 import { CustomRequest } from "../types/userTypes";
 import { generateRandomStringWithRandomLength, hashString } from "../utils";
 import { parse } from "path";
+import orderRouter from "../routes/orderRoutes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
@@ -691,6 +692,22 @@ const getAllOrders = async (
       orderBy: {
         createdAt: "desc",
       },
+	  include:{
+		OrderItem:{
+			
+			include:{
+				menuItem:{
+					select:{
+						name:true,
+						id:true,
+						price:true,
+						itemImage:true
+					}
+				}
+			}
+		}
+
+	  }
 	 
     });
 	const isMore= transactions.length>5;
