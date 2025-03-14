@@ -14,6 +14,7 @@ import {
   broadcastMenuItems,
   broadcastCanteenStatus,
 } from "../utils/redisHelpers";
+import { OrderList } from "../types/types";
 
 async function getAllDishes(req: Request, res: Response) {
   const canteenId = req.params.canteenId;
@@ -300,17 +301,17 @@ const getCanteenAvilabality = async (req: Request, res: Response) => {
   }
 };
 const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
-  const { canteenId, startDate, endDate } = OrderAnalysisSchema.parse(
+  const { startDate, type } = OrderAnalysisSchema.parse(
     req.query
   );
   const TEST_EMAILS = ["developer@cuttheq.in"];
+  const canteenId= req.user?.canteenId;
 
   try {
     const orders = await prisma.order.findMany({
       where: {
         createdAt: {
-          gte: startDate,
-          lte: endDate,
+          gte: startDate
         },
         orderStatus: "DONE",
         isPaid: true,
@@ -334,13 +335,45 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
                 id: true,
                 name: true,
                 price: true,
+                itemImage: true,
               },
             },
           },
         },
       },
     });
-	
+    const orderItems: OrderList = {
+      menuItems: [],  
+      summary: {
+        totalAmount: 0,
+        razorPayCut: 0,
+        taxOnRazorPayCut: 0,
+        totalAmountToBePaid: 0
+      }
+    };
+    
+    orders.forEach((order) => {
+      order.OrderItem.forEach((item) => {
+ 
+        orderItems.menuItems.push({
+          itemName: item.menuItem.name,
+          quantity: item.quantity,
+          image: item.menuItem.itemImage,
+          price: item.menuItem.price,
+          total: item.quantity * item.menuItem.price,
+        });
+        orderItems.summary.totalAmount += item.quantity * item.menuItem.price;
+        orderItems.summary.razorPayCut += (item.quantity * item.menuItem.price) * 0.02;
+        orderItems.summary.taxOnRazorPayCut += (item.quantity * item.menuItem.price) * 0.02 * 0.18;
+        
+      });
+
+
+    })
+    orderItems.summary.totalAmountToBePaid = orderItems.summary.totalAmount + orderItems.summary.razorPayCut + orderItems.summary.taxOnRazorPayCut;
+    res.status(200).json({ orderItems });
+    
+
 
   } catch (error) {
     if (error instanceof z.ZodError) {

@@ -26,5 +26,21 @@ export interface OrderResult {
       fcmToken: string | null;
   };
 }
+type MenuItemArray = {
+  itemName:string;
+  quantity:number;
+  image:string | null;
+  price:number;
+  total:number;
+}
+export type OrderList={
+  menuItems:MenuItemArray[]
+  summary:{
+    totalAmount:number;
+    razorPayCut:number;
+    taxOnRazorPayCut:number;
+    totalAmountToBePaid:number;
+  }
+}
 
 export type NotificationMessage = z.infer<typeof NotificationMessage>;

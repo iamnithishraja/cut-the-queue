@@ -10,7 +10,7 @@ export const OrderStatusEnum = z.enum(["PROCESSING", "DONE"]);
 export const AvailabilityStatusEnum = z.enum(["AVAILABLE", "UNAVAILABLE"]);
 export const MenuItemTypeEnum = z.enum(["Instant", "TimeConsuming"]);
 export const UserRoleEnum = z.enum(["USER", "PARTNER", "ADMIN"]);
-
+const OrderAnalysisTypeEnum = z.enum(["MENUITEM", "USER"]);
 // User Schema
 export const UserSchema = z.object({
 	id: z.string().cuid(),
@@ -117,7 +117,6 @@ export const PaymentVerificationSchema = z.object({
 });
 
 export const OrderAnalysisSchema = z.object({
-	canteenId: z.string(),
 	startDate: z.date(),
-	endDate: z.date(),
+	type: OrderAnalysisTypeEnum
 });
