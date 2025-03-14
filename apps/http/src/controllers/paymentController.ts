@@ -179,19 +179,6 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         // Handle non-critical operations separately and don't let them affect the response
         setTimeout(async () => {
             try {
-                // Broadcast menu updates
-                await broadcastMenuItems(updatedOrder.canteenId);
-                await updateCanteenOrders(updatedOrder.canteenId);
-                
-                // Send notification
-                if (updatedOrder.customer?.fcmToken) {
-                    const kafkaPublisher = KafkaPublisher.getInstance();
-                    await kafkaPublisher.publishToKafka("notification", {
-                        firebaseToken: updatedOrder.customer.fcmToken,
-                        title: `Your Payment is Successful ✅`,
-                        body: `Thank You for choosing CutTheQ`
-                    });
-                }
                 
                 // Handle inventory updates in a separate, non-blocking process
                 await prisma.$transaction(async (prismaClient) => {
@@ -226,6 +213,20 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                         }
                     }
                 });
+
+                // Send notification
+                if (updatedOrder.customer?.fcmToken) {
+                    const kafkaPublisher = KafkaPublisher.getInstance();
+                    await kafkaPublisher.publishToKafka("notification", {
+                        firebaseToken: updatedOrder.customer.fcmToken,
+                        title: `Your Payment is Successful ✅`,
+                        body: `Thank You for choosing CutTheQ`
+                    });
+                }
+                // Broadcast menu updates
+                await broadcastMenuItems(updatedOrder.canteenId);
+                await updateCanteenOrders(updatedOrder.canteenId);
+                
             } catch (error) {
                 // Just log the error, don't affect the main process
                 console.error('Error in post-payment processing:', error);
