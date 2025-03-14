@@ -46,10 +46,10 @@ export type OrderDetails = {
   summary: OrderSummary;
 };
 
-type UserOrder = {
-  name: string;
-  email: string;
-  phoneNumber: string;
+export type UserOrder = {
+  name: string| null;
+  email: string| null;
+  phoneNumber: string| null;
   items: MenuItem[];
   summary: OrderSummary;
 };

@@ -14,7 +14,7 @@ import {
   broadcastMenuItems,
   broadcastCanteenStatus,
 } from "../utils/redisHelpers";
-import { OrderDetails } from "../types/types";
+import { OrderDetails, UserOrder } from "../types/types";
 
 async function getAllDishes(req: Request, res: Response) {
   const canteenId = req.params.canteenId;
@@ -382,43 +382,109 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
     res.status(200).json({ orderItems });
   }
   else if(type==="USER"){
-      const orders= await prisma.order.findMany({
-        where: {
-          canteenId: canteenId!,
-          createdAt: {
-            gte: startDate
-          },
-          orderStatus: "DONE",
-          isPaid: true,
-          customer: {
-            email: {
-              notIn: TEST_EMAILS,
-            },
+    const orders = await prisma.order.findMany({
+      where: {
+        canteenId: canteenId!,
+        createdAt: {
+          gte: startDate,
+        },
+        orderStatus: "DONE",
+        isPaid: true,
+        customer: {
+          email: {
+            notIn: TEST_EMAILS,
           },
         },
-        include: {
-          customer: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-              phoneNumber: true,
-            },
+      },
+      include: {
+        customer: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            phoneNumber: true,
           },
-          OrderItem: {
-            include: {
-              menuItem: {
-                select: {
-                  id: true,
-                  name: true,
-                  price: true,
-                  itemImage: true,
-                },
+        },
+        OrderItem: {
+          include: {
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                itemImage: true,
               },
             },
           },
         },
+      },
+    });
+    
+    const userOrdersMap = new Map<string, UserOrder>();
+    let totalAmount = 0;
+   
+    orders.forEach((order) => {
+      const customer = order.customer;
+    
+      const userKey = customer ? customer.email : `guest_${order.id}`; 
+    
+      if (!userOrdersMap.has(userKey)) {
+        userOrdersMap.set(userKey, {
+          name: customer ? `${customer.firstName} ${customer.lastName}` : null,
+          email: customer ? customer.email : null,
+          phoneNumber: customer ? customer.phoneNumber : null,
+          items: [],
+          summary: {
+            totalAmount: 0,
+            razorPayCut: 0,
+            taxOnRazorPayCut: 0,
+            totalAmountToBePaid: 0,
+          },
+        });
+      }
+    
+      const userOrder = userOrdersMap.get(userKey)!;
+    
+      order.OrderItem.forEach((item) => {
+        const existingItem = userOrder.items.find(
+          (orderItem) => orderItem.name === item.menuItem.name
+        );
+    
+        if (existingItem) {
+          existingItem.quantity += item.quantity;
+          existingItem.total += item.quantity * item.menuItem.price;
+        } else {
+          userOrder.items.push({
+            name: item.menuItem.name,
+            quantity: item.quantity,
+            image: item.menuItem.itemImage,
+            price: item.menuItem.price,
+            total: item.quantity * item.menuItem.price,
+          });
+        }
+    
+        userOrder.summary.totalAmount += item.quantity * item.menuItem.price;
       });
+    });
+    
+    
+    const razorPayCut = totalAmount * 0.02;
+    const taxOnRazorPayCut = razorPayCut * 0.18;
+    const totalAmountToBePaid = totalAmount - razorPayCut - taxOnRazorPayCut;
+    
+    
+    const response = {
+      users: Array.from(userOrdersMap.values()),
+      summary: {
+        totalAmount: totalAmount,
+        razorPayCut:razorPayCut,
+        taxOnRazorPayCut: taxOnRazorPayCut,
+        totalAmountToBePaid: totalAmountToBePaid,
+      },
+    };
+     res.status(200).json({ response });
+    
+    
   }
     
   } catch (error) {
