@@ -179,7 +179,6 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
         // Handle non-critical operations separately and don't let them affect the response
         setTimeout(async () => {
             try {
-                
                 // Handle inventory updates in a separate, non-blocking process
                 await prisma.$transaction(async (prismaClient) => {
                     const orderWithItems = await prismaClient.order.findUnique({
@@ -192,14 +191,14 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                             }
                         }
                     });
-                    
+
                     if (orderWithItems) {
                         for (const orderItem of orderWithItems.OrderItem) {
                             const menuItem = orderItem.menuItem;
-                            
+
                             // Skip if item has unlimited stock
                             if (menuItem.avilableLimit === null) continue;
-                            
+
                             // Update inventory status separately
                             await prismaClient.menuItem.update({
                                 where: { id: menuItem.id },
@@ -226,10 +225,23 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
                 // Broadcast menu updates
                 await broadcastMenuItems(updatedOrder.canteenId);
                 await updateCanteenOrders(updatedOrder.canteenId);
-                
+
             } catch (error) {
                 // Just log the error, don't affect the main process
                 console.error('Error in post-payment processing:', error);
+                
+                // Send notification
+                if (updatedOrder.customer?.fcmToken) {
+                    const kafkaPublisher = KafkaPublisher.getInstance();
+                    await kafkaPublisher.publishToKafka("notification", {
+                        firebaseToken: updatedOrder.customer.fcmToken,
+                        title: `Your Payment is Successful ✅`,
+                        body: `Thank You for choosing CutTheQ`
+                    });
+                }
+                // Broadcast menu updates
+                await broadcastMenuItems(updatedOrder.canteenId);
+                await updateCanteenOrders(updatedOrder.canteenId);
             }
         }, 0);
 
@@ -242,7 +254,7 @@ async function paymentVerification(req: CustomRequest, res: Response): Promise<a
 
     } catch (error) {
         console.error('Webhook processing error:', error);
-        
+
         return res.status(200).json({
             success: true,
             message: "Payment acknowledged despite processing error",
