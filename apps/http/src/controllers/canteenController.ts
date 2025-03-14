@@ -14,7 +14,7 @@ import {
   broadcastMenuItems,
   broadcastCanteenStatus,
 } from "../utils/redisHelpers";
-import { OrderList } from "../types/types";
+import { OrderDetails } from "../types/types";
 
 async function getAllDishes(req: Request, res: Response) {
   const canteenId = req.params.canteenId;
@@ -308,8 +308,10 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
   const canteenId= req.user?.canteenId;
 
   try {
+    if(type==="MENUITEM"){
     const orders = await prisma.order.findMany({
       where: {
+        canteenId: canteenId!,
         createdAt: {
           gte: startDate
         },
@@ -342,8 +344,8 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
         },
       },
     });
-    const orderItems: OrderList = {
-      menuItems: [],  
+    const orderItems: OrderDetails = {
+      items: [],  
       summary: {
         totalAmount: 0,
         razorPayCut: 0,
@@ -351,30 +353,74 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
         totalAmountToBePaid: 0
       }
     };
-    
     orders.forEach((order) => {
       order.OrderItem.forEach((item) => {
- 
-        orderItems.menuItems.push({
-          itemName: item.menuItem.name,
-          quantity: item.quantity,
-          image: item.menuItem.itemImage,
-          price: item.menuItem.price,
-          total: item.quantity * item.menuItem.price,
-        });
+        const existingItem = orderItems.items.find(
+          (menuItem) => menuItem.name === item.menuItem.name
+        );
+    
+        if (existingItem) {
+          existingItem.quantity += item.quantity;
+          existingItem.total += item.quantity * item.menuItem.price;
+        } else {
+          orderItems.items.push({
+            name: item.menuItem.name,
+            quantity: item.quantity,
+            image: item.menuItem.itemImage,
+            price: item.menuItem.price,
+            total: item.quantity * item.menuItem.price,
+          });
+        }
+    
         orderItems.summary.totalAmount += item.quantity * item.menuItem.price;
         orderItems.summary.razorPayCut += (item.quantity * item.menuItem.price) * 0.02;
         orderItems.summary.taxOnRazorPayCut += (item.quantity * item.menuItem.price) * 0.02 * 0.18;
-        
       });
-
-
-    })
-    orderItems.summary.totalAmountToBePaid = orderItems.summary.totalAmount + orderItems.summary.razorPayCut + orderItems.summary.taxOnRazorPayCut;
-    res.status(200).json({ orderItems });
+    });
     
-
-
+    orderItems.summary.totalAmountToBePaid = orderItems.summary.totalAmount - orderItems.summary.razorPayCut - orderItems.summary.taxOnRazorPayCut;
+    res.status(200).json({ orderItems });
+  }
+  else if(type==="USER"){
+      const orders= await prisma.order.findMany({
+        where: {
+          canteenId: canteenId!,
+          createdAt: {
+            gte: startDate
+          },
+          orderStatus: "DONE",
+          isPaid: true,
+          customer: {
+            email: {
+              notIn: TEST_EMAILS,
+            },
+          },
+        },
+        include: {
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+          OrderItem: {
+            include: {
+              menuItem: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  itemImage: true,
+                },
+              },
+            },
+          },
+        },
+      });
+  }
+    
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
@@ -393,4 +439,5 @@ export {
   getAllCanteen,
   getAllDishes,
   toggleCanteenAvailability,
+  getOrderAnalysis,
 };

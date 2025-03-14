@@ -10,6 +10,7 @@ import {
   toggleCanteenAvailability,
 } from "../controllers/canteenController";
 import { checkRole, isAuthenticatedUser } from "../middlewares/auth";
+import { getOrderAnalysis } from "../controllers/canteenController";
 
 const canteenRoutes = express.Router();
 
