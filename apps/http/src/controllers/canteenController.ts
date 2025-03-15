@@ -306,12 +306,14 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
   );
   const TEST_EMAILS = ["developer@cuttheq.in"];
   const canteenId= req.user?.canteenId;
-
+  if(!canteenId){
+      return res.status(403).json({ message:"Canteen not found" });
+}
   try {
     if(type==="MENUITEM"){
     const orders = await prisma.order.findMany({
       where: {
-        canteenId: canteenId!,
+        canteenId: canteenId,
         createdAt: {
           gte: startDate
         },
