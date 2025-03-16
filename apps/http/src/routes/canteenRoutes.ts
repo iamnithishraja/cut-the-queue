@@ -39,6 +39,6 @@ canteenRoutes.put(
   editMenuItem
 );
 
-canteenRoutes.get("/getOrderAnalysis/", isAuthenticatedUser, (req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]), getOrderAnalysis);
+canteenRoutes.get("/getOrderAnalysis", isAuthenticatedUser, (req, res, next) => checkRole(req, res, next, [UserRole.PARTNER]), getOrderAnalysis);
 
 export default canteenRoutes;
