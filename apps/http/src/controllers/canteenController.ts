@@ -493,9 +493,7 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
           totalAmountToBePaid: totalAmountToBePaid,
         },
       };
-      res.status(200).json({ response });
-
-
+      res.status(200).json(response);
     }
 
   } catch (error) {
