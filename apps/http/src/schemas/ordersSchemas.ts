@@ -10,7 +10,7 @@ export const OrderStatusEnum = z.enum(["PROCESSING", "DONE"]);
 export const AvailabilityStatusEnum = z.enum(["AVAILABLE", "UNAVAILABLE"]);
 export const MenuItemTypeEnum = z.enum(["Instant", "TimeConsuming"]);
 export const UserRoleEnum = z.enum(["USER", "PARTNER", "ADMIN"]);
-
+const OrderAnalysisTypeEnum = z.enum(["MENUITEM", "USER"]);
 // User Schema
 export const UserSchema = z.object({
 	id: z.string().cuid(),
@@ -114,4 +114,9 @@ export const PaymentVerificationSchema = z.object({
 	razorpay_payment_id: z.string(),
 	razorpay_order_id: z.string(),
 	razorpay_signature: z.string(),
+});
+
+export const OrderAnalysisSchema = z.object({
+	startDate: z.date(),
+	type: OrderAnalysisTypeEnum
 });
