@@ -301,9 +301,15 @@ const getCanteenAvilabality = async (req: Request, res: Response) => {
   }
 };
 const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any> => {
-  const { startDate, type } = OrderAnalysisSchema.parse(
+  const { dateString, type } = OrderAnalysisSchema.parse(
     req.query
   );
+  const startDate = new Date(dateString);
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(dateString);
+  endDate.setHours(23, 59, 59, 999);
+
   const TEST_EMAILS = ["developer@cuttheq.in"];
   const canteenId = req.user?.canteenId;
   if (!canteenId) {
@@ -315,7 +321,8 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
         where: {
           canteenId: canteenId,
           createdAt: {
-            gte: startDate
+            gte: startDate,
+            lte: endDate,
           },
           orderStatus: "DONE",
           isPaid: true,
@@ -389,6 +396,7 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
           canteenId: canteenId!,
           createdAt: {
             gte: startDate,
+            lte: endDate,
           },
           orderStatus: "DONE",
           isPaid: true,

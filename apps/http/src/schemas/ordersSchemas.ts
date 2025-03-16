@@ -117,6 +117,6 @@ export const PaymentVerificationSchema = z.object({
 });
 
 export const OrderAnalysisSchema = z.object({
-    startDate: z.string(),
+    dateString: z.string(),
     type: OrderAnalysisTypeEnum
 });
