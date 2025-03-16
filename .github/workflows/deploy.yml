@@ -1,0 +1,61 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          
+      - name: Deploy to VPS
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          APP_DIR: ${{ secrets.APP_DIR }}
+        run: |
+          ssh $SSH_USER@$SSH_HOST << 'ENDSSH'
+            # Navigate to application directory
+            cd $APP_DIR
+            
+            # Pull latest code from the main branch
+            git pull origin main
+            
+            # Start other services with Docker Compose
+            docker-compose down
+            docker-compose up -d --build
+            
+            # Build and run HTTP service with Docker individually
+            cd apps/http
+            
+            # Stop the existing HTTP container if it's running
+            if docker ps -q --filter "name=cut-the-queue-http" | grep -q .; then
+              docker stop cut-the-queue-http
+              docker rm cut-the-queue-http
+              echo "Stopped existing HTTP container"
+            fi
+            
+            # Build a fresh HTTP container
+            docker build -t cut-the-queue-http:latest .
+            
+            # Run the HTTP container separately, mapping port 3002 and using the .env file
+            docker run -d \
+              --name cut-the-queue-http-server \
+              --env-file .env \
+              -p 3002:3002 \
+              --restart unless-stopped \
+              cut-the-queue-http:latest
+            
+            echo "HTTP service container started on port 3002"
+            echo "Deployment completed successfully!"
+          ENDSSH
