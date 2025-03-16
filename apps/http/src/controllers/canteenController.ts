@@ -300,196 +300,196 @@ const getCanteenAvilabality = async (req: Request, res: Response) => {
     res.status(500).json({ message: SERVER_ERROR });
   }
 };
-const getOrderAnalysis = async (req: CustomRequest, res: Response) => {
+const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any> => {
   const { startDate, type } = OrderAnalysisSchema.parse(
     req.query
   );
   const TEST_EMAILS = ["developer@cuttheq.in"];
-  const canteenId= req.user?.canteenId;
-  if(!canteenId){
-      return res.status(403).json({ message:"Canteen not found" });
-}
+  const canteenId = req.user?.canteenId;
+  if (!canteenId) {
+    return res.status(403).json({ message: "Canteen not found" });
+  }
   try {
-    if(type==="MENUITEM"){
-    const orders = await prisma.order.findMany({
-      where: {
-        canteenId: canteenId,
-        createdAt: {
-          gte: startDate
-        },
-        orderStatus: "DONE",
-        isPaid: true,
-        customer: {
-          email: {
-            notIn: TEST_EMAILS,
+    if (type === "MENUITEM") {
+      const orders = await prisma.order.findMany({
+        where: {
+          canteenId: canteenId,
+          createdAt: {
+            gte: startDate
+          },
+          orderStatus: "DONE",
+          isPaid: true,
+          customer: {
+            email: {
+              notIn: TEST_EMAILS,
+            },
           },
         },
-      },
-      include: {
-        canteen: {
-          select: {
-            id: true,
-            name: true,
+        include: {
+          canteen: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
-        },
-        OrderItem: {
-          include: {
-            menuItem: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                itemImage: true,
+          OrderItem: {
+            include: {
+              menuItem: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  itemImage: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    const orderItems: OrderDetails = {
-      items: [],  
-      summary: {
-        totalAmount: 0,
-        razorPayCut: 0,
-        taxOnRazorPayCut: 0,
-        totalAmountToBePaid: 0
-      }
-    };
-    orders.forEach((order) => {
-      order.OrderItem.forEach((item) => {
-        const existingItem = orderItems.items.find(
-          (menuItem) => menuItem.name === item.menuItem.name
-        );
-    
-        if (existingItem) {
-          existingItem.quantity += item.quantity;
-          existingItem.total += item.quantity * item.menuItem.price;
-        } else {
-          orderItems.items.push({
-            name: item.menuItem.name,
-            quantity: item.quantity,
-            image: item.menuItem.itemImage,
-            price: item.menuItem.price,
-            total: item.quantity * item.menuItem.price,
-          });
-        }
-    
-        orderItems.summary.totalAmount += item.quantity * item.menuItem.price;
-        orderItems.summary.razorPayCut += (item.quantity * item.menuItem.price) * 0.02;
-        orderItems.summary.taxOnRazorPayCut += (item.quantity * item.menuItem.price) * 0.02 * 0.18;
       });
-    });
-    
-    orderItems.summary.totalAmountToBePaid = orderItems.summary.totalAmount - orderItems.summary.razorPayCut - orderItems.summary.taxOnRazorPayCut;
-    res.status(200).json({ orderItems });
-  }
-  else if(type==="USER"){
-    const orders = await prisma.order.findMany({
-      where: {
-        canteenId: canteenId!,
-        createdAt: {
-          gte: startDate,
-        },
-        orderStatus: "DONE",
-        isPaid: true,
-        customer: {
-          email: {
-            notIn: TEST_EMAILS,
-          },
-        },
-      },
-      include: {
-        customer: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-            phoneNumber: true,
-          },
-        },
-        OrderItem: {
-          include: {
-            menuItem: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                itemImage: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    
-    const userOrdersMap = new Map<string, UserOrder>();
-    let totalAmount = 0;
-   
-    orders.forEach((order) => {
-      const customer = order.customer;
-    
-      const userKey = customer ? customer.email : `guest_${order.id}`; 
-    
-      if (!userOrdersMap.has(userKey)) {
-        userOrdersMap.set(userKey, {
-          name: customer ? `${customer.firstName} ${customer.lastName}` : null,
-          email: customer ? customer.email : null,
-          phoneNumber: customer ? customer.phoneNumber : null,
-          items: [],
-          summary: {
-            totalAmount: 0,
-            razorPayCut: 0,
-            taxOnRazorPayCut: 0,
-            totalAmountToBePaid: 0,
-          },
+      const orderItems: OrderDetails = {
+        items: [],
+        summary: {
+          totalAmount: 0,
+          razorPayCut: 0,
+          taxOnRazorPayCut: 0,
+          totalAmountToBePaid: 0
+        }
+      };
+      orders.forEach((order) => {
+        order.OrderItem.forEach((item) => {
+          const existingItem = orderItems.items.find(
+            (menuItem) => menuItem.name === item.menuItem.name
+          );
+
+          if (existingItem) {
+            existingItem.quantity += item.quantity;
+            existingItem.total += item.quantity * item.menuItem.price;
+          } else {
+            orderItems.items.push({
+              name: item.menuItem.name,
+              quantity: item.quantity,
+              image: item.menuItem.itemImage,
+              price: item.menuItem.price,
+              total: item.quantity * item.menuItem.price,
+            });
+          }
+
+          orderItems.summary.totalAmount += item.quantity * item.menuItem.price;
+          orderItems.summary.razorPayCut += (item.quantity * item.menuItem.price) * 0.02;
+          orderItems.summary.taxOnRazorPayCut += (item.quantity * item.menuItem.price) * 0.02 * 0.18;
         });
-      }
-    
-      const userOrder = userOrdersMap.get(userKey)!;
-    
-      order.OrderItem.forEach((item) => {
-        const existingItem = userOrder.items.find(
-          (orderItem) => orderItem.name === item.menuItem.name
-        );
-    
-        if (existingItem) {
-          existingItem.quantity += item.quantity;
-          existingItem.total += item.quantity * item.menuItem.price;
-        } else {
-          userOrder.items.push({
-            name: item.menuItem.name,
-            quantity: item.quantity,
-            image: item.menuItem.itemImage,
-            price: item.menuItem.price,
-            total: item.quantity * item.menuItem.price,
+      });
+
+      orderItems.summary.totalAmountToBePaid = orderItems.summary.totalAmount - orderItems.summary.razorPayCut - orderItems.summary.taxOnRazorPayCut;
+      res.status(200).json({ orderItems });
+    }
+    else if (type === "USER") {
+      const orders = await prisma.order.findMany({
+        where: {
+          canteenId: canteenId!,
+          createdAt: {
+            gte: startDate,
+          },
+          orderStatus: "DONE",
+          isPaid: true,
+          customer: {
+            email: {
+              notIn: TEST_EMAILS,
+            },
+          },
+        },
+        include: {
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              phoneNumber: true,
+            },
+          },
+          OrderItem: {
+            include: {
+              menuItem: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  itemImage: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const userOrdersMap = new Map<string, UserOrder>();
+      let totalAmount = 0;
+
+      orders.forEach((order) => {
+        const customer = order.customer;
+
+        const userKey = customer ? customer.email : `guest_${order.id}`;
+
+        if (!userOrdersMap.has(userKey)) {
+          userOrdersMap.set(userKey, {
+            name: customer ? `${customer.firstName} ${customer.lastName}` : null,
+            email: customer ? customer.email : null,
+            phoneNumber: customer ? customer.phoneNumber : null,
+            items: [],
+            summary: {
+              totalAmount: 0,
+              razorPayCut: 0,
+              taxOnRazorPayCut: 0,
+              totalAmountToBePaid: 0,
+            },
           });
         }
-    
-        userOrder.summary.totalAmount += item.quantity * item.menuItem.price;
-        totalAmount += item.quantity * item.menuItem.price;
+
+        const userOrder = userOrdersMap.get(userKey)!;
+
+        order.OrderItem.forEach((item) => {
+          const existingItem = userOrder.items.find(
+            (orderItem) => orderItem.name === item.menuItem.name
+          );
+
+          if (existingItem) {
+            existingItem.quantity += item.quantity;
+            existingItem.total += item.quantity * item.menuItem.price;
+          } else {
+            userOrder.items.push({
+              name: item.menuItem.name,
+              quantity: item.quantity,
+              image: item.menuItem.itemImage,
+              price: item.menuItem.price,
+              total: item.quantity * item.menuItem.price,
+            });
+          }
+
+          userOrder.summary.totalAmount += item.quantity * item.menuItem.price;
+          totalAmount += item.quantity * item.menuItem.price;
+        });
       });
-    });
-    
-    
-    const razorPayCut = totalAmount * 0.02;
-    const taxOnRazorPayCut = razorPayCut * 0.18;
-    const totalAmountToBePaid = totalAmount - razorPayCut - taxOnRazorPayCut;
-    
-    
-    const response = {
-      users: Array.from(userOrdersMap.values()),
-      summary: {
-        totalAmount: totalAmount,
-        razorPayCut:razorPayCut,
-        taxOnRazorPayCut: taxOnRazorPayCut,
-        totalAmountToBePaid: totalAmountToBePaid,
-      },
-    };
-     res.status(200).json({ response });
-    
-    
-  }
-    
+
+
+      const razorPayCut = totalAmount * 0.02;
+      const taxOnRazorPayCut = razorPayCut * 0.18;
+      const totalAmountToBePaid = totalAmount - razorPayCut - taxOnRazorPayCut;
+
+
+      const response = {
+        users: Array.from(userOrdersMap.values()),
+        summary: {
+          totalAmount: totalAmount,
+          razorPayCut: razorPayCut,
+          taxOnRazorPayCut: taxOnRazorPayCut,
+          totalAmountToBePaid: totalAmountToBePaid,
+        },
+      };
+      res.status(200).json({ response });
+
+
+    }
+
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ message: INVALID_INPUT, errors: error.errors });
