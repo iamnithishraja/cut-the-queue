@@ -629,42 +629,64 @@ const deleteAccount = async (
   req: CustomRequest,
   res: Response
 ): Promise<any> => {
-  try {
-    const { password } = deleteAccountSchema.parse(req.body);
+	try {
+		const { password } = deleteAccountSchema.parse(req.body);
 
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
-      select: { id: true, password: true },
-    });
+		const user = await prisma.user.findUnique({
+			where: { id: req.user!.id },
+			select: { id: true, password: true },
+		});
 
-    if (!user) {
-      return res.status(400).json({ message: USER_NOT_REGISTERED });
-    }
+		if (!user) {
+			return res.status(400).json({ message: USER_NOT_REGISTERED });
+		}
 
-    if (!user.password) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
+		if (!user.password) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: INVALID_CREDENTIALS });
-    }
+		const isPasswordValid = await bcrypt.compare(password, user.password);
+		if (!isPasswordValid) {
+			return res.status(400).json({ message: INVALID_CREDENTIALS });
+		}
 
-    await prisma.user.delete({
-      where: { id: req.user!.id },
-    });
+		const userOrdersProcessing = await prisma.order.findMany({
+			where: {
+				userId: req.user!.id,
+				orderStatus: "PROCESSING",
+			},
+		});
 
-    return res.status(200).json({ message: "Account deleted successfully" });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ message: INVALID_INPUT, errors: error.errors });
-    }
-    return res.status(500).json({ message: SERVER_ERROR });
-  }
-};
+		if (userOrdersProcessing.length > 0) {
+			return res.status(400).json({ message: "Cannot delete account with active orders" });
+		}
 
+		const replaceUser = await prisma.user.findFirst({
+			where: {
+				email: "deletedUser@cuttheq.in"
+			},
+			select: {
+				id: true
+			}
+		});
+
+		if (!replaceUser) {
+			return res.status(400).json({ message: "Cannot delete account with active orders" });
+		}
+
+		// Handle all database operations in a transaction
+		await prisma.$transaction(async (tx) => {
+			// First update all orders to point to the replacement user
+			await tx.order.updateMany({
+				where: { userId: req.user!.id },
+				data: { userId: replaceUser.id },
+			});
+
+			// Then delete the user
+			await tx.user.delete({
+				where: { id: req.user!.id },
+			});
+		});
 const getAllOrders = async (
   req: CustomRequest,
   res: Response

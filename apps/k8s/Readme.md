@@ -15,3 +15,6 @@ kubectl get deployments
 
 # restart deployment
 kubectl rollout restart deployment <deployment-name>
+
+# ssh into a pod
+kubectl exec --stdin --tty [POD_NAME] -- /bin/bash
