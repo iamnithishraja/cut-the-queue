@@ -654,6 +654,7 @@ const deleteAccount = async (
 			where: {
 				userId: req.user!.id,
 				orderStatus: "PROCESSING",
+				isPaid: true
 			},
 		});
 
