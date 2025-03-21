@@ -20,7 +20,13 @@ const getAllOrdersByCanteenId = async (req: CustomRequest, res: Response) => {
             where: {
                 canteenId: canteenId,
                 orderStatus: "PROCESSING",
-                isPaid: true
+                isPaid: true,
+                customer: {
+                    isNot: null
+                },
+                userId: {
+                    not: null
+                }
             },
             include: {
                 OrderItem: {

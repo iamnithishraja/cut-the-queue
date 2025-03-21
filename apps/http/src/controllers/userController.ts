@@ -647,8 +647,42 @@ const deleteAccount = async (
 			return res.status(400).json({ message: INVALID_CREDENTIALS });
 		}
 
-		await prisma.user.delete({
-			where: { id: req.user!.id },
+		const userOrdersProcessing = await prisma.order.findMany({
+			where: {
+				userId: req.user!.id,
+				orderStatus: "PROCESSING",
+			},
+		});
+
+		if (userOrdersProcessing.length > 0) {
+			return res.status(400).json({ message: "Cannot delete account with active orders" });
+		}
+
+		const replaceUser = await prisma.user.findFirst({
+			where: {
+				email: "deletedUser@cuttheq.in"
+			},
+			select: {
+				id: true
+			}
+		});
+
+		if (!replaceUser) {
+			return res.status(400).json({ message: "Cannot delete account with active orders" });
+		}
+
+		// Handle all database operations in a transaction
+		await prisma.$transaction(async (tx) => {
+			// First update all orders to point to the replacement user
+			await tx.order.updateMany({
+				where: { userId: req.user!.id },
+				data: { userId: replaceUser.id },
+			});
+
+			// Then delete the user
+			await tx.user.delete({
+				where: { id: req.user!.id },
+			});
 		});
 
 		return res.status(200).json({ message: "Account deleted successfully" });
