@@ -69,9 +69,53 @@ export class WSManager {
       socket.userRole = user.role;
 
       socket.send(JSON.stringify({ type: 'INIT_SUCCESS' }));
+      
+      await this.deliverPendingMessages(user.id, socket);
+      
     } catch (error) {
       // @ts-ignore
       socket.send(JSON.stringify({ type: 'ERROR', message: error.message}));
+    }
+  }
+
+  private async deliverPendingMessages(userId: string, socket: CustomWebSocket) {
+    const redis = RedisManager.getInstance().getPublisher();
+    const pendingKey = `pending:${userId}`;
+    
+    const messages = await redis.lrange(pendingKey, 0, -1);
+    
+    if (messages.length > 0) {
+      console.log(`Delivering ${messages.length} pending messages to user ${userId}`);
+      
+      for (const messageStr of messages) {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(messageStr);
+        }
+      }
+      
+      await redis.del(pendingKey);
+    }
+  }
+
+  public async broadcastOrdersToUser(userId: string) {
+    const userSocket = this.stateManager.getUserSocket(userId);
+    const message = { type: 'ORDERS_UPDATE_USER' };
+    const messageStr = JSON.stringify(message);
+    
+    if (userSocket && userSocket.readyState === WebSocket.OPEN) {
+      userSocket.send(messageStr);
+    } else {
+      // Store message in Redis with expiration
+      const redis = RedisManager.getInstance().getPublisher();
+      const pendingKey = `pending:${userId}`;
+      
+      // Add message to list
+      await redis.rpush(pendingKey, messageStr);
+      
+      // Set expiration (2 hours = 7200 seconds)
+      await redis.expire(pendingKey, 7200);
+      
+      console.log(`User ${userId} offline, message queued in Redis for later delivery`);
     }
   }
 

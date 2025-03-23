@@ -159,4 +159,7 @@ export class StateManager {
       if (partnerSocket) partnerSocket.send(JSON.stringify({ type: 'PARTNER_ORDER_STATUS_UPDATE', data: message}));
     });
   }
+  public getUserSocket(userId: string){
+    return this.users.get(userId);
+  }
 }
