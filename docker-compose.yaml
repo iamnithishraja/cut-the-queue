@@ -109,6 +109,10 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./apps/consumers/src:/app/apps/consumers/src
+      - ./packages:/app/packages
+    command: ["bun", "--watch", "src/index.ts"]
 
   email-consumer:
     depends_on:
@@ -127,6 +131,10 @@ services:
     env_file:
       - .env
     restart: always
+    volumes:
+      - ./apps/consumers/src:/app/apps/consumers/src
+      - ./packages:/app/packages
+    command: ["bun", "--watch", "src/index.ts"]
 
   #Service: notification-consumer
   notification-consumer:
@@ -146,6 +154,10 @@ services:
     env_file:
       - .env
     restart: always
+volumes:
+      - ./apps/consumers/src:/app/apps/consumers/src
+      - ./packages:/app/packages
+    command: ["bun", "--watch", "src/index.ts"]
 
   #Service: kafka-cleanup
   kafka-cleanup:
@@ -211,6 +223,10 @@ services:
     ports:
       - 3002:3002
     restart: always
+volumes:
+      - ./apps/http/src:/app/apps/http/src
+      - ./packages:/app/packages
+    command: ["bun", "--watch", "src/index.ts"]
 
   # Service: socket-server
   socket-server:
@@ -233,6 +249,10 @@ services:
     ports:
       - 3001:3001
     restart: always
+volumes:
+      - ./apps/socket/src:/app/apps/socket/src
+      - ./packages:/app/packages
+    command: ["bun", "--watch", "src/index.ts"]
 
   # Service: prometheus
   prometheus:
