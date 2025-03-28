@@ -61,7 +61,7 @@ export class WSManager {
   private async handleInit(socket: CustomWebSocket, message: z.infer<typeof InitMessageSchema>) {
     try {
       console.log('Init message', message);
-      
+
       const user = await verifyAndGetUser(message.token);
 
       this.stateManager.addUser(user.id, socket, user.role);
@@ -69,52 +69,56 @@ export class WSManager {
       socket.userRole = user.role;
 
       socket.send(JSON.stringify({ type: 'INIT_SUCCESS' }));
-      
+
       await this.deliverPendingMessages(user.id, socket);
-      
+
     } catch (error) {
       // @ts-ignore
-      socket.send(JSON.stringify({ type: 'ERROR', message: error.message}));
+      socket.send(JSON.stringify({ type: 'ERROR', message: error.message }));
     }
   }
 
   private async deliverPendingMessages(userId: string, socket: CustomWebSocket) {
     const redis = RedisManager.getInstance().getPublisher();
     const pendingKey = `pending:${userId}`;
-    
+
     const messages = await redis.lrange(pendingKey, 0, -1);
-    
+
     if (messages.length > 0) {
       console.log(`Delivering ${messages.length} pending messages to user ${userId}`);
-      
+
       for (const messageStr of messages) {
         if (socket.readyState === WebSocket.OPEN) {
           socket.send(messageStr);
         }
       }
-      
+
       await redis.del(pendingKey);
     }
   }
 
   public async broadcastOrdersToUser(userId: string) {
-    const userSocket = this.stateManager.getUserSocket(userId);
+    const userSockets = this.stateManager.getUserSocket(userId);
     const message = { type: 'ORDERS_UPDATE_USER' };
     const messageStr = JSON.stringify(message);
-    
-    if (userSocket && userSocket.readyState === WebSocket.OPEN) {
-      userSocket.send(messageStr);
+
+    if (userSockets) {
+      for (const socket of userSockets) {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(messageStr);
+        }
+      }
     } else {
       // Store message in Redis with expiration
       const redis = RedisManager.getInstance().getPublisher();
       const pendingKey = `pending:${userId}`;
-      
+
       // Add message to list
       await redis.rpush(pendingKey, messageStr);
       
       // Set expiration (2 hours = 7200 seconds)
       await redis.expire(pendingKey, 7200);
-      
+
       console.log(`User ${userId} offline, message queued in Redis for later delivery`);
     }
   }
@@ -127,11 +131,11 @@ export class WSManager {
 
     this.stateManager.addSubscription(message.canteenId, message.screen, socket.userId);
     socket.send(JSON.stringify({ type: 'SUBSCRIBE_SUCCESS' }));
-    if(socket.userRole === 'PARTNER'){
+    if (socket.userRole === 'PARTNER') {
       const redis = RedisManager.getInstance().getPublisher();
       const redis_data = await redis.hgetall(message.canteenId);
-      if(Object.keys(redis_data).length){
-        socket.send(JSON.stringify({ type: 'PARTNER_ORDER_STATUS_UPDATE', data: redis_data}))
+      if (Object.keys(redis_data).length) {
+        socket.send(JSON.stringify({ type: 'PARTNER_ORDER_STATUS_UPDATE', data: redis_data }))
       }
     }
   }
@@ -147,16 +151,16 @@ export class WSManager {
   }
 
   private async handlePartnerOrderStatusUpdate(socket: CustomWebSocket, message: z.infer<typeof PartnerOrderUpdates>) {
-    try{
+    try {
       const redis = RedisManager.getInstance().getPublisher();
-      if(!message.canteenId){
-        socket.send(JSON.stringify({ type: 'ERROR', message: 'CanteenId not provided'}));
+      if (!message.canteenId) {
+        socket.send(JSON.stringify({ type: 'ERROR', message: 'CanteenId not provided' }));
       }
       await redis.hmset(message.canteenId, message);
-      await redis.publish(process.env.REDIS_CHANNEL || "sockets",JSON.stringify({type: 'REDIS_FETCH_TRIGGER', canteenId: message.canteenId}));
-    }catch(error){
-      console.error({type:"handlePartnerOrderStatusUpdate", error});
+      await redis.publish(process.env.REDIS_CHANNEL || "sockets", JSON.stringify({ type: 'REDIS_FETCH_TRIGGER', canteenId: message.canteenId }));
+    } catch (error) {
+      console.error({ type: "handlePartnerOrderStatusUpdate", error });
     }
   }
-   
+
 }

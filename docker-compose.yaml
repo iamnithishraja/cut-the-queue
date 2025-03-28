@@ -154,7 +154,7 @@ services:
     env_file:
       - .env
     restart: always
-volumes:
+    volumes:
       - ./apps/consumers/src:/app/apps/consumers/src
       - ./packages:/app/packages
     command: ["bun", "--watch", "src/index.ts"]
@@ -223,7 +223,7 @@ volumes:
     ports:
       - 3002:3002
     restart: always
-volumes:
+    volumes:
       - ./apps/http/src:/app/apps/http/src
       - ./packages:/app/packages
     command: ["bun", "--watch", "src/index.ts"]
@@ -249,7 +249,7 @@ volumes:
     ports:
       - 3001:3001
     restart: always
-volumes:
+    volumes:
       - ./apps/socket/src:/app/apps/socket/src
       - ./packages:/app/packages
     command: ["bun", "--watch", "src/index.ts"]
