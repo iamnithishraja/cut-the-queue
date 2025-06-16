@@ -8,7 +8,10 @@ import canteenRoutes from "./routes/canteenRoutes";
 import orderRouter from "./routes/orderRoutes";
 import Razorpay from "razorpay";
 import path from "path";
-import { prometheusMiddleware, register } from "./middlewares/prometheusMiddleware";
+import {
+  prometheusMiddleware,
+  register,
+} from "./middlewares/prometheusMiddleware";
 
 const app = express();
 app.use(
@@ -17,28 +20,22 @@ app.use(
     credentials: true,
   })
 );
-app.use(prometheusMiddleware)
+app.use(prometheusMiddleware);
 app.use(bodyParser.json({ limit: "35mb" }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
 export const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY || "your-razorpay-keyid",
   key_secret: process.env.RAZORPAY_APT_SECRET,
 });
 
-
 app.get("/", (req, res) => {
-  res.sendFile('index.html', { root: 'public' });
+  res.send("Hello World!");
 });
 
-app.get("/privacy",(req, res) => {
-  res.sendFile('privacy.html', { root: 'public' });
-})
-
-app.get('/metrics', async (req, res) => {
+app.get("/metrics", async (req, res) => {
   try {
-    res.set('Content-Type', register.contentType);
+    res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
   } catch (err) {
     res.status(500).end(err);
