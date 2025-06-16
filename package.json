@@ -7,10 +7,10 @@
 	],
 	"scripts": {
 		"typecheck": "bun run --filter=* typecheck",
-		"build": "bun run --filter=http --filter=socket --filter=reporter --filter=consumers build",
-		"dev": "bun run --filter={http,socket,reporter,consumers} dev",
+		"build": "bun run --filter=http --filter=reporter --filter=consumers build",
+		"dev": "bun run --filter={http,reporter,consumers} dev",
 		"dev:http": "bun run --filter=http dev",
-		"dev:socket": "bun run --filter=socket dev",
+
 		"dev:reporter": "bun run --filter=reporter dev",
 		"dev:consumers": "bun run --filter=consumers dev",
 		"test": "bun run --filter=* test",
@@ -19,7 +19,7 @@
 		"prisma:studio": "bun run --filter=@repo/db studio",
 		"seed": "bun run --filter=@repo/db seed",
 		"format": "prettier --write \"**/*.{ts,tsx,md}\"",
-		"start": "bun run --filter={http,socket,reporter,consumers} start"
+		"start": "bun run --filter={http,reporter,consumers} start"
 	},
 	"devDependencies": {
 		"prettier": "^3.2.5",

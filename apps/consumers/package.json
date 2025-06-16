@@ -1,24 +1,24 @@
 {
-	"name": "consumers",
-	"version": "1.0.0",
-	"scripts": {
-		"start": "bun ./dist/index.js",
-		"dev": "bun --watch ./src/index.ts",
-		"build": "bun build ./src/index.ts --outdir=dist --target=bun",
-		"typecheck": "bun typecheck"
-	},
-	"devDependencies": {
-		"@repo/typescript-config": "workspace:*",
-		"@types/dotenv": "^6.1.1",
-		"@types/node": "^22.7.5"
-	},
-	"dependencies": {
-		"axios": "^1.8.2",
-		"dotenv": "^16.4.5",
-		"firebase-admin": "^13.0.2",
-		"kafkajs": "^2.2.4",
-		"resend": "^4.1.1",
-		"twilio": "^5.3.3",
-		"zod": "^3.23.8"
-	}
+  "name": "consumers",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "bun ./dist/index.js",
+    "dev": "bun --watch ./src/index.ts",
+    "build": "bun build ./src/index.ts --outdir=dist --target=bun",
+    "typecheck": "bun typecheck"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^22.7.5"
+  },
+  "dependencies": {
+    "axios": "^1.8.2",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^13.0.2",
+    "kafkajs": "^2.2.4",
+    "resend": "^4.1.1",
+    "twilio": "^5.3.3",
+    "zod": "^3.23.8"
+  }
 }

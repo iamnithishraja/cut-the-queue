@@ -10,10 +10,6 @@ import {
 import { calculateAmountSchema } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 import { getUploadUrl } from "../utils/r2";
-import {
-  broadcastMenuItems,
-  broadcastCanteenStatus,
-} from "../utils/redisHelpers";
 import { OrderDetails, UserOrder } from "../types/types";
 
 async function getAllDishes(req: Request, res: Response) {
@@ -103,9 +99,6 @@ const toggleCanteenAvailability = async (req: Request, res: Response) => {
       data: { isOpen: newStatus },
     });
 
-    await broadcastMenuItems(canteenId as string);
-    await broadcastCanteenStatus(canteenId as string, newStatus);
-
     res.status(200).json({
       success: true,
       message: `Canteen is now ${newStatus ? "open" : "closed"}`,
@@ -160,8 +153,6 @@ const addMenuItem = async (req: CustomRequest, res: Response) => {
           : null,
       },
     });
-
-    await broadcastMenuItems(canteenId);
 
     res.status(201).json({
       success: true,
@@ -244,10 +235,6 @@ const editMenuItem = async (req: CustomRequest, res: Response) => {
         throw new Error("Failed to update menu item in database");
       });
 
-    await broadcastMenuItems(canteenId).catch((error) => {
-      console.error("Broadcast error:", error);
-    });
-
     res.status(200).json({
       success: true,
       menuItem,
@@ -300,10 +287,11 @@ const getCanteenAvilabality = async (req: Request, res: Response) => {
     res.status(500).json({ message: SERVER_ERROR });
   }
 };
-const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any> => {
-  const { dateString, type } = OrderAnalysisSchema.parse(
-    req.query
-  );
+const getOrderAnalysis = async (
+  req: CustomRequest,
+  res: Response
+): Promise<any> => {
+  const { dateString, type } = OrderAnalysisSchema.parse(req.query);
   const startDate = new Date(dateString);
   startDate.setHours(0, 0, 0, 0);
 
@@ -359,8 +347,8 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
           totalAmount: 0,
           razorPayCut: 0,
           taxOnRazorPayCut: 0,
-          totalAmountToBePaid: 0
-        }
+          totalAmountToBePaid: 0,
+        },
       };
       orders.forEach((order) => {
         order.OrderItem.forEach((item) => {
@@ -382,15 +370,19 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
           }
 
           orderItems.summary.totalAmount += item.quantity * item.menuItem.price;
-          orderItems.summary.razorPayCut += (item.quantity * item.menuItem.price) * 0.02;
-          orderItems.summary.taxOnRazorPayCut += (item.quantity * item.menuItem.price) * 0.02 * 0.18;
+          orderItems.summary.razorPayCut +=
+            item.quantity * item.menuItem.price * 0.02;
+          orderItems.summary.taxOnRazorPayCut +=
+            item.quantity * item.menuItem.price * 0.02 * 0.18;
         });
       });
 
-      orderItems.summary.totalAmountToBePaid = orderItems.summary.totalAmount - orderItems.summary.razorPayCut - orderItems.summary.taxOnRazorPayCut;
+      orderItems.summary.totalAmountToBePaid =
+        orderItems.summary.totalAmount -
+        orderItems.summary.razorPayCut -
+        orderItems.summary.taxOnRazorPayCut;
       res.status(200).json({ orderItems });
-    }
-    else if (type === "USER") {
+    } else if (type === "USER") {
       const orders = await prisma.order.findMany({
         where: {
           canteenId: canteenId!,
@@ -440,7 +432,9 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
 
         if (!userOrdersMap.has(userKey)) {
           userOrdersMap.set(userKey, {
-            name: customer ? `${customer.firstName} ${customer.lastName}` : null,
+            name: customer
+              ? `${customer.firstName} ${customer.lastName}`
+              : null,
             email: customer ? customer.email : null,
             phoneNumber: customer ? customer.phoneNumber : null,
             items: [],
@@ -478,11 +472,9 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
         });
       });
 
-
       const razorPayCut = totalAmount * 0.02;
       const taxOnRazorPayCut = razorPayCut * 0.18;
       const totalAmountToBePaid = totalAmount - razorPayCut - taxOnRazorPayCut;
-
 
       const response = {
         users: Array.from(userOrdersMap.values()),
@@ -495,7 +487,6 @@ const getOrderAnalysis = async (req: CustomRequest, res: Response): Promise<any>
       };
       res.status(200).json(response);
     }
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ message: INVALID_INPUT, errors: error.errors });

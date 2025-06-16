@@ -179,27 +179,10 @@ services:
       done"
     restart: always
 
-  # Service: Redis-pubsub
-  redis-pubsub:
-    image: redis/redis-stack-server:7.2.0-v6
-    ports:
-      - 6379:6379
-    env_file:
-      - .env
-    environment:
-      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD}
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    restart: always
   #Service: http-server
   http-server:
     depends_on:
       kafka:
-        condition: service_healthy
-      redis-pubsub:
         condition: service_healthy
     build:
       context: ./
@@ -210,8 +193,6 @@ services:
       PORT: 3002
       KAFKA_CLIENT_ID: http-server
       KAFKA_BROKER: kafka:9092
-      REDIS_PUB_SUB_URL: redis://redis-pubsub:6379
-      REDIS_CHANNEL: "sockets"
       CLOUDFLARE_R2_ACCESS_KEY_ID: 8631e4cf2863839fe675692854c5a8ae
       CLOUDFLARE_R2_SECRET_ACCESS_KEY: b3ffa8b85326886b5297108c78b25c7aa9ae8b97ba609781832daf098d70caec
       CLOUDFLARE_R2_BUCKET_NAME: cut-the-q
@@ -225,32 +206,6 @@ services:
     restart: always
     volumes:
       - ./apps/http/src:/app/apps/http/src
-      - ./packages:/app/packages
-    command: ["bun", "--watch", "src/index.ts"]
-
-  # Service: socket-server
-  socket-server:
-    depends_on:
-      redis-pubsub:
-        condition: service_healthy
-    build:
-      context: ./
-      dockerfile: ./apps/socket/Dockerfile
-      platforms:
-        - linux/amd64
-    environment:
-      PORT: 3001
-      REDIS_HOST: redis-pubsub
-      REDIS_PORT: 6379
-      REDIS_CHANNEL: "sockets"
-      BUN_ENV: production # Added for Bun
-    env_file:
-      - .env
-    ports:
-      - 3001:3001
-    restart: always
-    volumes:
-      - ./apps/socket/src:/app/apps/socket/src
       - ./packages:/app/packages
     command: ["bun", "--watch", "src/index.ts"]
 

@@ -18,7 +18,6 @@
 		"@types/cookie-parser": "^1.4.7",
 		"@types/cors": "^2.8.17",
 		"@types/express": "^5.0.0",
-		"@types/ioredis": "^4.28.10",
 		"@types/jsonwebtoken": "^9.0.7"
 	},
 	"dependencies": {
@@ -34,7 +33,6 @@
 		"crypto": "^1.0.1",
 		"express": "^4.21.0",
 		"google-auth-library": "^9.14.1",
-		"ioredis": "^5.4.2",
 		"jsonwebtoken": "^9.0.2",
 		"kafkajs": "^2.2.4",
 		"prom-client": "^15.1.3",

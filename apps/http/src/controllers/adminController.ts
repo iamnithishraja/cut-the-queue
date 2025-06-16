@@ -5,7 +5,6 @@ import prisma from "@repo/db/client";
 import z from "zod";
 import { menuItemSchema } from "../schemas/ordersSchemas";
 import { KafkaPublisher } from "../publisher/kafka";
-import { broadcastMenuItems, updateCanteenOrders, updateUserOrders } from "../utils/redisHelpers";
 
 const orderNotifyIntervals = new Map<string, NodeJS.Timeout>();
 
@@ -65,7 +64,7 @@ async function updateItem(req: CustomRequest, res: Response) {
                 canteenId: parsedMenuItem.canteenId
             }
         })
-        await broadcastMenuItems(parsedMenuItem.canteenId);
+        
         res.json({
             canteenId: parsedMenuItem.id,
             items
@@ -171,8 +170,8 @@ async function chageToPickup(req: CustomRequest, res: Response) {
             }
         }, 2 * 60 * 1000);
 
-        await updateUserOrders(order.userId);
-        await updateCanteenOrders(order.canteenId);
+        
+        
         return getAllOrdersByCanteenId(req, res);
     } catch (error) {
         res.status(500).json({ message: SERVER_ERROR });
@@ -247,8 +246,8 @@ async function finishOrder(req: CustomRequest, res: Response): Promise<void> {
 
         // TODO: reflect the updated orders in user's app.
         // @ts-ignore
-        await updateUserOrders(result.order.userId);
-        await updateCanteenOrders(result.order.canteenId);
+        
+        
         res.json(result.itemsToUpdate);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : SERVER_ERROR;
