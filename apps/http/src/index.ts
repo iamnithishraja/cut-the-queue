@@ -23,7 +23,6 @@ app.use(
 app.use(prometheusMiddleware);
 app.use(bodyParser.json({ limit: "35mb" }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "public")));
 
 export const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY || "your-razorpay-keyid",
@@ -32,10 +31,6 @@ export const razorpayInstance = new Razorpay({
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
-});
-
-app.get("/privacy", (req, res) => {
-  res.sendFile("privacy.html", { root: "public" });
 });
 
 app.get("/metrics", async (req, res) => {
