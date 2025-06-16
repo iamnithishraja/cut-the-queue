@@ -1,10 +1,19 @@
 import {
+	ACCOUNT_DELETED,
+	ACTIVE_ORDERS_EXIST,
 	INVALID_CREDENTIALS,
 	INVALID_GOOGLE_TOKEN,
 	INVALID_INPUT,
 	INVALID_OTP,
+	INVALID_PAGE_NUMBER,
+	INVALID_PHONE_FORMAT,
+	LOGOUT_SUCCESS,
+	OTP_SEND_FAILED,
 	OTP_SENT,
+	PASSWORD_CHANGE_SUCCESS,
+	PASSWORD_MISMATCH,
 	SERVER_ERROR,
+	UNAUTHORIZED,
 	USER_ALREADY_EXISTS,
 	USER_NOT_REGISTERED,
 } from "@repo/constants";
@@ -24,17 +33,15 @@ import {
 	changePasswordSchema,
 	deleteAccountSchema,
 	forgotPasswordSchema,
+	getAllOrdersSchema,
 	loginSchema,
 	registerSchema,
 	requestOtpSchema,
 	submitOtpSchema,
 	verifyOtpAndResetPasswordSchema,
-	getAllOrdersSchema
 } from "../schemas/userSchemas";
 import { CustomRequest } from "../types/userTypes";
 import { generateRandomStringWithRandomLength, hashString } from "../utils";
-import { parse } from "path";
-import orderRouter from "../routes/orderRoutes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
@@ -348,7 +355,7 @@ const registerPartner = async (
 
 const logout = async (req: CustomRequest, res: Response): Promise<any> => {
 	try {
-		res.status(200).json({ message: "Logout successful" });
+		res.status(200).json({ message: LOGOUT_SUCCESS });
 	} catch (error) {
 		res.status(500).json({ message: SERVER_ERROR });
 	}
@@ -413,7 +420,7 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
 			verifyOtpAndResetPasswordSchema.parse(req.body);
 		const token = req.params.token;
 		if (password !== confirmPassword || !token) {
-			return res.status(400).json({ message: "Passwords don't match" });
+			return res.status(400).json({ message: PASSWORD_MISMATCH });
 		}
 		const hashedToken = await hashString(token);
 
@@ -532,7 +539,7 @@ async function changePassword(req: CustomRequest, res: Response): Promise<any> {
 
 		return res.json({
 			success: true,
-			message: "Password changed successfully",
+			message: PASSWORD_CHANGE_SUCCESS,
 		});
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -556,14 +563,14 @@ const updatePhoneNumber = async (
 		if (!phoneNumber || !phoneNumberRegex.test(phoneNumber)) {
 			return res.status(400).json({
 				message: INVALID_INPUT,
-				details: "Phone number must be 10 digits",
+				details: INVALID_PHONE_FORMAT,
 			});
 		}
 
 		// Ensure user exists and get their current data
 		const userId = req.user?.id;
 		if (!userId) {
-			return res.status(401).json({ message: "Unauthorized" });
+			return res.status(401).json({ message: UNAUTHORIZED });
 		}
 
 		const currentUser = await prisma.user.findUnique({
@@ -611,7 +618,7 @@ const updatePhoneNumber = async (
 					isVerified: currentUser.isVerified,
 				},
 			});
-			throw new Error("Failed to send OTP");
+			throw new Error(OTP_SEND_FAILED);
 		}
 
 		return res.status(200).json({ message: OTP_SENT });
@@ -654,25 +661,25 @@ const deleteAccount = async (
 			where: {
 				userId: req.user!.id,
 				orderStatus: "PROCESSING",
-				isPaid: true
+				isPaid: true,
 			},
 		});
 
 		if (userOrdersProcessing.length > 0) {
-			return res.status(400).json({ message: "Cannot delete account with active orders" });
+			return res.status(400).json({ message: ACTIVE_ORDERS_EXIST });
 		}
 
 		const replaceUser = await prisma.user.findFirst({
 			where: {
-				email: "deletedUser@cuttheq.in"
+				email: "deletedUser@cuttheq.in",
 			},
 			select: {
-				id: true
-			}
+				id: true,
+			},
 		});
 
 		if (!replaceUser) {
-			return res.status(400).json({ message: "Cannot delete account with active orders" });
+			return res.status(400).json({ message: ACTIVE_ORDERS_EXIST });
 		}
 
 		// Handle all database operations in a transaction
@@ -689,7 +696,7 @@ const deleteAccount = async (
 			});
 		});
 
-		return res.status(200).json({ message: "Account deleted successfully" });
+		return res.status(200).json({ message: ACCOUNT_DELETED });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return res
@@ -707,16 +714,16 @@ const getAllOrders = async (
 	try {
 		const { page } = getAllOrdersSchema.parse(req.params);
 		if (!page) {
-			return res.status(400).json({ message: "Invalid page number" });
+			return res.status(400).json({ message: INVALID_PAGE_NUMBER });
 		}
 		const pageNum = parseInt(page, 10);
 		const id = req.user?.id;
 		if (!id) {
-			return res.status(400).json({ message: "Invalid user id" });
+			return res.status(400).json({ message: UNAUTHORIZED });
 		}
 
 		if (isNaN(pageNum) || pageNum < 1) {
-			return res.status(400).json({ message: "Invalid page number" });
+			return res.status(400).json({ message: INVALID_PAGE_NUMBER });
 		}
 		const transactions = await prisma.order.findMany({
 			where: {
@@ -729,21 +736,18 @@ const getAllOrders = async (
 			},
 			include: {
 				OrderItem: {
-
 					include: {
 						menuItem: {
 							select: {
 								name: true,
 								id: true,
 								price: true,
-								itemImage: true
-							}
-						}
-					}
-				}
-
-			}
-
+								itemImage: true,
+							},
+						},
+					},
+				},
+			},
 		});
 		const isMore = transactions.length > 5;
 		const paginatedOrders = transactions.slice(0, 5);
@@ -751,7 +755,7 @@ const getAllOrders = async (
 		res.status(200).json({
 			transactions: paginatedOrders,
 			hasNext: isMore,
-			hasPrev: hasPrev
+			hasPrev: hasPrev,
 		});
 	} catch (error) {
 		console.error(error);
@@ -763,6 +767,7 @@ export {
 	changePassword,
 	deleteAccount,
 	forgetPassword,
+	getAllOrders,
 	getProfile,
 	googleLogin,
 	login,
@@ -775,5 +780,4 @@ export {
 	updateFcmToken,
 	updatePhoneNumber,
 	verifyOtp,
-	getAllOrders,
 };
