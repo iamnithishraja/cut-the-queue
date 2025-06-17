@@ -31,10 +31,14 @@ async function getAllDishes(req: Request, res: Response) {
         select: { isOpen: true }, 
       }),
     ]);
+       
+       if (!canteen) {
+    return res.status(404).json({ message: "Canteen not found" });
+  }
 
     res.json({
       items,
-      isOpen: canteen?.isOpen ?? false,
+      isOpen: canteen.isOpen 
     });
   } catch (e) {
     console.error(e);
