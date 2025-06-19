@@ -5,9 +5,9 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import Razorpay from "razorpay";
-import canteenRoutes from "./src/routes/canteenRoutes";
-import orderRouter from "./src/routes/orderRoutes";
-import userRoute from "./src/routes/userRoutes";
+import canteenRoutes from "../src/routes/canteenRoutes";
+import orderRouter from "../src/routes/orderRoutes";
+import userRoute from "../src/routes/userRoutes";
 // import { prometheusMiddleware, register } from "./middlewares/prometheusMiddleware";
 
 const app = express();
