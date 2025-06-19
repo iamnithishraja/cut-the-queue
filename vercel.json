@@ -6,5 +6,5 @@
 			"src": "apps/http/api/index.ts",
 			"use": "@vercel/node"
 		}
-	],
+	]
 }
