@@ -2,11 +2,11 @@ import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
 import crypto from "crypto";
 import { Response } from "express";
 import z from "zod";
-import { razorpayInstance } from "../../api";
 import { SERVER_ERROR } from "../constants/userConstants";
 import { CheckoutInputSchema } from "../schemas/ordersSchemas";
 import { sendPushNotification } from "../services/pushNotificationService";
 import { CustomRequest } from "../types/userTypes";
+import { razorpayInstance } from "..";
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used.
 async function checkout(req: CustomRequest, res: Response): Promise<any> {

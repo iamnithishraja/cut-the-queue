@@ -1,12 +1,13 @@
 {
 	"name": "http",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "./src/index.ts",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"dev": "bun --watch ./src/index.ts",
 		"start": "bun ./dist/index.js",
-		"build": "bun build ./src/index.ts --outdir=api --target=bun",
+		"build": "bun build ./src/index.ts --outdir=dist --target=bun",
 		"typecheck": "bun typecheck",
 		"lint": "echo \"No linting configured\""
 	},
@@ -23,6 +24,7 @@
 		"@aws-sdk/client-s3": "^3.750.0",
 		"@aws-sdk/s3-request-presigner": "^3.750.0",
 		"@repo/db": "workspace:*",
+	    "resend": "^4.1.1",
 		"aws-sdk": "^2.1692.0",
 		"bcrypt": "^5.1.1",
 		"body-parser": "^1.20.3",
@@ -31,6 +33,7 @@
 		"crypto": "^1.0.1",
 		"express": "^4.21.0",
 		"google-auth-library": "^9.14.1",
+    	"firebase-admin": "^13.0.2",
 		"jsonwebtoken": "^9.0.2",
 		"kafkajs": "^2.2.4",
 		"mock-aws-s3": "^4.0.2",

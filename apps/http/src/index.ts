@@ -5,9 +5,9 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import Razorpay from "razorpay";
-import canteenRoutes from "../src/routes/canteenRoutes";
-import orderRouter from "../src/routes/orderRoutes";
-import userRoute from "../src/routes/userRoutes";
+import canteenRoutes from "./routes/canteenRoutes";
+import orderRouter from "./routes/orderRoutes";
+import userRoute from "./routes/userRoutes";
 // import { prometheusMiddleware, register } from "./middlewares/prometheusMiddleware";
 
 const app = express();
@@ -59,8 +59,8 @@ app.use("/api/v1", userRoute);
 app.use("/api/v1", canteenRoutes);
 app.use("/api/v1", orderRouter);
 
-app.listen(process.env.PORT, () => {
-  console.log("Listening on port " + process.env.PORT);
+app.listen(80, () => {
+  console.log("Listening on port " + 80);
 });
 
 export default app;
