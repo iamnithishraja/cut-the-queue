@@ -1,13 +1,13 @@
-import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import userRoute from "./routes/userRoutes";
 import "dotenv/config";
-import canteenRoutes from "./routes/canteenRoutes";
-import orderRouter from "./routes/orderRoutes";
-import Razorpay from "razorpay";
+import express from "express";
 import path from "path";
+import Razorpay from "razorpay";
+import canteenRoutes from "./src/routes/canteenRoutes";
+import orderRouter from "./src/routes/orderRoutes";
+import userRoute from "./src/routes/userRoutes";
 // import { prometheusMiddleware, register } from "./middlewares/prometheusMiddleware";
 
 const app = express();
