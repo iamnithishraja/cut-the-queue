@@ -1,6 +1,5 @@
 { 
 	"version": 2, 
-	"routes": [{ "source": "/(.*)", "dest": "/apps/http/api" }],
 	"builds": [
 		{
 			"src": "apps/http/api/index.ts",
