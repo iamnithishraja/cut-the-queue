@@ -62,4 +62,4 @@ export const changePasswordSchema = z.object({
 export const getAllOrdersSchema = z.object({
   page:z.string()
 });
-export type SMSMessage = Zod.infer<typeof smsMessage>;
+export type SMSMessage = z.infer<typeof smsMessage>;
