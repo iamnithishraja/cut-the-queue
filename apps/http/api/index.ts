@@ -62,3 +62,5 @@ app.use("/api/v1", orderRouter);
 app.listen(process.env.PORT, () => {
   console.log("Listening on port " + process.env.PORT);
 });
+
+export default app;
