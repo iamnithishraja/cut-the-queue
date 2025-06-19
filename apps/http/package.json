@@ -6,7 +6,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"dev": "bun --watch ./src/index.ts",
 		"start": "bun ./dist/index.js",
-		"build": "bun build ./src/index.ts --outdir=dist --target=bun && cp -r public dist/public",
+		"build": "bun build ./src/index.ts --outdir=dist --target=bun",
 		"typecheck": "bun typecheck",
 		"lint": "echo \"No linting configured\""
 	},
