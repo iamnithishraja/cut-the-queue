@@ -7,13 +7,13 @@ import {
 	SERVER_ERROR,
 	USER_ALREADY_EXISTS,
 	USER_NOT_REGISTERED,
-} from "@repo/constants";
+} from "../constants/userConstants";
 import prisma from "@repo/db/client";
 import {
 	createVerificationMessage,
 	generateOTP,
 	generateToken,
-} from "@repo/utils";
+} from "../utils/auth";
 import bcrypt from "bcrypt";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";

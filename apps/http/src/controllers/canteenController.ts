@@ -1,4 +1,4 @@
-import { INVALID_INPUT, SERVER_ERROR } from "@repo/constants";
+import { INVALID_INPUT, SERVER_ERROR } from "../constants/userConstants";
 import prisma from "@repo/db/client";
 import { Request, Response } from "express";
 import z from "zod";

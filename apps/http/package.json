@@ -22,9 +22,7 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.750.0",
 		"@aws-sdk/s3-request-presigner": "^3.750.0",
-		"@repo/constants": "workspace:*",
 		"@repo/db": "workspace:*",
-		"@repo/utils": "workspace:*",
 		"aws-sdk": "^2.1692.0",
 		"bcrypt": "^5.1.1",
 		"body-parser": "^1.20.3",

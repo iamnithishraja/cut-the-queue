@@ -9,7 +9,7 @@ import {
   USER_NOT_AUTHORISED,
   USER_NOT_REGISTERED,
   USER_NOT_VERIFIED,
-} from "@repo/constants";
+} from "../constants/userConstants";
 import dotenv from "dotenv";
 dotenv.config();
 
