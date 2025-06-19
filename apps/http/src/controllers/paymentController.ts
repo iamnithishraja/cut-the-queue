@@ -1,13 +1,12 @@
-import { Response } from "express";
-import { CustomRequest } from "../types/userTypes";
-import { razorpayInstance } from "..";
+import { SERVER_ERROR } from "@repo/constants";
 import prisma, { MenuItemType, OrderItemStatus } from "@repo/db/client";
-import z from "zod";
-import { CheckoutInputSchema } from "../schemas/ordersSchemas";
 import crypto from "crypto";
-import { SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
-import { KafkaPublisher } from "../publisher/kafka";
-import { OrderResult } from "../types/types";
+import { Response } from "express";
+import z from "zod";
+import { razorpayInstance } from "..";
+import { CheckoutInputSchema } from "../schemas/ordersSchemas";
+import { sendPushNotification } from "../services/pushNotificationService";
+import { CustomRequest } from "../types/userTypes";
 
 // TODO: modify to process one order at a time by locking the transactions if multithread machine is used.
 async function checkout(req: CustomRequest, res: Response): Promise<any> {
@@ -224,12 +223,11 @@ async function paymentVerification(
 
         // Send notification
         if (updatedOrder.customer?.fcmToken) {
-          const kafkaPublisher = KafkaPublisher.getInstance();
-          await kafkaPublisher.publishToKafka("notification", {
-            firebaseToken: updatedOrder.customer.fcmToken,
-            title: `Your Payment is Successful ✅`,
-            body: `Thank You for choosing CutTheQ`,
-          });
+          await sendPushNotification(
+            updatedOrder.customer.fcmToken,
+            `Your Payment is Successful ✅`,
+            `Thank You for choosing CutTheQ`
+          );
         }
       } catch (error) {
         // Just log the error, don't affect the main process
@@ -237,12 +235,11 @@ async function paymentVerification(
 
         // Send notification
         if (updatedOrder.customer?.fcmToken) {
-          const kafkaPublisher = KafkaPublisher.getInstance();
-          await kafkaPublisher.publishToKafka("notification", {
-            firebaseToken: updatedOrder.customer.fcmToken,
-            title: `Your Payment is Successful ✅`,
-            body: `Thank You for choosing CutTheQ`,
-          });
+          await sendPushNotification(
+            updatedOrder.customer.fcmToken,
+            `Your Payment is Successful ✅`,
+            `Thank You for choosing CutTheQ`
+          );
         }
       }
     }, 0);
@@ -286,4 +283,5 @@ const getAllOrders = async (req: CustomRequest, res: Response) => {
   }
 };
 
-export { checkout, paymentVerification, getAllOrders };
+export { checkout, getAllOrders, paymentVerification };
+

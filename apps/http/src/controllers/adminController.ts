@@ -1,10 +1,10 @@
 import { INVALID_INPUT, SERVER_ERROR, USER_NOT_AUTHORISED } from "@repo/constants";
-import { Response } from "express";
-import { CustomRequest } from "../types/userTypes";
 import prisma from "@repo/db/client";
+import { Response } from "express";
 import z from "zod";
 import { menuItemSchema } from "../schemas/ordersSchemas";
-import { KafkaPublisher } from "../publisher/kafka";
+import { sendPushNotification } from "../services/pushNotificationService";
+import { CustomRequest } from "../types/userTypes";
 
 const orderNotifyIntervals = new Map<string, NodeJS.Timeout>();
 
@@ -133,14 +133,14 @@ async function chageToPickup(req: CustomRequest, res: Response) {
 
         // TODO: notify the person who ordered the item through msg, vibration or some sort of trigger.
         //notify immediately
-        const kafkaPublisher = KafkaPublisher.getInstance();
-        if (order.customer.fcmToken) {
-            await kafkaPublisher.publishToKafka("notification", {
-                firebaseToken: order.customer.fcmToken,
-                title: `Your ${orderItem.menuItem.name} is ready.`,
-                body: `Show the QR Code before collecting the order from ${order.canteen.name}`
-            });
+        if (order.customer?.fcmToken) {
+            await sendPushNotification(
+                order.customer.fcmToken,
+                `Your ${orderItem.menuItem.name} is ready.`,
+                `Show the QR Code before collecting the order from ${order.canteen.name}`
+            );
         }
+        
         //notify in every 2 minutes
         const intervalId = setInterval(async () => {
             try {
@@ -159,11 +159,11 @@ async function chageToPickup(req: CustomRequest, res: Response) {
 
                 // Resend the notification
                 if (order.customer && order.customer.fcmToken) {
-                    await kafkaPublisher.publishToKafka("notification", {
-                        firebaseToken: order.customer.fcmToken,
-                        title: `Your ${updatedOrderItem.menuItem.name} is ready.`,
-                        body: `Show the QR Code before collecting the order from ${order.canteen.name}`
-                    });
+                    await sendPushNotification(
+                        order.customer.fcmToken,
+                        `Your ${updatedOrderItem.menuItem.name} is ready.`,
+                        `Show the QR Code before collecting the order from ${order.canteen.name}`
+                    );
                 }
             } catch (error) {
                 console.error("Failed to check order status or send notification:", error);
@@ -300,4 +300,4 @@ async function getOrderDetailsByDay(req: CustomRequest, res: Response) {
     }
 }
 
-export { updateItem, chageToPickup, getAllOrdersByCanteenId, finishOrder, updateCounter, getOrderDetailsByDay }
+export { chageToPickup, finishOrder, getAllOrdersByCanteenId, getOrderDetailsByDay, updateCounter, updateItem };

@@ -19,22 +19,20 @@ import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import z from "zod";
-import { KafkaPublisher } from "../publisher/kafka";
 import {
 	changePasswordSchema,
 	deleteAccountSchema,
 	forgotPasswordSchema,
+	getAllOrdersSchema,
 	loginSchema,
 	registerSchema,
 	requestOtpSchema,
 	submitOtpSchema,
-	verifyOtpAndResetPasswordSchema,
-	getAllOrdersSchema
+	verifyOtpAndResetPasswordSchema
 } from "../schemas/userSchemas";
+import { sendSMS } from "../services/smsService";
 import { CustomRequest } from "../types/userTypes";
 import { generateRandomStringWithRandomLength, hashString } from "../utils";
-import { parse } from "path";
-import orderRouter from "../routes/orderRoutes";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const SALT_ROUNDS = 10;
@@ -201,11 +199,7 @@ const requestOtp = async (req: Request, res: Response): Promise<void> => {
 			},
 		});
 		const message = createVerificationMessage(otp);
-		const kafkaPublisher = KafkaPublisher.getInstance();
-		await kafkaPublisher.publishToKafka("sms", {
-			to: "+91" + number,
-			content: `${otp}`,
-		});
+		await sendSMS("+91" + number, `${otp}`);
 		res.status(200).json({ message: OTP_SENT });
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -387,11 +381,7 @@ async function forgetPassword(req: Request, res: Response): Promise<any> {
 			},
 		});
 
-		const kafkaPublisher = KafkaPublisher.getInstance();
-		await kafkaPublisher.publishToKafka("sms", {
-			to: "+91" + user.phoneNumber,
-			content: `${otp}`,
-		});
+		await sendSMS("+91" + user.phoneNumber, `${otp}`);
 
 		return res.json({
 			success: true,
@@ -595,13 +585,9 @@ const updatePhoneNumber = async (
 
 		// Send OTP via Kafka
 		try {
-			const kafkaPublisher = KafkaPublisher.getInstance();
-			await kafkaPublisher.publishToKafka("sms", {
-				to: "+91" + phoneNumber,
-				content: `${otp}`,
-			});
-		} catch (kafkaError) {
-			console.error("Kafka publishing error:", kafkaError);
+			await sendSMS("+91" + phoneNumber, `${otp}`);
+		} catch (smsError) {
+			console.error("SMS sending error:", smsError);
 			// Rollback the phone number update
 			await prisma.user.update({
 				where: { id: userId },
@@ -762,8 +748,7 @@ const getAllOrders = async (
 export {
 	changePassword,
 	deleteAccount,
-	forgetPassword,
-	getProfile,
+	forgetPassword, getAllOrders, getProfile,
 	googleLogin,
 	login,
 	logout,
@@ -774,6 +759,6 @@ export {
 	submitOtp,
 	updateFcmToken,
 	updatePhoneNumber,
-	verifyOtp,
-	getAllOrders,
+	verifyOtp
 };
+
