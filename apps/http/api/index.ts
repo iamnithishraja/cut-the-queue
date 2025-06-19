@@ -29,7 +29,7 @@ export const razorpayInstance = new Razorpay({
 
 
 app.get("/", (req, res) => {
-  res.sendFile('index.html', { root: 'public' });
+  res.send("Welcome to CutTheQ API");
 });
 
 app.get("/privacy",(req, res) => {
