@@ -2,9 +2,9 @@
 	"version": 2, 
 	"builds": [
 		{
-			"src": "apps/http/dist/index.js",
+			"src": "apps/http/index.js",
 			"use": "@vercel/node"
 		}
 	],
-	"routes": [{ "src": "/(.*)", "dest": "/apps/http/dist/index.js" }]
+	"routes": [{ "src": "/(.*)", "dest": "/apps/http/index.js" }]
 }
