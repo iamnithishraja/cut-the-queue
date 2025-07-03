@@ -15,10 +15,27 @@ import { OrderDetails, UserOrder } from "../types/types";
 async function getAllDishes(req: Request, res: Response) {
   const canteenId = req.params.canteenId;
   try {
-    const items = await prisma.menuItem.findMany({
-      where: { canteenId: canteenId },
+    if (!canteenId) {
+      return res.status(400).json({ message: "Canteen ID is required" });
+    }
+    const [items, canteen] = await Promise.all([
+      prisma.menuItem.findMany({
+        where: { canteenId },
+      }),
+      prisma.canteen.findUnique({
+        where: { id: canteenId },
+        select: { isOpen: true }, 
+      }),
+    ]);
+       
+       if (!canteen) {
+    return res.status(404).json({ message: "Canteen not found" });
+  }
+
+    res.json({
+      items,
+      isOpen: canteen.isOpen 
     });
-    res.json({ items });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: SERVER_ERROR });
